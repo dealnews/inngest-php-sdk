@@ -21,7 +21,7 @@ class Headers
     public const EXPECTED_SERVER_KIND = 'X-Inngest-Expected-Server-Kind';
     public const AUTHORIZATION = 'Authorization';
 
-    public const SDK_VERSION = '0.1.0';
+    public const SDK_VERSION = '0.1.1';
     public const SDK_NAME = 'inngest-php';
     public const REQ_VERSION_CURRENT = '1';
 }
