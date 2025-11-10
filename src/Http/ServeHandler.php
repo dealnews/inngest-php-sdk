@@ -105,8 +105,8 @@ class ServeHandler
                 'serve_origin' => $config->getServeOrigin(),
                 'serve_path' => $config->getServePath() ?? $this->serve_path,
                 'signing_key_hash' => $signing_key ? hash('sha256', $signing_key) : null,
-                'signing_key_fallback_hash' => $config->getSigningKeyFallback() 
-                    ? hash('sha256', $config->getSigningKeyFallback()) 
+                'signing_key_fallback_hash' => $config->getSigningKeyFallback()
+                    ? hash('sha256', $config->getSigningKeyFallback())
                     : null,
             ]);
         }
@@ -126,10 +126,10 @@ class ServeHandler
         try {
             $config = $this->client->getConfig();
             $url = $this->buildServeUrl();
-            
+
             $deploy_id = $query['deployId'] ?? null;
             $sync_url = $config->getApiBaseUrl() . '/fn/register';
-            
+
             if ($deploy_id !== null) {
                 $sync_url .= '?deployId=' . urlencode($deploy_id);
             }
@@ -186,7 +186,7 @@ class ServeHandler
         try {
             $signature = $headers[Headers::SIGNATURE] ?? $headers['x-inngest-signature'] ?? null;
             $server_kind = $headers[Headers::SERVER_KIND] ?? $headers['x-inngest-server-kind'] ?? null;
-            
+
             $this->verifier->verify($body, $signature, $server_kind);
 
             $fn_id = $query['fnId'] ?? null;
@@ -235,7 +235,7 @@ class ServeHandler
         );
 
         $step = new Step($step_context);
-        
+
         $function_context = new FunctionContext(
             $event,
             $events,
@@ -248,7 +248,7 @@ class ServeHandler
             $result = $function->execute($function_context);
 
             $planned_steps = $step->getPlannedSteps();
-            
+
             if (!empty($planned_steps)) {
                 return $this->jsonResponse($planned_steps, 206, [
                     Headers::SDK => $this->client->getSdkIdentifier(),
@@ -310,9 +310,8 @@ class ServeHandler
 
     protected function findFunction(string $composite_id): ?InngestFunction
     {
-        $parts = explode('-', $composite_id, 2);
-        $function_id = $parts[1] ?? $composite_id;
-        
+        // trim app name plus a '-' off the composite id
+        $function_id = substr($composite_id, strlen($this->client->getAppId()) + 1);
         return $this->client->getFunction($function_id);
     }
 
