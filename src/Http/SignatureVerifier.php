@@ -50,7 +50,7 @@ class SignatureVerifier
     protected function verifySignature(string $body, string $signature_header, string $signing_key): bool
     {
         parse_str($signature_header, $parts);
-        
+
         if (!isset($parts['t']) || !isset($parts['s'])) {
             return false;
         }
@@ -93,8 +93,8 @@ class SignatureVerifier
     public function hashSigningKey(string $signing_key): string
     {
         $key = $this->extractKey($signing_key);
-        $hashed = hash('sha256', $key);
-        
+        $hashed = hash('sha256', hex2bin($key));
+
         if (str_starts_with($signing_key, 'signkey-')) {
             $parts = explode('-', $signing_key, 3);
             return "signkey-{$parts[1]}-{$hashed}";
