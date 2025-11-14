@@ -305,10 +305,6 @@ The SDK follows PSR standards and uses:
 composer test
 ```
 
-## License
-
-Apache 2.0 - See LICENSE for details.
-
 ## Resources
 
 - [Inngest Documentation](https://www.inngest.com/docs)
