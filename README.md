@@ -213,6 +213,85 @@ $function = new InngestFunction(
 );
 ```
 
+## Concurrency Control
+
+Limit how many steps can run simultaneously across all function runs. Useful for rate-limiting external APIs, managing resources, or preventing overwhelming downstream services.
+
+### Basic Limit
+
+```php
+use DealNews\Inngest\Function\Concurrency;
+
+$function = new InngestFunction(
+    id: 'process-data',
+    handler: function ($ctx) {
+        // Function logic
+    },
+    triggers: [new TriggerEvent('data/process')],
+    concurrency: [
+        new Concurrency(limit: 10) // Max 10 concurrent steps
+    ]
+);
+```
+
+### Per-User Limits
+
+```php
+// Limit to 2 concurrent runs per user
+$function = new InngestFunction(
+    id: 'user-task',
+    handler: function ($ctx) {
+        // Process user-specific task
+    },
+    triggers: [new TriggerEvent('user/task')],
+    concurrency: [
+        new Concurrency(
+            limit: 2,
+            key: 'event.data.user_id' // Group by user ID
+        )
+    ]
+);
+```
+
+### Multi-Level Limits
+
+```php
+// Set both regional and account-wide limits
+$function = new InngestFunction(
+    id: 'process-orders',
+    handler: function ($ctx) {
+        // Process order
+    },
+    triggers: [new TriggerEvent('order/created')],
+    concurrency: [
+        // Limit per region
+        new Concurrency(
+            limit: 5,
+            key: 'event.data.region',
+            scope: 'fn' // Per function (default)
+        ),
+        // Overall account limit
+        new Concurrency(
+            limit: 100,
+            scope: 'account' // Across all environments
+        )
+    ]
+);
+```
+
+### Concurrency Options
+
+- **limit**: Maximum concurrent steps (0 = unlimited)
+- **key**: Expression to group concurrency (e.g., `event.data.user_id`, `event.data.region`)
+- **scope**: Where the limit applies
+  - `fn` (default): Per function
+  - `env`: Per environment (production, staging, etc.)
+  - `account`: Across entire account
+
+**Heads-up:** Maximum of 2 concurrency configurations per function.
+
+See [examples/concurrency.php](examples/concurrency.php) for more examples.
+
 ## Development
 
 The SDK follows PSR standards and uses:

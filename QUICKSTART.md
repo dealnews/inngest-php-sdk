@@ -197,6 +197,43 @@ $daily_task = new InngestFunction(
 );
 ```
 
+### Control Concurrency
+
+Limit how many steps run simultaneously across all function runs:
+
+```php
+use DealNews\Inngest\Function\Concurrency;
+
+// Simple limit
+$function = new InngestFunction(
+    id: 'rate-limited-task',
+    handler: function ($ctx) {
+        // Your logic here
+    },
+    triggers: [new TriggerEvent('task/process')],
+    concurrency: [
+        new Concurrency(limit: 10) // Max 10 concurrent steps
+    ]
+);
+
+// Per-user limit
+$per_user = new InngestFunction(
+    id: 'user-task',
+    handler: function ($ctx) {
+        // Process user task
+    },
+    triggers: [new TriggerEvent('user/task')],
+    concurrency: [
+        new Concurrency(
+            limit: 2,
+            key: 'event.data.user_id' // 2 concurrent per user
+        )
+    ]
+);
+```
+
+**Heads-up:** Use concurrency to prevent overwhelming external APIs or to manage resource usage.
+
 ## Framework Integration
 
 ### Laravel
