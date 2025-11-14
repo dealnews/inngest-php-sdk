@@ -15,16 +15,30 @@ class InngestFunction
      * @param array<TriggerInterface> $triggers Array of triggers
      * @param string|null $name Display name for the function
      * @param int $retries Number of retry attempts (default 3 retries = 4 total attempts)
+     * @param array<Concurrency>|null $concurrency Optional concurrency limits (max 2)
      */
     public function __construct(
         protected string $id,
         protected $handler,
         protected array $triggers,
         protected ?string $name = null,
-        protected int $retries = 3
+        protected int $retries = 3,
+        protected ?array $concurrency = null
     ) {
         if (empty($triggers)) {
             throw new \InvalidArgumentException('Function must have at least one trigger');
+        }
+
+        if ($concurrency !== null && count($concurrency) > 2) {
+            throw new \InvalidArgumentException('Maximum of 2 concurrency options allowed');
+        }
+
+        if ($concurrency !== null) {
+            foreach ($concurrency as $item) {
+                if (!$item instanceof Concurrency) {
+                    throw new \InvalidArgumentException('Concurrency array must contain only Concurrency instances');
+                }
+            }
         }
     }
 
@@ -57,6 +71,16 @@ class InngestFunction
     }
 
     /**
+     * Get concurrency configuration
+     *
+     * @return array<Concurrency>|null
+     */
+    public function getConcurrency(): ?array
+    {
+        return $this->concurrency;
+    }
+
+    /**
      * Execute the function handler
      *
      * @return mixed
@@ -71,7 +95,7 @@ class InngestFunction
      */
     public function toArray(): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'name' => $this->name ?? $this->id,
             'triggers' => array_map(fn($t) => $t->toArray(), $this->triggers),
@@ -88,5 +112,11 @@ class InngestFunction
                 ],
             ],
         ];
+
+        if ($this->concurrency !== null && count($this->concurrency) > 0) {
+            $data['concurrency'] = array_map(fn($c) => $c->toArray(), $this->concurrency);
+        }
+
+        return $data;
     }
 }
