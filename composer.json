@@ -1,6 +1,6 @@
 {
     "name": "dealnews/inngest-php-sdk",
-    "description": "Official PHP SDK for Inngest - Build event-driven workflows with durable execution",
+    "description": "Unofficial PHP SDK for Inngest - Build event-driven workflows with durable execution",
     "type": "library",
     "license": "BSD-3-Clause",
     "keywords": ["inngest", "event-driven", "workflow", "serverless", "queue", "background-jobs"],
