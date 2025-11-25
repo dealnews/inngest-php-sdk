@@ -24,6 +24,7 @@ class Config
      * @param string|null $serve_origin Origin for serving functions
      * @param string|null $serve_path Path for serving functions
      * @param string|null $log_level Logging level
+     * @param string|null $app_version Application version for deployment tracking
      */
     public function __construct(
         protected ?string $event_key = null,
@@ -35,7 +36,8 @@ class Config
         protected bool $is_dev = false,
         protected ?string $serve_origin = null,
         protected ?string $serve_path = null,
-        protected ?string $log_level = null
+        protected ?string $log_level = null,
+        protected ?string $app_version = null
     ) {
         $this->loadFromEnvironment();
     }
@@ -97,6 +99,10 @@ class Config
         if ($this->log_level === null) {
             $this->log_level = getenv('INNGEST_LOG_LEVEL') ?: null;
         }
+
+        if ($this->app_version === null) {
+            $this->app_version = getenv('INNGEST_APP_VERSION') ?: null;
+        }
     }
 
     public function getEventKey(): ?string
@@ -155,5 +161,15 @@ class Config
     public function getLogLevel(): ?string
     {
         return $this->log_level;
+    }
+
+    /**
+     * Get the application version
+     *
+     * @return string|null
+     */
+    public function getAppVersion(): ?string
+    {
+        return $this->app_version;
     }
 }

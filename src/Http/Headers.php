@@ -20,8 +20,9 @@ class Headers
     public const SERVER_KIND = 'X-Inngest-Server-Kind';
     public const EXPECTED_SERVER_KIND = 'X-Inngest-Expected-Server-Kind';
     public const AUTHORIZATION = 'Authorization';
+    public const SYNC_KIND = 'X-Inngest-Sync-Kind';
 
-    public const SDK_VERSION = '0.1.3';
+    public const SDK_VERSION = '0.1.5';
     public const SDK_NAME = 'inngest-php';
     public const REQ_VERSION_CURRENT = '1';
 }

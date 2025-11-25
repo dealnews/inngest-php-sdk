@@ -117,11 +117,94 @@ class ServeHandler
     }
 
     /**
+     * Handle sync request (function registration)
+     *
      * @param array<string, string> $headers
      * @param array<string, string> $query
      * @return array{status: int, headers: array<string, string>, body: string}
      */
     protected function handleSync(array $headers, array $query): array
+    {
+        $sync_kind = $headers[Headers::SYNC_KIND] ?? $headers['x-inngest-sync-kind'] ?? null;
+
+        if ($sync_kind === 'in-band') {
+            return $this->handleInBandSync($headers, $query);
+        }
+
+        return $this->handleOutOfBandSync($headers, $query);
+    }
+
+    /**
+     * Handle in-band sync (registration data returned in response)
+     *
+     * @param array<string, string> $headers
+     * @param array<string, string> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    protected function handleInBandSync(array $headers, array $query): array
+    {
+        try {
+            $config = $this->client->getConfig();
+            $url = $this->buildServeUrl();
+
+            $functions = [];
+            foreach ($this->client->getFunctions() as $function) {
+                $function_data = $function->toArray();
+                $function_url = $url . '?fnId=' . urlencode($this->getCompositeId($function->getId())) . '&stepId=step';
+                $function_data['steps']['step']['runtime']['url'] = $function_url;
+                $function_data['id'] = $this->getCompositeId($function->getId());
+                $functions[] = $function_data;
+            }
+
+            $platform = $this->detectPlatform();
+
+            $payload = [
+                'app_id' => $this->client->getAppId(),
+                'capabilities' => [
+                    'trust_probe' => 'v1',
+                    'connect' => 'v1',
+                ],
+                'env' => $config->getEnv(),
+                'framework' => 'php',
+                'functions' => $functions,
+                'inspection' => $this->buildIntrospectionData(),
+                'sdk' => $this->client->getSdkIdentifier(),
+                'sdk_author' => 'inngest',
+                'sdk_language' => 'php',
+                'sdk_version' => Headers::SDK_VERSION,
+                'url' => $url,
+                'v' => '0.1',
+            ];
+
+            $app_version = $config->getAppVersion();
+            if ($app_version !== null) {
+                $payload['appVersion'] = $app_version;
+            }
+
+            if ($platform !== null) {
+                $payload['platform'] = $platform;
+            }
+
+            return $this->jsonResponse($payload, 200, [
+                Headers::SDK => $this->client->getSdkIdentifier(),
+                Headers::SYNC_KIND => 'in-band',
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse([
+                'message' => $e->getMessage(),
+                'modified' => false,
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle out-of-band sync (external API call to Inngest)
+     *
+     * @param array<string, string> $headers
+     * @param array<string, string> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    protected function handleOutOfBandSync(array $headers, array $query): array
     {
         try {
             $config = $this->client->getConfig();
@@ -400,5 +483,69 @@ class ServeHandler
             'headers' => $headers,
             'body' => json_encode($data),
         ];
+    }
+
+    /**
+     * Build introspection data for sync payload
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildIntrospectionData(): array
+    {
+        $config = $this->client->getConfig();
+        $signing_key = $config->getSigningKey();
+        $event_key = $config->getEventKey();
+
+        return [
+            'authentication_succeeded' => null,
+            'function_count' => count($this->client->getFunctions()),
+            'has_event_key' => $event_key !== null,
+            'has_signing_key' => $signing_key !== null,
+            'has_signing_key_fallback' => $config->getSigningKeyFallback() !== null,
+            'mode' => $config->isDev() ? 'dev' : 'cloud',
+            'schema_version' => '2024-05-24',
+            'api_origin' => $config->getApiBaseUrl(),
+            'app_id' => $this->client->getAppId(),
+            'env' => $config->getEnv(),
+            'event_api_origin' => $config->getEventApiBaseUrl(),
+            'event_key_hash' => $event_key ? hash('sha256', $event_key) : null,
+            'framework' => 'php',
+            'sdk_language' => 'php',
+            'sdk_version' => Headers::SDK_VERSION,
+            'serve_origin' => $config->getServeOrigin(),
+            'serve_path' => $config->getServePath() ?? $this->serve_path,
+            'signing_key_hash' => $signing_key ? hash('sha256', $signing_key) : null,
+            'signing_key_fallback_hash' => $config->getSigningKeyFallback()
+                ? hash('sha256', $config->getSigningKeyFallback())
+                : null,
+        ];
+    }
+
+    /**
+     * Detect deployment platform from environment variables
+     *
+     * @return string|null
+     */
+    protected function detectPlatform(): ?string
+    {
+        $platform_checks = [
+            'vercel' => 'VERCEL',
+            'aws-lambda' => 'AWS_LAMBDA_FUNCTION_NAME',
+            'cloudflare-workers' => 'CLOUDFLARE_WORKERS',
+            'cloudflare-pages' => 'CF_PAGES',
+            'netlify' => 'NETLIFY',
+            'render' => 'RENDER',
+            'fly' => 'FLY_APP_NAME',
+            'railway' => 'RAILWAY_ENVIRONMENT',
+        ];
+
+        foreach ($platform_checks as $platform => $env_var) {
+            $value = getenv($env_var);
+            if ($value !== false && $value !== '') {
+                return $platform;
+            }
+        }
+
+        return null;
     }
 }
