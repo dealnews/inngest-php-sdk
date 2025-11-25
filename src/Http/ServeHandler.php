@@ -151,7 +151,15 @@ class ServeHandler
                 'v' => '0.1',
                 'framework' => 'php',
                 'functions' => $functions,
+                'capabilities' => [
+                    'trust_probe' => 'v1',
+                    'connect' => 'v1',
+                ],
             ];
+
+            if ($deploy_id !== null) {
+                $payload['deployId'] = $deploy_id;
+            }
 
             $response = $this->sendToInngest($sync_url, $payload);
 

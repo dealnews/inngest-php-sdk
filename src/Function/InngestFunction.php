@@ -16,6 +16,7 @@ class InngestFunction
      * @param string|null $name Display name for the function
      * @param int $retries Number of retry attempts (default 3 retries = 4 total attempts)
      * @param array<Concurrency>|null $concurrency Optional concurrency limits (max 2)
+     * @param string|null $description Function description
      */
     public function __construct(
         protected string $id,
@@ -23,7 +24,8 @@ class InngestFunction
         protected array $triggers,
         protected ?string $name = null,
         protected int $retries = 3,
-        protected ?array $concurrency = null
+        protected ?array $concurrency = null,
+        protected ?string $description = null
     ) {
         if (empty($triggers)) {
             throw new \InvalidArgumentException('Function must have at least one trigger');
@@ -50,6 +52,11 @@ class InngestFunction
     public function getName(): ?string
     {
         return $this->name;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
     }
 
     /**
@@ -112,6 +119,10 @@ class InngestFunction
                 ],
             ],
         ];
+
+        if ($this->description !== null) {
+            $data['description'] = $this->description;
+        }
 
         if ($this->concurrency !== null && count($this->concurrency) > 0) {
             $data['concurrency'] = array_map(fn($c) => $c->toArray(), $this->concurrency);
