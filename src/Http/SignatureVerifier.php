@@ -6,22 +6,15 @@ namespace DealNews\Inngest\Http;
 
 use DealNews\Inngest\Config\Config;
 use DealNews\Inngest\Error\InngestException;
-use Root23\JsonCanonicalizer\JsonCanonicalizer;
 
 /**
  * Handles signature verification for incoming requests per SDK spec section 4.1.3
  *
- * Implements request signature verification using HMAC-SHA256 with optional JSON
- * canonicalization per RFC 8785. This ensures requests from Inngest Cloud are
- * authentic and haven't been tampered with.
+ * Implements request signature verification using HMAC-SHA256. This ensures requests
+ * from Inngest Cloud are authentic and haven't been tampered with.
  */
-class SignatureVerifier
-{
-    protected JsonCanonicalizer $canonicalizer;
-
-    public function __construct(protected Config $config)
-    {
-        $this->canonicalizer = new JsonCanonicalizer();
+class SignatureVerifier {
+    public function __construct(protected Config $config) {
     }
 
     /**
@@ -31,14 +24,13 @@ class SignatureVerifier
      * In dev mode, skips verification but warns if the dev server header is missing.
      * Supports fallback signing key for key rotation scenarios.
      *
-     * @param string $body Raw request body (will be canonicalized if valid JSON)
+     * @param string      $body             Raw request body
      * @param string|null $signature_header Value of X-Inngest-Signature header (format: t={timestamp}&s={signature})
-     * @param string|null $server_kind Value of X-Inngest-Server-Kind header (expected: 'dev' in dev mode)
+     * @param string|null $server_kind      Value of X-Inngest-Server-Kind header (expected: 'dev' in dev mode)
      *
      * @throws InngestException If signature validation fails or required config is missing
      */
-    public function verify(string $body, ?string $signature_header, ?string $server_kind = null): void
-    {
+    public function verify(string $body, ?string $signature_header, ?string $server_kind = null): void {
         if ($this->config->isDev()) {
             if ($server_kind !== 'dev') {
                 error_log('Warning: Expected dev server but did not receive X-Inngest-Server-Kind: dev header');
@@ -55,48 +47,13 @@ class SignatureVerifier
             throw new InngestException('Missing X-Inngest-Signature header');
         }
 
-        $canonical_body = $this->canonicalizeBody($body);
-
-        if (!$this->verifySignature($canonical_body, $signature_header, $signing_key)) {
+        if (!$this->verifySignature($body, $signature_header, $signing_key)) {
             $fallback_key = $this->config->getSigningKeyFallback();
-            if ($fallback_key !== null && $this->verifySignature($canonical_body, $signature_header, $fallback_key)) {
+            if ($fallback_key !== null && $this->verifySignature($body, $signature_header, $fallback_key)) {
                 return;
             }
 
             throw new InngestException('Invalid signature');
-        }
-    }
-
-    /**
-     * Canonicalize request body using JSON Canonicalization Scheme (RFC 8785)
-     *
-     * Per SDK spec section 4.1.3: "if the raw bytes of the request body are
-     * inaccessible, the body should first be parsed using the JSON Canonicalization
-     * Scheme (JCS) as specified in RFC 8785"
-     *
-     * This ensures consistent signature verification regardless of JSON whitespace
-     * or key ordering differences.
-     *
-     * @param string $body Raw request body
-     *
-     * @return string Canonicalized body (or original if not valid JSON)
-     */
-    protected function canonicalizeBody(string $body): string
-    {
-        if (empty($body)) {
-            return $body;
-        }
-
-        try {
-            // The body may come in with escaped Unicode characters. But the
-            // signature from Inngest was generated with non-escaped characters.
-            // Decoding and re-encoding fixes this issue.
-            $body = json_encode(json_decode($body, true), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-            $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-            return $this->canonicalizer->canonicalize($decoded);
-        } catch (\Throwable $e) {
-            return $body;
         }
     }
 
@@ -109,26 +66,33 @@ class SignatureVerifier
      * 3. Calculate HMAC-SHA256 of body + timestamp
      * 4. Compare calculated vs provided signature using constant-time comparison
      *
-     * @param string $body Request body (should already be canonicalized)
+     * @param string $body             Request body
      * @param string $signature_header Signature header value (format: t={timestamp}&s={signature})
-     * @param string $signing_key Signing key with or without signkey-{env}- prefix
+     * @param string $signing_key      Signing key with or without signkey-{env}- prefix
      *
      * @return bool True if signature is valid, false otherwise
      */
-    protected function verifySignature(string $body, string $signature_header, string $signing_key): bool
-    {
+    protected function verifySignature(string $body, string $signature_header, string $signing_key): bool {
         parse_str($signature_header, $parts);
 
         if (!isset($parts['t']) || !isset($parts['s'])) {
             return false;
         }
 
-        $timestamp = (int) $parts['t'];
+        $timestamp = (int)$parts['t'];
         $signature = $parts['s'];
 
         $current_time = time();
         if (abs($current_time - $timestamp) > 300) {
             return false;
+        }
+
+        // Fix escaped Unicode characters that don't need to be escaped (only for valid JSON)
+        if (!empty($body)) {
+            $decoded = json_decode($body, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $body = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
         }
 
         $key = $this->extractKey($signing_key);
@@ -147,8 +111,7 @@ class SignatureVerifier
      *
      * @return string Hex-encoded key without prefix
      */
-    protected function extractKey(string $signing_key): string
-    {
+    protected function extractKey(string $signing_key): string {
         if (str_starts_with($signing_key, 'signkey-')) {
             $parts = explode('-', $signing_key, 3);
             if (count($parts) === 3) {
@@ -163,19 +126,17 @@ class SignatureVerifier
      * Sign a request body for outgoing requests to Inngest
      *
      * Generates an X-Inngest-Signature header value by creating an HMAC-SHA256
-     * of the canonicalized body + current timestamp.
+     * of the body + current timestamp.
      *
-     * @param string $body Request body to sign (will be canonicalized if valid JSON)
+     * @param string $body        Request body to sign
      * @param string $signing_key Signing key with or without signkey-{env}- prefix
      *
      * @return string Signature header value (format: t={timestamp}&s={signature})
      */
-    public function signRequest(string $body, string $signing_key): string
-    {
-        $canonical_body = $this->canonicalizeBody($body);
+    public function signRequest(string $body, string $signing_key): string {
         $timestamp = time();
-        $key = $this->extractKey($signing_key);
-        $mac = hash_hmac('sha256', $canonical_body . $timestamp, $key);
+        $key       = $this->extractKey($signing_key);
+        $mac       = hash_hmac('sha256', $body . $timestamp, $key);
 
         return "t={$timestamp}&s={$mac}";
     }
@@ -194,9 +155,8 @@ class SignatureVerifier
      *
      * @return string Hashed signing key in same format
      */
-    public function hashSigningKey(string $signing_key): string
-    {
-        $key = $this->extractKey($signing_key);
+    public function hashSigningKey(string $signing_key): string {
+        $key    = $this->extractKey($signing_key);
         $hashed = hash('sha256', hex2bin($key));
 
         if (str_starts_with($signing_key, 'signkey-')) {

@@ -159,43 +159,6 @@ class SignatureVerifierTest extends TestCase
     }
 
     /**
-     * Test JSON canonicalization makes signatures consistent
-     *
-     * Different JSON formatting should produce same signature after canonicalization
-     */
-    public function testJsonCanonicalizationProducesSameSignature(): void
-    {
-        $config = $this->createMock(Config::class);
-        $config->method('isDev')->willReturn(false);
-        $config->method('getSigningKey')->willReturn(self::SIGNING_KEY);
-
-        $verifier = new SignatureVerifier($config);
-
-        $body1 = '{"foo":"bar","baz":123}';
-        $body2 = '{"baz": 123, "foo": "bar"}';
-        $body3 = "{\"baz\":123,\"foo\":\"bar\"}";
-
-        $signature1 = $verifier->signRequest($body1, self::SIGNING_KEY);
-        $signature2 = $verifier->signRequest($body2, self::SIGNING_KEY);
-        $signature3 = $verifier->signRequest($body3, self::SIGNING_KEY);
-
-        parse_str($signature1, $parts1);
-        parse_str($signature2, $parts2);
-        parse_str($signature3, $parts3);
-
-        $this->assertEquals(
-            $parts1['s'],
-            $parts2['s'],
-            'Different JSON key ordering should produce same signature'
-        );
-        $this->assertEquals(
-            $parts1['s'],
-            $parts3['s'],
-            'Different JSON whitespace should produce same signature'
-        );
-    }
-
-    /**
      * Test signing key hashing for Authorization header
      */
     public function testHashSigningKey(): void

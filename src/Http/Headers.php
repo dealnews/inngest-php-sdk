@@ -22,7 +22,7 @@ class Headers
     public const AUTHORIZATION = 'Authorization';
     public const SYNC_KIND = 'X-Inngest-Sync-Kind';
 
-    public const SDK_VERSION = '0.1.8';
+    public const SDK_VERSION = '0.1.9';
     public const SDK_NAME = 'php';
     public const REQ_VERSION_CURRENT = '1';
 }
