@@ -87,18 +87,24 @@ class SignatureVerifier {
             return false;
         }
 
-        // Fix escaped Unicode characters that don't need to be escaped (only for valid JSON)
-        if (!empty($body)) {
-            $decoded = json_decode($body, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $body = json_encode($decoded);
+        $key    = $this->extractKey($signing_key);
+        $mac    = hash_hmac('sha256', $body . $timestamp, $key);
+        $result = hash_equals($signature, $mac);
+
+        if (!$result) {
+            // Fix escaped Unicode characters that don't need to be escaped (only for valid JSON)
+            if (!empty($body)) {
+                $decoded = json_decode($body, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $body = json_encode($decoded);
+                }
             }
+
+            $mac    = hash_hmac('sha256', $body . $timestamp, $key);
+            $result = hash_equals($signature, $mac);
         }
 
-        $key = $this->extractKey($signing_key);
-        $mac = hash_hmac('sha256', $body . $timestamp, $key);
-
-        return hash_equals($signature, $mac);
+        return $result;
     }
 
     /**
