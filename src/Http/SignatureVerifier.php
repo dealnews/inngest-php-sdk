@@ -88,6 +88,11 @@ class SignatureVerifier
         }
 
         try {
+            // The body may come in with escaped Unicode characters. But the
+            // signature from Inngest was generated with non-escaped characters.
+            // Decoding and re-encoding fixes this issue.
+            $body = json_encode(json_decode($body, true), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
             $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
             return $this->canonicalizer->canonicalize($decoded);
         } catch (\Throwable $e) {
