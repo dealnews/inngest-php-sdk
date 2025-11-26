@@ -94,9 +94,9 @@ class SignatureVerifier {
         if (!$result) {
             // Fix escaped Unicode characters that don't need to be escaped (only for valid JSON)
             if (!empty($body)) {
-                $decoded = json_decode($body, true);
+                $decoded = json_decode($body);
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    $body = json_encode($decoded);
+                    $body = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
             }
 
