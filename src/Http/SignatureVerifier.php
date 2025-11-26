@@ -91,7 +91,7 @@ class SignatureVerifier {
         if (!empty($body)) {
             $decoded = json_decode($body, true);
             if (json_last_error() === JSON_ERROR_NONE) {
-                $body = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $body = json_encode($decoded);
             }
         }
 
