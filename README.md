@@ -5,7 +5,7 @@ Unofficial PHP SDK for [Inngest](https://www.inngest.com) - Build event-driven w
 ## Installation
 
 ```bash
-composer require dealnews/inngest-php
+composer require dealnews/inngest-php-sdk
 ```
 
 ## Requirements
