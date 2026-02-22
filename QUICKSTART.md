@@ -234,6 +234,42 @@ $per_user = new InngestFunction(
 
 **Heads-up:** Use concurrency to prevent overwhelming external APIs or to manage resource usage.
 
+### Prioritize Runs
+
+Dynamically prioritize function runs based on event data:
+
+```php
+use DealNews\Inngest\Function\Priority;
+
+// Prioritize enterprise customers
+$function = new InngestFunction(
+    id: 'ai-summary',
+    handler: function ($ctx) {
+        // Generate summary
+    },
+    triggers: [new TriggerEvent('ai/summary.requested')],
+    priority: new Priority(
+        // Enterprise runs up to 120 seconds ahead
+        run: 'event.data.account_type == "enterprise" ? 120 : 0'
+    )
+);
+
+// Delay free tier
+$delayed = new InngestFunction(
+    id: 'process-report',
+    handler: function ($ctx) {
+        // Generate report
+    },
+    triggers: [new TriggerEvent('report/generate')],
+    priority: new Priority(
+        // Free tier delayed by 60 seconds
+        run: 'event.data.plan == "free" ? -60 : 0'
+    )
+);
+```
+
+**Heads-up:** Priority is most effective when combined with concurrency limits.
+
 ## Framework Integration
 
 ### Laravel

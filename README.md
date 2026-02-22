@@ -292,6 +292,78 @@ $function = new InngestFunction(
 
 See [examples/concurrency.php](examples/concurrency.php) for more examples.
 
+## Priority
+
+Dynamically prioritize function runs based on event data. Higher priority runs execute ahead of lower priority ones within the same function queue.
+
+### Basic Priority
+
+```php
+use DealNews\Inngest\Function\Priority;
+
+$function = new InngestFunction(
+    id: 'process-task',
+    handler: function ($ctx) {
+        // Function logic
+    },
+    triggers: [new TriggerEvent('task/process')],
+    priority: new Priority(
+        run: 'event.data.priority' // Use priority from event
+    )
+);
+```
+
+### Conditional Priority
+
+```php
+// Prioritize enterprise customers
+$function = new InngestFunction(
+    id: 'ai-generate-summary',
+    handler: function ($ctx) {
+        // Generate AI summary
+    },
+    triggers: [new TriggerEvent('ai/summary.requested')],
+    priority: new Priority(
+        // Enterprise accounts run up to 120 seconds ahead
+        run: 'event.data.account_type == "enterprise" ? 120 : 0'
+    )
+);
+```
+
+### Delayed Priority
+
+```php
+// Delay free tier users
+$function = new InngestFunction(
+    id: 'process-report',
+    handler: function ($ctx) {
+        // Generate report
+    },
+    triggers: [new TriggerEvent('report/generate')],
+    priority: new Priority(
+        // Free plan users delayed by 60 seconds
+        run: 'event.data.plan == "free" ? -60 : 0'
+    )
+);
+```
+
+### Priority Options
+
+- **run**: CEL expression that returns an integer priority factor
+  - Range: `-600` to `600` seconds (enforced by Inngest)
+  - Positive values: Run ahead of jobs enqueued up to N seconds ago
+  - Negative values: Delay execution by N seconds
+  - `0`: No priority (default queue position)
+
+**How it works:** When a function run is enqueued, Inngest evaluates the expression using the event data. The result adjusts the run's position in the queue relative to other pending runs.
+
+**Heads-up:** 
+- Most useful when combined with concurrency limits (jobs wait in queue)
+- Invalid expressions evaluate to `0` (no priority)
+- Out-of-range values are automatically clipped by Inngest
+
+See [Inngest Priority Documentation](https://www.inngest.com/docs/reference/functions/run-priority) for more details.
+
 ## Development
 
 The SDK follows PSR standards and uses:
