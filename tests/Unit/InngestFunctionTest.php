@@ -279,7 +279,7 @@ class InngestFunctionTest extends TestCase
     public function testPriorityWithTooLongExpressionThrowsException(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Priority expression is too long');
+        $this->expectExceptionMessage('Priority expression is too long (max 1000 characters)');
 
         new Priority(run: str_repeat('a', 1001));
     }
