@@ -6,6 +6,7 @@ namespace DealNews\Inngest\Tests\Unit;
 
 use DealNews\Inngest\Function\Concurrency;
 use DealNews\Inngest\Function\InngestFunction;
+use DealNews\Inngest\Function\Priority;
 use DealNews\Inngest\Function\TriggerEvent;
 use PHPUnit\Framework\TestCase;
 
@@ -179,5 +180,155 @@ class InngestFunctionTest extends TestCase
 
         $array = $function->toArray();
         $this->assertSame(['limit' => 0], $array['concurrency'][0]);
+    }
+
+    public function testFunctionWithoutPriority(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')]
+        );
+
+        $this->assertNull($function->getPriority());
+
+        $array = $function->toArray();
+        $this->assertArrayNotHasKey('priority', $array);
+    }
+
+    public function testFunctionWithPriority(): void
+    {
+        $priority = new Priority(run: 'event.data.priority');
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            priority: $priority
+        );
+
+        $this->assertNotNull($function->getPriority());
+        $this->assertSame($priority, $function->getPriority());
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame(['run' => 'event.data.priority'], $array['priority']);
+    }
+
+    public function testFunctionWithConditionalPriority(): void
+    {
+        $priority = new Priority(
+            run: 'event.data.account_type == "enterprise" ? 120 : 0'
+        );
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            priority: $priority
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame([
+            'run' => 'event.data.account_type == "enterprise" ? 120 : 0',
+        ], $array['priority']);
+    }
+
+    public function testFunctionWithNegativePriority(): void
+    {
+        $priority = new Priority(run: 'event.data.plan == "free" ? -60 : 0');
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            priority: $priority
+        );
+
+        $array = $function->toArray();
+        $this->assertSame([
+            'run' => 'event.data.plan == "free" ? -60 : 0',
+        ], $array['priority']);
+    }
+
+    public function testPriorityWithEmptyExpressionThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Priority expression cannot be empty');
+
+        new Priority(run: '');
+    }
+
+    public function testPriorityWithWhitespaceOnlyThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Priority expression cannot be empty');
+
+        new Priority(run: '   ');
+    }
+
+    public function testPriorityWithInvalidCharactersThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Priority expression contains invalid characters');
+
+        new Priority(run: 'event.data.test; DROP TABLE users;');
+    }
+
+    public function testPriorityWithTooLongExpressionThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Priority expression is too long (max 1000 characters)');
+
+        new Priority(run: str_repeat('a', 1001));
+    }
+
+    public function testPriorityWithComplexExpression(): void
+    {
+        $expressions = [
+            'event.data.priority',
+            'event.data.user.subscription == "pro" ? 180 : 0',
+            'event.data.critical == true ? 300 : 0',
+            '(event.data.tier == "gold" && event.data.region == "us") ? 240 : 60',
+            'event.data.score * 10',
+            'event.data.delay_seconds * -1',
+        ];
+
+        foreach ($expressions as $expr) {
+            $priority = new Priority(run: $expr);
+            $this->assertSame($expr, $priority->getRun());
+            $this->assertSame(['run' => $expr], $priority->toArray());
+        }
+    }
+
+    public function testFunctionWithBothConcurrencyAndPriority(): void
+    {
+        $concurrency = new Concurrency(
+            limit: 10,
+            key: 'event.data.user_id'
+        );
+        $priority = new Priority(
+            run: 'event.data.plan == "enterprise" ? 120 : 0'
+        );
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            concurrency: [$concurrency],
+            priority: $priority
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame([
+            'limit' => 10,
+            'key' => 'event.data.user_id',
+        ], $array['concurrency'][0]);
+        $this->assertSame([
+            'run' => 'event.data.plan == "enterprise" ? 120 : 0',
+        ], $array['priority']);
     }
 }

@@ -16,6 +16,7 @@ class InngestFunction
      * @param string|null $name Display name for the function
      * @param int $retries Number of retry attempts (default 3 retries = 4 total attempts)
      * @param array<Concurrency>|null $concurrency Optional concurrency limits (max 2)
+     * @param Priority|null $priority Optional priority configuration for dynamic execution ordering
      * @param string|null $description Function description
      */
     public function __construct(
@@ -25,6 +26,7 @@ class InngestFunction
         protected ?string $name = null,
         protected int $retries = 3,
         protected ?array $concurrency = null,
+        protected ?Priority $priority = null,
         protected ?string $description = null
     ) {
         if (empty($triggers)) {
@@ -88,6 +90,16 @@ class InngestFunction
     }
 
     /**
+     * Get priority configuration
+     *
+     * @return Priority|null
+     */
+    public function getPriority(): ?Priority
+    {
+        return $this->priority;
+    }
+
+    /**
      * Execute the function handler
      *
      * @return mixed
@@ -126,6 +138,10 @@ class InngestFunction
 
         if ($this->concurrency !== null && count($this->concurrency) > 0) {
             $data['concurrency'] = array_map(fn($c) => $c->toArray(), $this->concurrency);
+        }
+
+        if ($this->priority !== null) {
+            $data['priority'] = $this->priority->toArray();
         }
 
         return $data;
