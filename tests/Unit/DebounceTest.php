@@ -149,7 +149,7 @@ class DebounceTest extends TestCase
     public function testInvalidTimeoutFormatThrowsException(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Debounce timeout must be in format');
+        $this->expectExceptionMessageMatches('/^Debounce timeout must be in format/');
 
         new Debounce(period: '30s', timeout: 'invalid');
     }
