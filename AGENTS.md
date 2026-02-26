@@ -1,6 +1,6 @@
 # Inngest PHP SDK - Project Overview
 
-**Last Updated:** November 10, 2025  
+**Last Updated:** February 26, 2026  
 
 ## What is This Project?
 
@@ -152,9 +152,16 @@ This SDK implements the official Inngest SDK Specification:
 - Request signature verification
 - Step memoization and replay
 
+✅ **Advanced Features:**
+- Concurrency control (limit concurrent runs)
+- Priority (dynamic execution ordering)
+- Debounce (delay execution until events settle)
+- Singleton (ensure only one run executes at a time)
+
 ⏳ **Not Yet Implemented:**
 - Section 6: Middleware (partial implementation exists)
-- Advanced function configuration (batch, rate limit, debounce, concurrency)
+- Batch event configuration
+- Rate limiting
 - PSR-7/PSR-18 HTTP abstractions (currently uses curl directly)
 
 ## Usage Example
@@ -284,7 +291,7 @@ A: Yes! It implements the full spec. However, you may want to add more advanced 
 
 - Complete middleware system
 - Batch event configuration
-- Rate limiting, debouncing, concurrency controls
+- Rate limiting
 - PSR-7/PSR-18 HTTP abstractions for better framework integration
 - Async/parallel step execution
 - More comprehensive integration tests
@@ -323,3 +330,653 @@ $response = $handler->handle($method, $path, $headers, $body, $query);
 ---
 
 This SDK is complete, tested, and ready to use for building reliable event-driven workflows in PHP applications!
+
+## Complete API Reference
+
+### Client Namespace (`DealNews\Inngest\Client`)
+
+#### `Inngest`
+Main SDK client for registering functions and sending events.
+
+**Constructor:**
+```php
+__construct(string $app_id, ?Config $config = null)
+```
+
+**Methods:**
+- `getAppId(): string` - Get application ID
+- `getConfig(): Config` - Get configuration instance
+- `registerFunction(InngestFunction $function): void` - Register a function
+- `getFunction(string $id): ?InngestFunction` - Get registered function by ID
+- `getFunctions(): array<string, InngestFunction>` - Get all functions
+- `send(Event|array $events): array<string, mixed>` - Send one or more events
+- `getSdkIdentifier(): string` - Get SDK identifier string
+
+### Config Namespace (`DealNews\Inngest\Config`)
+
+#### `Config`
+Configuration management (auto-loads from environment variables).
+
+**Constructor:**
+```php
+__construct(
+    ?string $event_key = null,
+    ?string $signing_key = null,
+    ?string $signing_key_fallback = null,
+    ?string $env = null,
+    ?string $api_base_url = null,
+    ?string $event_api_base_url = null,
+    bool $is_dev = false,
+    ?string $serve_origin = null,
+    ?string $serve_path = null,
+    ?string $log_level = null,
+    ?string $app_version = null
+)
+```
+
+**Constants:**
+- `DEFAULT_API_ORIGIN = 'https://api.inngest.com'`
+- `DEFAULT_EVENT_ORIGIN = 'https://inn.gs'`
+- `DEFAULT_DEV_SERVER_ORIGIN = 'http://localhost:8288'`
+
+**Methods:**
+- `getEventKey(): ?string`
+- `getSigningKey(): ?string`
+- `getSigningKeyFallback(): ?string`
+- `getEnv(): ?string`
+- `getApiBaseUrl(): string`
+- `getEventApiBaseUrl(): string`
+- `isDev(): bool`
+- `getServeOrigin(): ?string`
+- `getServePath(): ?string`
+- `getLogLevel(): ?string`
+- `getAppVersion(): ?string`
+
+### Error Namespace (`DealNews\Inngest\Error`)
+
+#### `InngestException`
+Base exception for all SDK errors. Extends `Exception`.
+
+#### `NonRetriableError`
+Indicates function/step should not be retried. Extends `InngestException`.
+
+**Usage:**
+```php
+throw new NonRetriableError('Invalid user ID');
+```
+
+#### `RetryAfterError`
+Specify when to retry. Extends `InngestException`.
+
+**Constructor:**
+```php
+__construct(
+    string $message,
+    int|DateTime|string $retry_after,
+    int $code = 0,
+    ?Throwable $previous = null
+)
+```
+
+**Methods:**
+- `getRetryAfter(): int|DateTime|string` - Get retry time
+- `getRetryAfterHeader(): string` - Format for HTTP header
+
+**Usage:**
+```php
+// Retry in 30 seconds
+throw new RetryAfterError('Rate limited', 30);
+
+// Retry at specific time
+throw new RetryAfterError('Try again later', new DateTime('+1 hour'));
+```
+
+#### `StepError`
+Handle step-specific failures. Extends `InngestException`.
+
+**Constructor:**
+```php
+__construct(
+    string $message,
+    string $step_name,
+    ?string $step_stack = null,
+    int $code = 0,
+    ?Throwable $previous = null
+)
+```
+
+**Methods:**
+- `getStepName(): string` - Get step name
+- `getStepStack(): ?string` - Get step stack trace
+- `toArray(): array<string, mixed>` - Convert to array for serialization
+
+### Event Namespace (`DealNews\Inngest\Event`)
+
+#### `Event`
+Represents an event sent to Inngest.
+
+**Constructor:**
+```php
+__construct(
+    string $name,
+    array<string, mixed> $data = [],
+    ?string $id = null,
+    ?array<string, mixed> $user = null,
+    ?int $ts = null
+)
+```
+
+**Methods:**
+- `toArray(): array<string, mixed>` - Serialize for API
+- `getName(): string` - Get event name
+- `getData(): array<string, mixed>` - Get event data
+- `getId(): string` - Get event ID (auto-generated if not provided)
+- `getUser(): ?array<string, mixed>` - Get user metadata
+- `getTs(): int` - Get Unix timestamp (auto-generated if not provided)
+
+**Usage:**
+```php
+$event = new Event(
+    name: 'user/signup',
+    data: ['email' => 'user@example.com', 'plan' => 'pro'],
+    user: ['id' => '123', 'email' => 'user@example.com']
+);
+```
+
+### Function Namespace (`DealNews\Inngest\Function`)
+
+#### `TriggerInterface`
+Interface for all trigger types.
+
+**Methods:**
+- `toArray(): array<string, mixed>` - Serialize trigger configuration
+
+#### `TriggerEvent`
+Event-based trigger (run when specific events occur).
+
+**Constructor:**
+```php
+__construct(string $event, ?string $expression = null)
+```
+
+**Methods:**
+- `toArray(): array<string, mixed>`
+- `getEvent(): string` - Get event name/pattern
+- `getExpression(): ?string` - Get optional CEL filter expression
+
+**Usage:**
+```php
+// Simple event trigger
+new TriggerEvent('user/signup')
+
+// With filter expression
+new TriggerEvent('user/updated', 'event.data.plan == "enterprise"')
+```
+
+#### `TriggerCron`
+Cron-based trigger (scheduled execution).
+
+**Constructor:**
+```php
+__construct(string $cron)
+```
+
+**Methods:**
+- `toArray(): array<string, mixed>`
+- `getCron(): string` - Get cron expression
+
+**Usage:**
+```php
+// Every day at midnight
+new TriggerCron('0 0 * * *')
+
+// Every 5 minutes
+new TriggerCron('*/5 * * * *')
+```
+
+#### `Concurrency`
+Limit concurrent function runs.
+
+**Constructor:**
+```php
+__construct(int $limit, ?string $key = null, ?string $scope = null)
+```
+
+**Methods:**
+- `getLimit(): int` - Get concurrency limit (0 = unlimited)
+- `getKey(): ?string` - Get CEL expression for grouping
+- `getScope(): ?string` - Get scope ('fn', 'env', 'account')
+- `toArray(): array<string, mixed>`
+
+**Validation:**
+- Limit must be >= 0
+- Scope must be 'fn', 'env', or 'account'
+
+**Usage:**
+```php
+// Limit to 10 concurrent runs
+new Concurrency(limit: 10)
+
+// Limit per user
+new Concurrency(limit: 5, key: 'event.data.user_id')
+
+// Limit across all environments
+new Concurrency(limit: 100, scope: 'account')
+```
+
+#### `Debounce`
+Delay execution until events stop arriving.
+
+**Constructor:**
+```php
+__construct(string $period, ?string $key = null, ?string $timeout = null)
+```
+
+**Methods:**
+- `getPeriod(): string` - Get debounce period
+- `getKey(): ?string` - Get CEL expression for per-key debouncing
+- `getTimeout(): ?string` - Get maximum wait time
+- `toArray(): array<string, mixed>`
+
+**Validation:**
+- Period: 1s to 7d, format `<number><unit>` (s, m, h, d)
+- Timeout: same validation as period
+
+**Usage:**
+```php
+// Wait 30 seconds after last event
+new Debounce(period: '30s')
+
+// Debounce per user
+new Debounce(period: '5m', key: 'event.data.user_id')
+
+// With timeout (force run after 10 minutes)
+new Debounce(period: '1m', timeout: '10m')
+```
+
+#### `Priority`
+Dynamic execution ordering based on event data.
+
+**Constructor:**
+```php
+__construct(string $run)
+```
+
+**Methods:**
+- `getRun(): string` - Get CEL expression (returns -600 to 600)
+- `toArray(): array<string, mixed>`
+
+**Validation:**
+- CEL expression, max 1000 characters
+- Must evaluate to integer between -600 and 600
+
+**Usage:**
+```php
+// Use priority from event
+new Priority(run: 'event.data.priority')
+
+// Prioritize enterprise users
+new Priority(run: 'event.data.plan == "enterprise" ? 120 : 0')
+
+// Delay free tier
+new Priority(run: 'event.data.plan == "free" ? -60 : 0')
+```
+
+#### `Singleton`
+Ensure only a single run of a function executes at a time.
+
+**Constructor:**
+```php
+__construct(string $mode, ?string $key = null)
+```
+
+**Methods:**
+- `getMode(): string` - Get singleton mode ("skip" or "cancel")
+- `getKey(): ?string` - Get CEL expression for grouping
+- `toArray(): array<string, mixed>`
+
+**Validation:**
+- Mode must be "skip" or "cancel" (case-sensitive)
+- Key is optional CEL expression
+
+**Usage:**
+```php
+// Basic: Skip new runs if one is executing
+new Singleton(mode: 'skip')
+
+// Per-user singleton
+new Singleton(mode: 'skip', key: 'event.data.user_id')
+
+// Cancel mode: Process latest event
+new Singleton(mode: 'cancel', key: 'event.data.user_id')
+
+// Complex key
+new Singleton(
+    mode: 'skip',
+    key: 'event.data.customer_id + "-" + event.data.region'
+)
+```
+
+**Modes:**
+- **`skip`**: Skip new runs if another is executing (preserve current)
+- **`cancel`**: Cancel existing run and start new one (use latest)
+
+**Compatibility:**
+- ❌ Cannot combine with batching
+- ⚠️ Incompatible with concurrency (singleton implies concurrency=1)
+- ✅ Works with debounce, priority, rate limiting, throttling
+
+#### `InngestFunction`
+Represents a serverless function.
+
+**Constructor:**
+```php
+__construct(
+    string $id,
+    callable $handler,
+    array<TriggerInterface> $triggers,
+    ?string $name = null,
+    int $retries = 3,
+    ?array<Concurrency> $concurrency = null,
+    ?Priority $priority = null,
+    ?Debounce $debounce = null,
+    ?Singleton $singleton = null,
+    ?string $description = null
+)
+```
+
+**Methods:**
+- `getId(): string`
+- `getName(): ?string`
+- `getDescription(): ?string`
+- `getTriggers(): array<TriggerInterface>`
+- `getHandler(): callable`
+- `getRetries(): int`
+- `getConcurrency(): ?array<Concurrency>`
+- `getPriority(): ?Priority`
+- `getDebounce(): ?Debounce`
+- `getSingleton(): ?Singleton`
+- `execute(FunctionContext $context): mixed` - Execute handler
+- `toArray(): array<string, mixed>` - Serialize for registration
+
+**Validation:**
+- Must have at least one trigger
+- Maximum 2 concurrency options
+
+**Usage:**
+```php
+new InngestFunction(
+    id: 'process-order',
+    handler: function ($ctx) {
+        $step = $ctx->getStep();
+        $order = $step->run('fetch', fn() => fetchOrder());
+        $step->run('process', fn() => processOrder($order));
+        return ['status' => 'complete'];
+    },
+    triggers: [new TriggerEvent('order/created')],
+    retries: 5,
+    debounce: new Debounce(period: '30s')
+)
+```
+
+#### `FunctionContext`
+Context passed to function handler.
+
+**Constructor:**
+```php
+__construct(
+    Event $event,
+    array<Event> $events,
+    string $run_id,
+    int $attempt,
+    Step $step
+)
+```
+
+**Methods:**
+- `getEvent(): Event` - Get triggering event
+- `getEvents(): array<Event>` - Get all triggering events (for batch)
+- `getRunId(): string` - Get unique run identifier
+- `getAttempt(): int` - Get attempt number (0-indexed)
+- `getStep(): Step` - Get step execution interface
+
+### HTTP Namespace (`DealNews\Inngest\Http`)
+
+#### `Headers`
+HTTP header constants.
+
+**Constants:**
+- `SDK = 'X-Inngest-Sdk'`
+- `SIGNATURE = 'X-Inngest-Signature'`
+- `ENV = 'X-Inngest-Env'`
+- `PLATFORM = 'X-Inngest-Platform'`
+- `FRAMEWORK = 'X-Inngest-Framework'`
+- `NO_RETRY = 'X-Inngest-No-Retry'`
+- `REQ_VERSION = 'X-Inngest-Req-Version'`
+- `RETRY_AFTER = 'Retry-After'`
+- `SERVER_KIND = 'X-Inngest-Server-Kind'`
+- `EXPECTED_SERVER_KIND = 'X-Inngest-Expected-Server-Kind'`
+- `AUTHORIZATION = 'Authorization'`
+- `SYNC_KIND = 'X-Inngest-Sync-Kind'`
+- `SDK_VERSION = '0.1.13'`
+- `SDK_NAME = 'php'`
+- `REQ_VERSION_CURRENT = '1'`
+
+#### `SignatureVerifier`
+Request signature verification (HMAC-SHA256).
+
+**Constructor:**
+```php
+__construct(Config $config)
+```
+
+**Methods:**
+- `verify(string $body, ?string $signature_header, ?string $server_kind = null): void` - Verify request signature (throws on failure)
+- `signRequest(string $body, string $signing_key): string` - Sign request body
+- `hashSigningKey(string $signing_key): string` - Hash signing key
+
+#### `ServeHandler`
+HTTP request handler for function serving.
+
+**Constructor:**
+```php
+__construct(Inngest $client, string $serve_path = '/api/inngest')
+```
+
+**Methods:**
+- `handle(string $method, string $path, array<string, string> $headers, string $body = '', array<string, string> $query = []): array{status: int, headers: array<string, string>, body: string}` - Handle HTTP request
+
+**Request Types:**
+- `GET` - Introspection (health check)
+- `PUT` - Sync (function registration)
+- `POST` - Call (function execution)
+
+**Usage:**
+```php
+$handler = new ServeHandler($client, '/api/inngest');
+
+$response = $handler->handle(
+    method: $_SERVER['REQUEST_METHOD'],
+    path: $_SERVER['REQUEST_URI'],
+    headers: getallheaders() ?: [],
+    body: file_get_contents('php://input') ?: '',
+    query: $_GET
+);
+
+http_response_code($response['status']);
+foreach ($response['headers'] as $name => $value) {
+    header("{$name}: {$value}");
+}
+echo $response['body'];
+```
+
+### Step Namespace (`DealNews\Inngest\Step`)
+
+#### `StepContext`
+Internal context for step execution (typically not used directly).
+
+**Constructor:**
+```php
+__construct(
+    string $run_id,
+    int $attempt,
+    bool $disable_immediate_execution,
+    bool $use_api,
+    array<string, mixed> $stack,
+    array<string, mixed> $steps = []
+)
+```
+
+**Methods:**
+- `getRunId(): string`
+- `getAttempt(): int`
+- `shouldDisableImmediateExecution(): bool`
+- `shouldUseApi(): bool`
+- `getStack(): array<string, mixed>`
+- `getSteps(): array<string, mixed>`
+- `setSteps(array<string, mixed> $steps): void`
+- `hasStep(string $id): bool`
+- `getStep(string $id): mixed`
+
+#### `Step`
+Step execution interface with memoization.
+
+**Constructor:**
+```php
+__construct(StepContext $context)
+```
+
+**Methods:**
+
+`run(string $id, callable $fn): mixed`
+- Execute retriable code block
+- Result is memoized on success
+- On retry, returns cached result if step succeeded previously
+
+`sleep(string $id, string|int $duration): null`
+- Pause execution for duration
+- Duration: integer seconds or string like "1h", "30m", "5s"
+- Returns null, execution continues after sleep
+
+`waitForEvent(string $id, string $event, string $timeout, ?string $if = null): ?array<string, mixed>`
+- Wait for specific event to arrive
+- Timeout: string like "1h" (max 7 days)
+- Optional `if` expression to filter events
+- Returns event data or null if timeout
+
+`invoke(string $id, string $function_id, array<string, mixed> $payload): mixed`
+- Invoke another Inngest function
+- Returns function result
+- Waits for invoked function to complete
+
+`getPlannedSteps(): array<int, array<string, mixed>>`
+- Get all planned steps (internal use)
+
+`getTotalSteps(): int`
+- Get total step count (internal use)
+
+**Usage:**
+```php
+$function = new InngestFunction(
+    id: 'example',
+    handler: function ($ctx) {
+        $step = $ctx->getStep();
+        
+        // Retriable step
+        $user = $step->run('fetch-user', function () {
+            return fetchUserFromDatabase();
+        });
+        
+        // Sleep for 1 hour
+        $step->sleep('wait-1h', '1h');
+        
+        // Wait for payment event
+        $payment = $step->waitForEvent(
+            'wait-payment',
+            'payment/completed',
+            '24h',
+            'event.data.user_id == "' . $user['id'] . '"'
+        );
+        
+        // Invoke another function
+        $result = $step->invoke(
+            'send-email',
+            'send-welcome-email',
+            ['user_id' => $user['id']]
+        );
+        
+        return ['status' => 'complete'];
+    },
+    triggers: [new TriggerEvent('user/signup')]
+);
+```
+
+## Exception Codes
+
+This SDK does not currently use specific exception codes. All exceptions extend from `InngestException` (which extends `Exception`) and use standard exception mechanisms:
+
+- **`InngestException`**: Base exception (code 0)
+- **`NonRetriableError`**: Stop retry immediately (code 0)
+- **`RetryAfterError`**: Retry with delay (code 0, uses retry_after property)
+- **`StepError`**: Step-specific failure (code 0, uses step_name property)
+
+When catching exceptions:
+```php
+try {
+    $client->send($event);
+} catch (NonRetriableError $e) {
+    // Don't retry this operation
+    log_error($e->getMessage());
+} catch (RetryAfterError $e) {
+    // Schedule retry after delay
+    schedule_retry($e->getRetryAfter());
+} catch (InngestException $e) {
+    // Generic Inngest error
+    handle_error($e);
+}
+```
+
+## Testing Notes
+
+When testing functions, remember:
+- Steps are memoized by hashed ID
+- On retry, completed steps return cached results
+- Step IDs must be unique within a function execution
+- Use unique step IDs even in loops (e.g., append loop index)
+
+**Example test:**
+```php
+public function testFunctionWithSteps(): void
+{
+    $handler = function ($ctx) {
+        $step = $ctx->getStep();
+        $result = $step->run('test-step', fn() => 'test-value');
+        return ['result' => $result];
+    };
+    
+    $function = new InngestFunction(
+        id: 'test-fn',
+        handler: $handler,
+        triggers: [new TriggerEvent('test/event')]
+    );
+    
+    $event = new Event(name: 'test/event', data: ['foo' => 'bar']);
+    $context = new FunctionContext(
+        event: $event,
+        events: [$event],
+        run_id: 'test-run',
+        attempt: 0,
+        step: new Step(new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        ))
+    );
+    
+    $result = $function->execute($context);
+    $this->assertSame('test-value', $result['result']);
+}
+```
