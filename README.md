@@ -14,6 +14,22 @@ composer require dealnews/inngest-php-sdk
 - ext-json
 - ext-hash
 
+## Features
+
+- ✅ **Event-driven workflows** - Trigger functions from events
+- ✅ **Durable execution** - Automatic retries and step memoization
+- ✅ **Step functions** - Break work into retriable blocks
+- ✅ **Sleep & delays** - Pause execution for minutes, hours, or days
+- ✅ **Wait for events** - Coordinate across async workflows
+- ✅ **Function invocation** - Call other Inngest functions
+- ✅ **Cron triggers** - Schedule recurring tasks
+- ✅ **Concurrency control** - Limit parallel execution
+- ✅ **Priority queues** - Dynamic execution ordering
+- ✅ **Debounce** - Delay execution until events settle
+- ✅ **Singleton** - Ensure only one run executes at a time
+- ✅ **Dev mode** - Local development with Inngest dev server
+- ✅ **Type safety** - Full PHP 8.1+ type declarations
+
 ## Quick Start
 
 ### 1. Create an Inngest Client
@@ -363,6 +379,261 @@ $function = new InngestFunction(
 - Out-of-range values are automatically clipped by Inngest
 
 See [Inngest Priority Documentation](https://www.inngest.com/docs/reference/functions/run-priority) for more details.
+
+## Debounce
+
+Delay function execution until events stop arriving for a specified period. Prevents wasted work when functions might be triggered rapidly in succession (user input, webhook floods, frequent updates).
+
+The function runs once using the **last event** received as input data.
+
+### Basic Debounce
+
+```php
+use DealNews\Inngest\Function\Debounce;
+
+$function = new InngestFunction(
+    id: 'process-user-input',
+    handler: function ($ctx) {
+        $text = $ctx->getEvent()->getData()['text'];
+        // Process final input after user stops typing
+        return saveUserInput($text);
+    },
+    triggers: [new TriggerEvent('user/input')],
+    debounce: new Debounce(
+        period: '30s' // Wait 30 seconds after last event
+    )
+);
+```
+
+### Per-Key Debounce
+
+```php
+// Separate debounce window for each user
+$function = new InngestFunction(
+    id: 'sync-user-data',
+    handler: function ($ctx) {
+        $user_id = $ctx->getEvent()->getData()['user_id'];
+        // Sync data once updates stop for this user
+        return syncUserData($user_id);
+    },
+    triggers: [new TriggerEvent('user/updated')],
+    debounce: new Debounce(
+        period: '5m',
+        key: 'event.data.user_id' // Each user has own debounce
+    )
+);
+```
+
+### With Timeout
+
+```php
+// Process webhooks, but force execution after maximum wait
+$function = new InngestFunction(
+    id: 'process-webhook',
+    handler: function ($ctx) {
+        $data = $ctx->getEvent()->getData();
+        // Process either when events stop OR timeout reached
+        return processWebhook($data);
+    },
+    triggers: [new TriggerEvent('webhook/received')],
+    debounce: new Debounce(
+        period: '1m',    // Wait 1 minute after last event
+        timeout: '10m'   // Force run after 10 minutes max
+    )
+);
+```
+
+### Complex Key Expression
+
+```php
+// Debounce per customer and region combination
+$function = new InngestFunction(
+    id: 'aggregate-metrics',
+    handler: function ($ctx) {
+        $data = $ctx->getEvent()->getData();
+        return aggregateMetrics($data['customer_id'], $data['region']);
+    },
+    triggers: [new TriggerEvent('metrics/collected')],
+    debounce: new Debounce(
+        period: '2m',
+        key: 'event.data.customer_id + "-" + event.data.region'
+    )
+);
+```
+
+### Debounce Options
+
+- **period** (required): Time to wait after last event
+  - Format: `<number><unit>` where unit is `s`, `m`, `h`, or `d`
+  - Range: `1s` to `7d` (168 hours)
+  - Examples: `30s`, `5m`, `2h`, `7d`
+- **key** (optional): CEL expression to group debounce windows
+  - Each unique key value gets its own debounce period
+  - Examples: `event.data.user_id`, `event.data.region`
+- **timeout** (optional): Maximum wait time before forcing execution
+  - Same format and range as period
+  - Ensures function eventually runs even if events keep arriving
+
+**How it works:**
+1. First event starts the debounce period
+2. Each new matching event resets the period timer
+3. Function runs when period expires with no new events
+4. If timeout is set, function runs after timeout regardless of new events
+
+**Use cases:**
+- **User input**: Wait for user to stop typing before processing
+- **Webhook processing**: Batch rapid webhook updates into single run
+- **Data synchronization**: Use latest data after updates settle
+- **Rate limiting**: Prevent overwhelming downstream services
+
+**Heads-up:**
+- Cannot combine debounce with batching
+- Function receives only the last event, not all events
+- Use rate limiting if you need the first event instead of last
+
+See [examples/debounce.php](examples/debounce.php) for more examples and [Inngest Debounce Documentation](https://www.inngest.com/docs/guides/debounce) for details.
+
+## Singleton
+
+Ensure only a single run of a function (or per unique key) is executing at a time. Prevents duplicate work, race conditions, and ensures sequential processing of events.
+
+### Basic Singleton - Skip Mode
+
+```php
+use DealNews\Inngest\Function\Singleton;
+
+$function = new InngestFunction(
+    id: 'data-sync',
+    handler: function ($ctx) {
+        // Sync data with third-party API
+        // Only one sync can run at a time
+        return syncDataWithAPI();
+    },
+    triggers: [new TriggerEvent('sync/start')],
+    singleton: new Singleton(
+        mode: 'skip' // Skip new runs if one is executing
+    )
+);
+```
+
+### Per-User Singleton
+
+```php
+// Each user has their own singleton rule
+$function = new InngestFunction(
+    id: 'process-user-data',
+    handler: function ($ctx) {
+        $user_id = $ctx->getEvent()->getData()['user_id'];
+        // Process user data (only one run per user at a time)
+        return processUserData($user_id);
+    },
+    triggers: [new TriggerEvent('user/data.updated')],
+    singleton: new Singleton(
+        mode: 'skip',
+        key: 'event.data.user_id' // Separate singleton per user
+    )
+);
+```
+
+### Cancel Mode
+
+```php
+// Always process the latest event
+$function = new InngestFunction(
+    id: 'sync-latest-profile',
+    handler: function ($ctx) {
+        $user_id = $ctx->getEvent()->getData()['user_id'];
+        // Cancel old sync and start new one with latest data
+        return syncUserProfile($user_id);
+    },
+    triggers: [new TriggerEvent('profile/updated')],
+    singleton: new Singleton(
+        mode: 'cancel', // Cancel existing run, start new one
+        key: 'event.data.user_id'
+    )
+);
+```
+
+### Complex Key Expression
+
+```php
+// Singleton per customer and region combination
+$function = new InngestFunction(
+    id: 'generate-report',
+    handler: function ($ctx) {
+        $data = $ctx->getEvent()->getData();
+        return generateReport($data['customer_id'], $data['region']);
+    },
+    triggers: [new TriggerEvent('report/generate')],
+    singleton: new Singleton(
+        mode: 'skip',
+        key: 'event.data.customer_id + "-" + event.data.region'
+    )
+);
+```
+
+### Singleton Options
+
+- **mode** (required): Behavior when new run arrives
+  - `"skip"`: Skip new runs if another is already executing
+  - `"cancel"`: Cancel existing run and start the new one
+- **key** (optional): CEL expression to group singleton behavior
+  - Each unique key value gets its own singleton rule
+  - Examples: `event.data.user_id`, `event.data.tenant_id`
+
+### How It Works
+
+**Skip Mode:**
+1. First event starts the function run
+2. While running, new matching events are skipped/discarded
+3. Function completes with first event's data
+4. Next event can then start a new run
+
+**Cancel Mode:**
+1. First event starts the function run
+2. New matching event cancels the in-progress run
+3. New run starts immediately with latest event
+4. Rapid events may cause some to be skipped (debounce-like)
+
+### When to Use Each Mode
+
+**Use Skip Mode when:**
+- Preventing duplicate work (only need to process once)
+- Protecting expensive operations (AI, heavy compute)
+- Sequential processing required (database migrations)
+- Resource limits (third-party API rate limits)
+
+**Use Cancel Mode when:**
+- Latest data matters most (user profile updates)
+- Older data becomes stale (real-time dashboards)
+- Want to process most recent event (search queries)
+
+### Use Cases
+
+- **Data synchronization**: Third-party API syncs (skip mode)
+- **AI processing**: Expensive computations (skip mode)
+- **Profile updates**: Always use latest data (cancel mode)
+- **Report generation**: One report at a time per customer (skip + key)
+- **Database migrations**: Sequential execution required (skip mode)
+
+### Compatibility
+
+**Works with:**
+- ✅ Debounce
+- ✅ Priority
+- ✅ Rate limiting
+- ✅ Throttling
+
+**Does not work with:**
+- ❌ Batching (singleton incompatible)
+- ⚠️ Concurrency (singleton implies concurrency=1)
+
+**Heads-up:**
+- Failed functions still skip new runs during retry
+- Cancel mode with rapid events may skip some (not all are cancelled)
+- Singleton ensures "at most one" run, not "exactly one"
+
+See [examples/singleton.php](examples/singleton.php) for more examples and [Inngest Singleton Documentation](https://www.inngest.com/docs/guides/singleton) for details.
 
 ## Development
 

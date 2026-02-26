@@ -17,6 +17,8 @@ class InngestFunction
      * @param int $retries Number of retry attempts (default 3 retries = 4 total attempts)
      * @param array<Concurrency>|null $concurrency Optional concurrency limits (max 2)
      * @param Priority|null $priority Optional priority configuration for dynamic execution ordering
+     * @param Debounce|null $debounce Optional debounce configuration to delay execution until events stop
+     * @param Singleton|null $singleton Optional singleton to ensure only one run executes at a time
      * @param string|null $description Function description
      */
     public function __construct(
@@ -27,6 +29,8 @@ class InngestFunction
         protected int $retries = 3,
         protected ?array $concurrency = null,
         protected ?Priority $priority = null,
+        protected ?Debounce $debounce = null,
+        protected ?Singleton $singleton = null,
         protected ?string $description = null
     ) {
         if (empty($triggers)) {
@@ -100,6 +104,26 @@ class InngestFunction
     }
 
     /**
+     * Get debounce configuration
+     *
+     * @return Debounce|null
+     */
+    public function getDebounce(): ?Debounce
+    {
+        return $this->debounce;
+    }
+
+    /**
+     * Get singleton configuration
+     *
+     * @return Singleton|null
+     */
+    public function getSingleton(): ?Singleton
+    {
+        return $this->singleton;
+    }
+
+    /**
      * Execute the function handler
      *
      * @return mixed
@@ -142,6 +166,14 @@ class InngestFunction
 
         if ($this->priority !== null) {
             $data['priority'] = $this->priority->toArray();
+        }
+
+        if ($this->debounce !== null) {
+            $data['debounce'] = $this->debounce->toArray();
+        }
+
+        if ($this->singleton !== null) {
+            $data['singleton'] = $this->singleton->toArray();
         }
 
         return $data;
