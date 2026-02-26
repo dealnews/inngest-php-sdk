@@ -210,7 +210,7 @@ class SingletonTest extends TestCase
         $this->assertArrayNotHasKey('key', $array);
     }
 
-    public function testVariousModeAndKeyCombinat(): void
+    public function testVariousModeAndKeyCombinations(): void
     {
         $combinations = [
             ['mode' => 'skip', 'key' => null],
