@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace DealNews\Inngest\Tests\Unit;
 
 use DealNews\Inngest\Function\Concurrency;
+use DealNews\Inngest\Function\Debounce;
 use DealNews\Inngest\Function\InngestFunction;
 use DealNews\Inngest\Function\Priority;
+use DealNews\Inngest\Function\Singleton;
 use DealNews\Inngest\Function\TriggerEvent;
 use PHPUnit\Framework\TestCase;
 
@@ -327,6 +329,448 @@ class InngestFunctionTest extends TestCase
             'limit' => 10,
             'key' => 'event.data.user_id',
         ], $array['concurrency'][0]);
+        $this->assertSame([
+            'run' => 'event.data.plan == "enterprise" ? 120 : 0',
+        ], $array['priority']);
+    }
+
+    public function testFunctionWithoutDebounce(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')]
+        );
+
+        $this->assertNull($function->getDebounce());
+
+        $array = $function->toArray();
+        $this->assertArrayNotHasKey('debounce', $array);
+    }
+
+    public function testFunctionWithBasicDebounce(): void
+    {
+        $debounce = new Debounce(period: '30s');
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            debounce: $debounce
+        );
+
+        $this->assertNotNull($function->getDebounce());
+        $this->assertSame($debounce, $function->getDebounce());
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame(['period' => '30s'], $array['debounce']);
+    }
+
+    public function testFunctionWithDebounceWithKey(): void
+    {
+        $debounce = new Debounce(
+            period: '5m',
+            key: 'event.data.user_id'
+        );
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            debounce: $debounce
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'period' => '5m',
+            'key'    => 'event.data.user_id',
+        ], $array['debounce']);
+    }
+
+    public function testFunctionWithDebounceWithTimeout(): void
+    {
+        $debounce = new Debounce(
+            period: '1m',
+            timeout: '10m'
+        );
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            debounce: $debounce
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'period'  => '1m',
+            'timeout' => '10m',
+        ], $array['debounce']);
+    }
+
+    public function testFunctionWithFullDebounceConfiguration(): void
+    {
+        $debounce = new Debounce(
+            period: '30s',
+            key: 'event.data.customer_id + "-" + event.data.region',
+            timeout: '5m'
+        );
+
+        $function = new InngestFunction(
+            id: 'process-webhook',
+            handler: fn($ctx) => ['status' => 'complete'],
+            triggers: [new TriggerEvent('webhook/received')],
+            name: 'Process Webhook',
+            debounce: $debounce
+        );
+
+        $array = $function->toArray();
+        $this->assertSame('process-webhook', $array['id']);
+        $this->assertSame('Process Webhook', $array['name']);
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'period'  => '30s',
+            'key'     => 'event.data.customer_id + "-" + event.data.region',
+            'timeout' => '5m',
+        ], $array['debounce']);
+    }
+
+    public function testFunctionWithDebounceAndConcurrency(): void
+    {
+        $debounce = new Debounce(
+            period: '1m',
+            key: 'event.data.user_id'
+        );
+        $concurrency = new Concurrency(
+            limit: 10,
+            key: 'event.data.user_id'
+        );
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            debounce: $debounce,
+            concurrency: [$concurrency]
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertSame([
+            'period' => '1m',
+            'key'    => 'event.data.user_id',
+        ], $array['debounce']);
+        $this->assertSame([
+            'limit' => 10,
+            'key'   => 'event.data.user_id',
+        ], $array['concurrency'][0]);
+    }
+
+    public function testFunctionWithDebounceAndPriority(): void
+    {
+        $debounce = new Debounce(period: '30s');
+        $priority = new Priority(run: 'event.data.priority');
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            debounce: $debounce,
+            priority: $priority
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame(['period' => '30s'], $array['debounce']);
+        $this->assertSame(['run' => 'event.data.priority'], $array['priority']);
+    }
+
+    public function testFunctionWithAllFeatures(): void
+    {
+        $debounce = new Debounce(
+            period: '1m',
+            key: 'event.data.user_id',
+            timeout: '10m'
+        );
+        $concurrency = new Concurrency(
+            limit: 5,
+            key: 'event.data.user_id',
+            scope: 'fn'
+        );
+        $priority = new Priority(
+            run: 'event.data.plan == "enterprise" ? 120 : 0'
+        );
+
+        $function = new InngestFunction(
+            id: 'complex-function',
+            handler: fn($ctx) => ['status' => 'complete'],
+            triggers: [new TriggerEvent('user/action')],
+            name: 'Complex Function',
+            retries: 5,
+            debounce: $debounce,
+            concurrency: [$concurrency],
+            priority: $priority,
+            description: 'A function with all features enabled'
+        );
+
+        $array = $function->toArray();
+        $this->assertSame('complex-function', $array['id']);
+        $this->assertSame('Complex Function', $array['name']);
+        $this->assertSame('A function with all features enabled', $array['description']);
+        $this->assertSame(6, $array['steps']['step']['retries']['attempts']);
+
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'period'  => '1m',
+            'key'     => 'event.data.user_id',
+            'timeout' => '10m',
+        ], $array['debounce']);
+
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertSame([
+            'limit' => 5,
+            'key'   => 'event.data.user_id',
+            'scope' => 'fn',
+        ], $array['concurrency'][0]);
+
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame([
+            'run' => 'event.data.plan == "enterprise" ? 120 : 0',
+        ], $array['priority']);
+    }
+
+    public function testFunctionWithoutSingleton(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')]
+        );
+
+        $this->assertNull($function->getSingleton());
+
+        $array = $function->toArray();
+        $this->assertArrayNotHasKey('singleton', $array);
+    }
+
+    public function testFunctionWithBasicSingleton(): void
+    {
+        $singleton = new Singleton(mode: 'skip');
+
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            singleton: $singleton
+        );
+
+        $this->assertNotNull($function->getSingleton());
+        $this->assertSame($singleton, $function->getSingleton());
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame(['mode' => 'skip'], $array['singleton']);
+    }
+
+    public function testFunctionWithSingletonSkipMode(): void
+    {
+        $singleton = new Singleton(mode: 'skip');
+
+        $function = new InngestFunction(
+            id: 'data-sync',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('sync/start')],
+            singleton: $singleton
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame('skip', $array['singleton']['mode']);
+    }
+
+    public function testFunctionWithSingletonCancelMode(): void
+    {
+        $singleton = new Singleton(mode: 'cancel');
+
+        $function = new InngestFunction(
+            id: 'process-latest',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('data/updated')],
+            singleton: $singleton
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame('cancel', $array['singleton']['mode']);
+    }
+
+    public function testFunctionWithSingletonWithKey(): void
+    {
+        $singleton = new Singleton(
+            mode: 'skip',
+            key: 'event.data.user_id'
+        );
+
+        $function = new InngestFunction(
+            id: 'user-task',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('task/start')],
+            singleton: $singleton
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame([
+            'mode' => 'skip',
+            'key'  => 'event.data.user_id',
+        ], $array['singleton']);
+    }
+
+    public function testFunctionWithSingletonComplexKey(): void
+    {
+        $singleton = new Singleton(
+            mode: 'cancel',
+            key: 'event.data.customer_id + "-" + event.data.region'
+        );
+
+        $function = new InngestFunction(
+            id: 'sync-customer-data',
+            handler: fn($ctx) => ['status' => 'synced'],
+            triggers: [new TriggerEvent('customer/updated')],
+            name: 'Sync Customer Data',
+            singleton: $singleton
+        );
+
+        $array = $function->toArray();
+        $this->assertSame('sync-customer-data', $array['id']);
+        $this->assertSame('Sync Customer Data', $array['name']);
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame([
+            'mode' => 'cancel',
+            'key'  => 'event.data.customer_id + "-" + event.data.region',
+        ], $array['singleton']);
+    }
+
+    public function testFunctionWithSingletonAndDebounce(): void
+    {
+        $singleton = new Singleton(
+            mode: 'skip',
+            key: 'event.data.user_id'
+        );
+        $debounce = new Debounce(
+            period: '1m',
+            key: 'event.data.user_id'
+        );
+
+        $function = new InngestFunction(
+            id: 'process-user-events',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('user/event')],
+            singleton: $singleton,
+            debounce: $debounce
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'mode' => 'skip',
+            'key'  => 'event.data.user_id',
+        ], $array['singleton']);
+        $this->assertSame([
+            'period' => '1m',
+            'key'    => 'event.data.user_id',
+        ], $array['debounce']);
+    }
+
+    public function testFunctionWithSingletonAndPriority(): void
+    {
+        $singleton = new Singleton(mode: 'cancel');
+        $priority = new Priority(run: 'event.data.priority');
+
+        $function = new InngestFunction(
+            id: 'priority-task',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('task/execute')],
+            singleton: $singleton,
+            priority: $priority
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame(['mode' => 'cancel'], $array['singleton']);
+        $this->assertSame(['run' => 'event.data.priority'], $array['priority']);
+    }
+
+    public function testFunctionWithAllFeaturesIncludingSingleton(): void
+    {
+        $singleton = new Singleton(
+            mode: 'skip',
+            key: 'event.data.user_id'
+        );
+        $debounce = new Debounce(
+            period: '1m',
+            key: 'event.data.user_id',
+            timeout: '10m'
+        );
+        $concurrency = new Concurrency(
+            limit: 5,
+            key: 'event.data.user_id',
+            scope: 'fn'
+        );
+        $priority = new Priority(
+            run: 'event.data.plan == "enterprise" ? 120 : 0'
+        );
+
+        $function = new InngestFunction(
+            id: 'complex-workflow',
+            handler: fn($ctx) => ['status' => 'complete'],
+            triggers: [new TriggerEvent('workflow/start')],
+            name: 'Complex Workflow',
+            retries: 5,
+            singleton: $singleton,
+            debounce: $debounce,
+            concurrency: [$concurrency],
+            priority: $priority,
+            description: 'A workflow with all features enabled'
+        );
+
+        $array = $function->toArray();
+        $this->assertSame('complex-workflow', $array['id']);
+        $this->assertSame('Complex Workflow', $array['name']);
+        $this->assertSame(
+            'A workflow with all features enabled',
+            $array['description']
+        );
+        $this->assertSame(6, $array['steps']['step']['retries']['attempts']);
+
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame([
+            'mode' => 'skip',
+            'key'  => 'event.data.user_id',
+        ], $array['singleton']);
+
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'period'  => '1m',
+            'key'     => 'event.data.user_id',
+            'timeout' => '10m',
+        ], $array['debounce']);
+
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertSame([
+            'limit' => 5,
+            'key'   => 'event.data.user_id',
+            'scope' => 'fn',
+        ], $array['concurrency'][0]);
+
+        $this->assertArrayHasKey('priority', $array);
         $this->assertSame([
             'run' => 'event.data.plan == "enterprise" ? 120 : 0',
         ], $array['priority']);
