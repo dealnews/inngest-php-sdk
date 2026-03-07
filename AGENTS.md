@@ -622,6 +622,135 @@ new Priority(run: 'event.data.plan == "enterprise" ? 120 : 0')
 new Priority(run: 'event.data.plan == "free" ? -60 : 0')
 ```
 
+#### `RateLimit`
+Set a hard limit on how many function runs can start within a time period.
+
+**Constructor:**
+```php
+__construct(int $limit, string $period, ?string $key = null)
+```
+
+**Methods:**
+- `getLimit(): int` - Get rate limit maximum
+- `getPeriod(): string` - Get rate limit period
+- `getKey(): ?string` - Get CEL expression for grouping
+- `toArray(): array<string, mixed>`
+
+**Validation:**
+- Limit must be >= 1 (unlike Concurrency which allows 0)
+- Period: 1s to 24h, format `<number><unit>` (s, m, h)
+- Period does NOT support days (d) unlike Debounce (max is 24h)
+
+**Usage:**
+```php
+// Simple: 10 runs per hour
+new RateLimit(limit: 10, period: '1h')
+
+// Per-user rate limiting
+new RateLimit(
+    limit: 5,
+    period: '30m',
+    key: 'event.data.user_id'
+)
+
+// Per-customer and region
+new RateLimit(
+    limit: 100,
+    period: '24h',
+    key: 'event.data.customer_id + "-" + event.data.region'
+)
+```
+
+**Behavior:**
+- Uses Generic Cell Rate Algorithm (GCRA)
+- Events exceeding limit are **skipped** (not queued or throttled)
+- Period begins when first matching event is received
+- Each unique key value has its own independent limit
+
+**Compatibility:**
+- ❌ Cannot combine with batching
+- ✅ Works with concurrency, priority, debounce, singleton, throttling
+
+**Rate Limit vs Throttle vs Debounce:**
+- **Rate Limit**: Skip excess events (hard limit)
+- **Throttle**: Queue excess events (process all eventually)
+- **Debounce**: Wait until events stop arriving
+
+#### `Throttle`
+Limit how many function runs can start within a time period. Excess runs are enqueued (FIFO).
+
+**Constructor:**
+```php
+__construct(int $limit, string $period, int $burst = 0, ?string $key = null)
+```
+
+**Methods:**
+- `getLimit(): int` - Get throttle limit
+- `getPeriod(): string` - Get throttle period
+- `getBurst(): int` - Get burst allowance
+- `getKey(): ?string` - Get CEL expression for grouping
+- `toArray(): array<string, mixed>`
+
+**Validation:**
+- Limit must be >= 1 (same as RateLimit)
+- Burst must be >= 0 (default 0, no bursting)
+- Period: 1s to 7d, format `<number><unit>` (s, m, h, d)
+- Period supports days (d) unlike RateLimit (max is 7d like Debounce)
+
+**Usage:**
+```php
+// Simple: 10 runs per hour
+new Throttle(limit: 10, period: '1h')
+
+// With burst (allows 15 runs per hour: 10 + 5 burst)
+new Throttle(limit: 10, period: '1h', burst: 5)
+
+// Per-user throttling
+new Throttle(
+    limit: 5,
+    period: '30m',
+    key: 'event.data.user_id'
+)
+
+// API rate limit with burst
+new Throttle(
+    limit: 100,
+    period: '1h',
+    burst: 10,
+    key: 'event.data.customer_id'
+)
+```
+
+**Behavior:**
+- Uses Generic Cell Rate Algorithm (GCRA)
+- Events exceeding limit are **enqueued for future execution** (FIFO)
+- Maximum runs per period: limit + burst
+- Each unique key value has its own independent limit
+- FIFO: First enqueued runs first when capacity available
+
+**GCRA Algorithm:**
+- Breaks period into windows based on limit
+- Without burst: admits 1 request per window
+- With burst: admits (limit + burst) requests per window
+- Ensures smooth distribution over time
+
+**Compatibility:**
+- ❌ Cannot combine with batching
+- ✅ Works with concurrency, priority, debounce, singleton, rate_limit
+
+**Throttle vs Rate Limit:**
+- **Throttle**: Enqueues excess events (no data loss)
+- **Rate Limit**: Skips excess events (lossy)
+- **Throttle**: Supports burst parameter
+- **Rate Limit**: No burst support
+- **Throttle**: Max period 7 days
+- **Rate Limit**: Max period 24 hours
+
+**Use Cases:**
+- API rate limit compliance (match external API limits)
+- Smooth traffic spikes (evenly distribute execution)
+- Background job processing (control processing rate)
+
 #### `Singleton`
 Ensure only a single run of a function executes at a time.
 
@@ -664,7 +793,7 @@ new Singleton(
 **Compatibility:**
 - ❌ Cannot combine with batching
 - ⚠️ Incompatible with concurrency (singleton implies concurrency=1)
-- ✅ Works with debounce, priority, rate limiting, throttling
+- ✅ Works with debounce, priority, rate limit, throttling
 
 #### `InngestFunction`
 Represents a serverless function.
@@ -680,6 +809,8 @@ __construct(
     ?array<Concurrency> $concurrency = null,
     ?Priority $priority = null,
     ?Debounce $debounce = null,
+    ?RateLimit $rate_limit = null,
+    ?Throttle $throttle = null,
     ?Singleton $singleton = null,
     ?string $description = null
 )
@@ -695,6 +826,8 @@ __construct(
 - `getConcurrency(): ?array<Concurrency>`
 - `getPriority(): ?Priority`
 - `getDebounce(): ?Debounce`
+- `getRateLimit(): ?RateLimit`
+- `getThrottle(): ?Throttle`
 - `getSingleton(): ?Singleton`
 - `execute(FunctionContext $context): mixed` - Execute handler
 - `toArray(): array<string, mixed>` - Serialize for registration
@@ -715,6 +848,8 @@ new InngestFunction(
     },
     triggers: [new TriggerEvent('order/created')],
     retries: 5,
+    rate_limit: new RateLimit(limit: 100, period: '1h'),
+    throttle: new Throttle(limit: 50, period: '1h', burst: 10),
     debounce: new Debounce(period: '30s')
 )
 ```
