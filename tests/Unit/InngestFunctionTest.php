@@ -775,4 +775,587 @@ class InngestFunctionTest extends TestCase
             'run' => 'event.data.plan == "enterprise" ? 120 : 0',
         ], $array['priority']);
     }
+
+    public function testFunctionWithoutRateLimit(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')]
+        );
+
+        $this->assertNull($function->getRateLimit());
+
+        $array = $function->toArray();
+        $this->assertArrayNotHasKey('rateLimit', $array);
+    }
+
+    public function testFunctionWithRateLimit(): void
+    {
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 10,
+            period: '1h'
+        );
+
+        $function = new InngestFunction(
+            id: 'rate-limited-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            rate_limit: $rate_limit
+        );
+
+        $this->assertNotNull($function->getRateLimit());
+        $this->assertSame($rate_limit, $function->getRateLimit());
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertSame([
+            'limit'  => 10,
+            'period' => '1h',
+        ], $array['rateLimit']);
+    }
+
+    public function testFunctionWithRateLimitAndKey(): void
+    {
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 5,
+            period: '30m',
+            key: 'event.data.user_id'
+        );
+
+        $function = new InngestFunction(
+            id: 'user-rate-limited',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('user/action')],
+            rate_limit: $rate_limit
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertSame([
+            'limit'  => 5,
+            'period' => '30m',
+            'key'    => 'event.data.user_id',
+        ], $array['rateLimit']);
+    }
+
+    public function testFunctionWithRateLimitAndConcurrency(): void
+    {
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 100,
+            period: '24h'
+        );
+        $concurrency = new Concurrency(limit: 10);
+
+        $function = new InngestFunction(
+            id: 'combined-limits',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            rate_limit: $rate_limit,
+            concurrency: [$concurrency]
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertSame([
+            'limit'  => 100,
+            'period' => '24h',
+        ], $array['rateLimit']);
+        $this->assertSame(['limit' => 10], $array['concurrency'][0]);
+    }
+
+    public function testFunctionWithRateLimitAndDebounce(): void
+    {
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 50,
+            period: '1h',
+            key: 'event.data.customer_id'
+        );
+        $debounce = new Debounce(period: '30s');
+
+        $function = new InngestFunction(
+            id: 'rate-and-debounce',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('customer/activity')],
+            rate_limit: $rate_limit,
+            debounce: $debounce
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'limit'  => 50,
+            'period' => '1h',
+            'key'    => 'event.data.customer_id',
+        ], $array['rateLimit']);
+        $this->assertSame(['period' => '30s'], $array['debounce']);
+    }
+
+    public function testFunctionWithRateLimitAndSingleton(): void
+    {
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 10,
+            period: '5m'
+        );
+        $singleton = new Singleton(mode: 'skip');
+
+        $function = new InngestFunction(
+            id: 'rate-and-singleton',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('critical/task')],
+            rate_limit: $rate_limit,
+            singleton: $singleton
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame([
+            'limit'  => 10,
+            'period' => '5m',
+        ], $array['rateLimit']);
+        $this->assertSame(['mode' => 'skip'], $array['singleton']);
+    }
+
+    public function testFunctionWithRateLimitAndPriority(): void
+    {
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 20,
+            period: '10m'
+        );
+        $priority = new Priority(run: 'event.data.priority');
+
+        $function = new InngestFunction(
+            id: 'rate-and-priority',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('task/execute')],
+            rate_limit: $rate_limit,
+            priority: $priority
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame([
+            'limit'  => 20,
+            'period' => '10m',
+        ], $array['rateLimit']);
+        $this->assertSame(['run' => 'event.data.priority'], $array['priority']);
+    }
+
+    public function testFunctionWithAllFeaturesIncludingRateLimit(): void
+    {
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 100,
+            period: '24h',
+            key: 'event.data.customer_id'
+        );
+        $singleton = new Singleton(
+            mode: 'skip',
+            key: 'event.data.user_id'
+        );
+        $debounce = new Debounce(
+            period: '1m',
+            key: 'event.data.user_id',
+            timeout: '10m'
+        );
+        $concurrency = new Concurrency(
+            limit: 5,
+            key: 'event.data.user_id',
+            scope: 'fn'
+        );
+        $priority = new Priority(
+            run: 'event.data.plan == "enterprise" ? 120 : 0'
+        );
+
+        $function = new InngestFunction(
+            id: 'fully-featured-workflow',
+            handler: fn($ctx) => ['status' => 'complete'],
+            triggers: [new TriggerEvent('workflow/start')],
+            name: 'Fully Featured Workflow',
+            retries: 5,
+            rate_limit: $rate_limit,
+            singleton: $singleton,
+            debounce: $debounce,
+            concurrency: [$concurrency],
+            priority: $priority,
+            description: 'A workflow with all features including rate limit'
+        );
+
+        $array = $function->toArray();
+        $this->assertSame('fully-featured-workflow', $array['id']);
+        $this->assertSame('Fully Featured Workflow', $array['name']);
+        $this->assertSame(
+            'A workflow with all features including rate limit',
+            $array['description']
+        );
+        $this->assertSame(6, $array['steps']['step']['retries']['attempts']);
+
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertSame([
+            'limit'  => 100,
+            'period' => '24h',
+            'key'    => 'event.data.customer_id',
+        ], $array['rateLimit']);
+
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame([
+            'mode' => 'skip',
+            'key'  => 'event.data.user_id',
+        ], $array['singleton']);
+
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'period'  => '1m',
+            'key'     => 'event.data.user_id',
+            'timeout' => '10m',
+        ], $array['debounce']);
+
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertSame([
+            'limit' => 5,
+            'key'   => 'event.data.user_id',
+            'scope' => 'fn',
+        ], $array['concurrency'][0]);
+
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame([
+            'run' => 'event.data.plan == "enterprise" ? 120 : 0',
+        ], $array['priority']);
+    }
+
+    public function testFunctionWithoutThrottle(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')]
+        );
+
+        $this->assertNull($function->getThrottle());
+
+        $array = $function->toArray();
+        $this->assertArrayNotHasKey('throttle', $array);
+    }
+
+    public function testFunctionWithThrottle(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 10,
+            period: '1h'
+        );
+
+        $function = new InngestFunction(
+            id: 'throttled-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            throttle: $throttle
+        );
+
+        $this->assertNotNull($function->getThrottle());
+        $this->assertSame($throttle, $function->getThrottle());
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertSame([
+            'limit'  => 10,
+            'period' => '1h',
+        ], $array['throttle']);
+    }
+
+    public function testFunctionWithThrottleAndBurst(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 10,
+            period: '1h',
+            burst: 5
+        );
+
+        $function = new InngestFunction(
+            id: 'burst-throttled-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            throttle: $throttle
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertSame([
+            'limit'  => 10,
+            'period' => '1h',
+            'burst'  => 5,
+        ], $array['throttle']);
+    }
+
+    public function testFunctionWithThrottleAndKey(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 5,
+            period: '30m',
+            key: 'event.data.user_id'
+        );
+
+        $function = new InngestFunction(
+            id: 'user-throttled',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('user/action')],
+            throttle: $throttle
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertSame([
+            'limit'  => 5,
+            'period' => '30m',
+            'key'    => 'event.data.user_id',
+        ], $array['throttle']);
+    }
+
+    public function testFunctionWithThrottleBurstAndKey(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 100,
+            period: '24h',
+            burst: 10,
+            key: 'event.data.customer_id'
+        );
+
+        $function = new InngestFunction(
+            id: 'customer-throttled',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('customer/activity')],
+            throttle: $throttle
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertSame([
+            'limit'  => 100,
+            'period' => '24h',
+            'burst'  => 10,
+            'key'    => 'event.data.customer_id',
+        ], $array['throttle']);
+    }
+
+    public function testFunctionWithThrottleAndConcurrency(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 100,
+            period: '1h',
+            burst: 10
+        );
+        $concurrency = new Concurrency(limit: 10);
+
+        $function = new InngestFunction(
+            id: 'combined-limits',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            throttle: $throttle,
+            concurrency: [$concurrency]
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertSame([
+            'limit'  => 100,
+            'period' => '1h',
+            'burst'  => 10,
+        ], $array['throttle']);
+        $this->assertSame(['limit' => 10], $array['concurrency'][0]);
+    }
+
+    public function testFunctionWithThrottleAndDebounce(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 50,
+            period: '1h',
+            key: 'event.data.customer_id'
+        );
+        $debounce = new Debounce(period: '30s');
+
+        $function = new InngestFunction(
+            id: 'throttle-and-debounce',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('customer/activity')],
+            throttle: $throttle,
+            debounce: $debounce
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'limit'  => 50,
+            'period' => '1h',
+            'key'    => 'event.data.customer_id',
+        ], $array['throttle']);
+        $this->assertSame(['period' => '30s'], $array['debounce']);
+    }
+
+    public function testFunctionWithThrottleAndRateLimit(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 100,
+            period: '1h',
+            burst: 10
+        );
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 10,
+            period: '5m'
+        );
+
+        $function = new InngestFunction(
+            id: 'throttle-and-rate',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('api/request')],
+            throttle: $throttle,
+            rate_limit: $rate_limit
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertSame([
+            'limit'  => 100,
+            'period' => '1h',
+            'burst'  => 10,
+        ], $array['throttle']);
+        $this->assertSame([
+            'limit'  => 10,
+            'period' => '5m',
+        ], $array['rateLimit']);
+    }
+
+    public function testFunctionWithThrottleAndPriority(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 20,
+            period: '10m',
+            burst: 5
+        );
+        $priority = new Priority(run: 'event.data.priority');
+
+        $function = new InngestFunction(
+            id: 'throttle-and-priority',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('task/execute')],
+            throttle: $throttle,
+            priority: $priority
+        );
+
+        $array = $function->toArray();
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame([
+            'limit'  => 20,
+            'period' => '10m',
+            'burst'  => 5,
+        ], $array['throttle']);
+        $this->assertSame(['run' => 'event.data.priority'], $array['priority']);
+    }
+
+    public function testFunctionWithAllFeaturesIncludingThrottle(): void
+    {
+        $throttle = new \DealNews\Inngest\Function\Throttle(
+            limit: 200,
+            period: '1h',
+            burst: 20,
+            key: 'event.data.region'
+        );
+        $rate_limit = new \DealNews\Inngest\Function\RateLimit(
+            limit: 100,
+            period: '24h',
+            key: 'event.data.customer_id'
+        );
+        $singleton = new Singleton(
+            mode: 'skip',
+            key: 'event.data.user_id'
+        );
+        $debounce = new Debounce(
+            period: '1m',
+            key: 'event.data.user_id',
+            timeout: '10m'
+        );
+        $concurrency = new Concurrency(
+            limit: 5,
+            key: 'event.data.user_id',
+            scope: 'fn'
+        );
+        $priority = new Priority(
+            run: 'event.data.plan == "enterprise" ? 120 : 0'
+        );
+
+        $function = new InngestFunction(
+            id: 'fully-featured-workflow-with-throttle',
+            handler: fn($ctx) => ['status' => 'complete'],
+            triggers: [new TriggerEvent('workflow/start')],
+            name: 'Fully Featured Workflow with Throttle',
+            retries: 5,
+            throttle: $throttle,
+            rate_limit: $rate_limit,
+            singleton: $singleton,
+            debounce: $debounce,
+            concurrency: [$concurrency],
+            priority: $priority,
+            description: 'A workflow with all features including throttle'
+        );
+
+        $array = $function->toArray();
+        $this->assertSame(
+            'fully-featured-workflow-with-throttle',
+            $array['id']
+        );
+        $this->assertSame(
+            'Fully Featured Workflow with Throttle',
+            $array['name']
+        );
+        $this->assertSame(
+            'A workflow with all features including throttle',
+            $array['description']
+        );
+        $this->assertSame(6, $array['steps']['step']['retries']['attempts']);
+
+        $this->assertArrayHasKey('throttle', $array);
+        $this->assertSame([
+            'limit'  => 200,
+            'period' => '1h',
+            'burst'  => 20,
+            'key'    => 'event.data.region',
+        ], $array['throttle']);
+
+        $this->assertArrayHasKey('rateLimit', $array);
+        $this->assertSame([
+            'limit'  => 100,
+            'period' => '24h',
+            'key'    => 'event.data.customer_id',
+        ], $array['rateLimit']);
+
+        $this->assertArrayHasKey('singleton', $array);
+        $this->assertSame([
+            'mode' => 'skip',
+            'key'  => 'event.data.user_id',
+        ], $array['singleton']);
+
+        $this->assertArrayHasKey('debounce', $array);
+        $this->assertSame([
+            'period'  => '1m',
+            'key'     => 'event.data.user_id',
+            'timeout' => '10m',
+        ], $array['debounce']);
+
+        $this->assertArrayHasKey('concurrency', $array);
+        $this->assertSame([
+            'limit' => 5,
+            'key'   => 'event.data.user_id',
+            'scope' => 'fn',
+        ], $array['concurrency'][0]);
+
+        $this->assertArrayHasKey('priority', $array);
+        $this->assertSame([
+            'run' => 'event.data.plan == "enterprise" ? 120 : 0',
+        ], $array['priority']);
+    }
 }
