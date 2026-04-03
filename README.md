@@ -26,6 +26,8 @@ composer require dealnews/inngest-php-sdk
 - ✅ **Concurrency control** - Limit parallel execution
 - ✅ **Priority queues** - Dynamic execution ordering
 - ✅ **Debounce** - Delay execution until events settle
+- ✅ **Rate limiting** - Hard limit on function runs per time period
+- ✅ **Throttling** - FIFO queueing with burst support
 - ✅ **Singleton** - Ensure only one run executes at a time
 - ✅ **Dev mode** - Local development with Inngest dev server
 - ✅ **Type safety** - Full PHP 8.1+ type declarations
@@ -634,6 +636,266 @@ $function = new InngestFunction(
 - Singleton ensures "at most one" run, not "exactly one"
 
 See [examples/singleton.php](examples/singleton.php) for more examples and [Inngest Singleton Documentation](https://www.inngest.com/docs/guides/singleton) for details.
+
+## Rate Limiting
+
+Set a hard limit on how many function runs can start within a time period. Events exceeding the limit are **skipped** (not queued). Uses the Generic Cell Rate Algorithm (GCRA) for smooth distribution.
+
+### Basic Rate Limit
+
+```php
+use DealNews\Inngest\Function\RateLimit;
+
+$function = new InngestFunction(
+    id: 'api-request',
+    handler: function ($ctx) {
+        // Call external API
+        // Maximum 100 calls per hour
+        return callExternalAPI($ctx->getEvent()->getData());
+    },
+    triggers: [new TriggerEvent('api/request')],
+    rate_limit: new RateLimit(
+        limit: 100,
+        period: '1h'
+    )
+);
+```
+
+### Per-User Rate Limiting
+
+```php
+// Each user has their own rate limit
+$function = new InngestFunction(
+    id: 'user-api-request',
+    handler: function ($ctx) {
+        $user_id = $ctx->getEvent()->getData()['user_id'];
+        // Limit: 10 requests per 30 minutes per user
+        return processUserRequest($user_id);
+    },
+    triggers: [new TriggerEvent('user/api.request')],
+    rate_limit: new RateLimit(
+        limit: 10,
+        period: '30m',
+        key: 'event.data.user_id'
+    )
+);
+```
+
+### Per-Customer and Region
+
+```php
+// Complex key expression
+$function = new InngestFunction(
+    id: 'process-webhook',
+    handler: function ($ctx) {
+        $data = $ctx->getEvent()->getData();
+        return processWebhook($data);
+    },
+    triggers: [new TriggerEvent('webhook/received')],
+    rate_limit: new RateLimit(
+        limit: 50,
+        period: '1h',
+        key: 'event.data.customer_id + "-" + event.data.region'
+    )
+);
+```
+
+### Rate Limit Options
+
+- **limit** (required): Maximum runs per period
+  - Must be >= 1
+- **period** (required): Time window
+  - Format: `<number><unit>` where unit is `s`, `m`, or `h`
+  - Range: `1s` to `24h` (does NOT support days)
+  - Examples: `30s`, `10m`, `2h`, `24h`
+- **key** (optional): CEL expression to group rate limits
+  - Each unique key value has its own independent limit
+  - Examples: `event.data.user_id`, `event.data.api_key`
+
+### How It Works
+
+1. Uses Generic Cell Rate Algorithm (GCRA) for smooth distribution
+2. Events exceeding limit are **skipped/discarded** (lossy behavior)
+3. Period begins when first matching event is received
+4. Each unique key value has its own rate limit tracker
+
+### Use Cases
+
+- **External API limits**: Enforce third-party API rate limits
+- **Resource protection**: Prevent overwhelming downstream services
+- **Cost control**: Limit expensive operations (AI, compute)
+- **Abuse prevention**: Per-user/API key rate limiting
+
+### Compatibility
+
+**Works with:**
+- ✅ Concurrency, priority, debounce, singleton, throttling
+
+**Does not work with:**
+- ❌ Batching (not yet implemented)
+
+**Heads-up:**
+- Events exceeding limit are permanently lost (use throttling for lossless queueing)
+- Rate limit is enforced server-side by Inngest
+- Maximum period is 24 hours (for longer periods, use throttling with up to 7 days)
+
+See [examples/rate-limit.php](examples/rate-limit.php) for more examples and [Inngest Rate Limiting Documentation](https://www.inngest.com/docs/guides/rate-limiting) for details.
+
+## Throttling
+
+Limit how many function runs can start within a time period, with excess runs **enqueued for future execution** (FIFO). Unlike rate limiting which skips events, throttling ensures no data loss.
+
+### Basic Throttle
+
+```php
+use DealNews\Inngest\Function\Throttle;
+
+$function = new InngestFunction(
+    id: 'process-job',
+    handler: function ($ctx) {
+        // Process job at controlled rate
+        // Maximum 10 jobs per hour (excess are queued)
+        return processJob($ctx->getEvent()->getData());
+    },
+    triggers: [new TriggerEvent('job/created')],
+    throttle: new Throttle(
+        limit: 10,
+        period: '1h'
+    )
+);
+```
+
+### With Burst Support
+
+```php
+// Allow bursts above base limit
+$function = new InngestFunction(
+    id: 'api-sync',
+    handler: function ($ctx) {
+        // Base: 100/hour, can burst up to 110/hour
+        return syncWithAPI($ctx->getEvent()->getData());
+    },
+    triggers: [new TriggerEvent('sync/request')],
+    throttle: new Throttle(
+        limit: 100,
+        period: '1h',
+        burst: 10  // Allow 10 extra runs during spikes
+    )
+);
+```
+
+### Per-User Throttling
+
+```php
+// Each user has their own throttle
+$function = new InngestFunction(
+    id: 'user-report',
+    handler: function ($ctx) {
+        $user_id = $ctx->getEvent()->getData()['user_id'];
+        // Limit: 5 reports per 30 minutes per user
+        return generateReport($user_id);
+    },
+    triggers: [new TriggerEvent('report/generate')],
+    throttle: new Throttle(
+        limit: 5,
+        period: '30m',
+        key: 'event.data.user_id'
+    )
+);
+```
+
+### Complex Key Expression
+
+```php
+// Throttle per customer and region
+$function = new InngestFunction(
+    id: 'aggregate-data',
+    handler: function ($ctx) {
+        $data = $ctx->getEvent()->getData();
+        return aggregateData($data);
+    },
+    triggers: [new TriggerEvent('data/received')],
+    throttle: new Throttle(
+        limit: 100,
+        period: '1h',
+        burst: 20,
+        key: 'event.data.customer_id + "-" + event.data.region'
+    )
+);
+```
+
+### Throttle Options
+
+- **limit** (required): Base number of runs per period
+  - Must be >= 1
+- **period** (required): Time window
+  - Format: `<number><unit>` where unit is `s`, `m`, `h`, or `d`
+  - Range: `1s` to `7d` (supports days unlike rate limiting)
+  - Examples: `30s`, `10m`, `2h`, `7d`
+- **burst** (optional): Extra runs allowed during spikes
+  - Must be >= 0 (default: 0, no bursting)
+  - Total capacity: limit + burst
+  - Example: limit=10, burst=5 allows 15 runs per period
+- **key** (optional): CEL expression to group throttles
+  - Each unique key value has its own throttle
+  - Examples: `event.data.user_id`, `event.data.tenant_id`
+
+### How It Works
+
+1. Uses Generic Cell Rate Algorithm (GCRA)
+2. Breaks period into windows based on limit
+3. Events exceeding limit are **enqueued (FIFO)** for future execution
+4. Burst parameter allows temporary spikes
+5. Each unique key value has its own throttle tracker
+
+### FIFO Behavior
+
+When the limit is reached:
+1. Excess events are added to a queue (First In, First Out)
+2. As capacity becomes available, queued events execute in order
+3. No events are lost (unlike rate limiting)
+
+### Burst Parameter
+
+The burst parameter handles traffic spikes:
+- **Without burst** (burst=0): Admits exactly `limit` runs per period
+- **With burst** (burst>0): Admits up to `limit + burst` runs per period
+- Example: `limit: 100, burst: 10` allows 110 runs per hour during spikes
+- Useful for: API burst allowances, handling temporary traffic increases
+
+### Use Cases
+
+- **API rate limit compliance**: Match external API limits with burst allowance
+- **Smooth traffic spikes**: Evenly distribute execution over time
+- **Background job processing**: Control processing rate without data loss
+- **Resource management**: Prevent overwhelming services while queuing excess
+- **Cost control**: Limit expensive operations but process all eventually
+
+### Throttle vs Rate Limit
+
+| Feature | Throttle | Rate Limit |
+|---------|----------|------------|
+| **Excess events** | Enqueued (FIFO) | Skipped |
+| **Data loss** | No ✅ | Yes (lossy) ❌ |
+| **Max period** | 7 days | 24 hours |
+| **Burst support** | Yes ✅ | No |
+| **Use case** | Process all events | Hard limits |
+
+### Compatibility
+
+**Works with:**
+- ✅ Concurrency, priority, debounce, singleton, rate limiting
+
+**Does not work with:**
+- ❌ Batching (not yet implemented)
+
+**Heads-up:**
+- All events are eventually processed (FIFO queue)
+- Burst capacity refreshes each period
+- Throttle is enforced server-side by Inngest
+- Supports longer periods (7 days) vs rate limiting (24 hours max)
+
+See [examples/throttle.php](examples/throttle.php) for more examples and [Inngest Throttling Documentation](https://www.inngest.com/docs/guides/throttling) for details.
 
 ## Development
 

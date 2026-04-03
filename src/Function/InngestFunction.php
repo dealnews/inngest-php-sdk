@@ -18,6 +18,8 @@ class InngestFunction
      * @param array<Concurrency>|null $concurrency Optional concurrency limits (max 2)
      * @param Priority|null $priority Optional priority configuration for dynamic execution ordering
      * @param Debounce|null $debounce Optional debounce configuration to delay execution until events stop
+     * @param RateLimit|null $rate_limit Optional rate limit to cap function runs per time period
+     * @param Throttle|null $throttle Optional throttle to enqueue excess function runs over time period
      * @param Singleton|null $singleton Optional singleton to ensure only one run executes at a time
      * @param string|null $description Function description
      */
@@ -30,6 +32,8 @@ class InngestFunction
         protected ?array $concurrency = null,
         protected ?Priority $priority = null,
         protected ?Debounce $debounce = null,
+        protected ?RateLimit $rate_limit = null,
+        protected ?Throttle $throttle = null,
         protected ?Singleton $singleton = null,
         protected ?string $description = null
     ) {
@@ -114,6 +118,26 @@ class InngestFunction
     }
 
     /**
+     * Get rate limit configuration
+     *
+     * @return RateLimit|null
+     */
+    public function getRateLimit(): ?RateLimit
+    {
+        return $this->rate_limit;
+    }
+
+    /**
+     * Get throttle configuration
+     *
+     * @return Throttle|null
+     */
+    public function getThrottle(): ?Throttle
+    {
+        return $this->throttle;
+    }
+
+    /**
      * Get singleton configuration
      *
      * @return Singleton|null
@@ -170,6 +194,14 @@ class InngestFunction
 
         if ($this->debounce !== null) {
             $data['debounce'] = $this->debounce->toArray();
+        }
+
+        if ($this->rate_limit !== null) {
+            $data['rateLimit'] = $this->rate_limit->toArray();
+        }
+
+        if ($this->throttle !== null) {
+            $data['throttle'] = $this->throttle->toArray();
         }
 
         if ($this->singleton !== null) {
