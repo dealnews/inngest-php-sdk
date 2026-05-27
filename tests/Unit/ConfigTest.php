@@ -19,6 +19,7 @@ class ConfigTest extends TestCase
         putenv('INNGEST_DEV');
         putenv('INNGEST_API_BASE_URL');
         putenv('INNGEST_EVENT_API_BASE_URL');
+        putenv('INNGEST_BASE_URL');
         putenv('INNGEST_SERVE_ORIGIN');
         putenv('INNGEST_SERVE_PATH');
         putenv('INNGEST_LOG_LEVEL');
@@ -121,5 +122,49 @@ class ConfigTest extends TestCase
 
         $this->assertSame('https://myapp.com', $config->getServeOrigin());
         $this->assertSame('/webhooks/inngest', $config->getServePath());
+    }
+
+    public function testInngestBaseUrlSetsApiAndEventBaseUrl(): void
+    {
+        $old_val = getenv('INNGEST_BASE_URL');
+        putenv('INNGEST_BASE_URL=https://custom.example.com');
+
+        try {
+            $config = new Config();
+            $this->assertSame('https://custom.example.com', $config->getApiBaseUrl());
+            $this->assertSame('https://custom.example.com', $config->getEventApiBaseUrl());
+        } finally {
+            if ($old_val === false) {
+                putenv('INNGEST_BASE_URL');
+            } else {
+                putenv('INNGEST_BASE_URL=' . $old_val);
+            }
+        }
+    }
+
+    public function testInngestBaseUrlDoesNotOverrideExplicitApiBaseUrl(): void
+    {
+        $old_val = getenv('INNGEST_BASE_URL');
+        putenv('INNGEST_BASE_URL=https://custom.example.com');
+
+        try {
+            $config = new Config(api_base_url: 'https://explicit-api.example.com');
+            $this->assertSame('https://explicit-api.example.com', $config->getApiBaseUrl());
+            // event_api_base_url falls back to custom.example.com
+            $this->assertSame('https://custom.example.com', $config->getEventApiBaseUrl());
+        } finally {
+            if ($old_val === false) {
+                putenv('INNGEST_BASE_URL');
+            } else {
+                putenv('INNGEST_BASE_URL=' . $old_val);
+            }
+        }
+    }
+
+    public function testBaseUrlConstructorParam(): void
+    {
+        $config = new Config(base_url: 'https://my-server.example.com');
+        $this->assertSame('https://my-server.example.com', $config->getApiBaseUrl());
+        $this->assertSame('https://my-server.example.com', $config->getEventApiBaseUrl());
     }
 }

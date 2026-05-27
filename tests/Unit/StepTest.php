@@ -212,4 +212,164 @@ class StepTest extends TestCase
         $this->assertNotSame($planned[0]['id'], $planned[1]['id']);
         $this->assertNotSame($planned[1]['id'], $planned[2]['id']);
     }
+
+    public function testStepIdHashingUsesColonOneForFirstRepeat(): void
+    {
+        $context = new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        );
+        $step = new Step($context);
+
+        $step->run('my-step', fn() => 'first');
+        $step->run('my-step', fn() => 'second');
+        $step->run('my-step', fn() => 'third');
+
+        $planned = $step->getPlannedSteps();
+        $this->assertCount(3, $planned);
+
+        // First occurrence: sha1('my-step')
+        $this->assertSame(sha1('my-step'), $planned[0]['id']);
+        // Second occurrence: sha1('my-step:1')
+        $this->assertSame(sha1('my-step:1'), $planned[1]['id']);
+        // Third occurrence: sha1('my-step:2')
+        $this->assertSame(sha1('my-step:2'), $planned[2]['id']);
+    }
+
+    public function testTargetStepExecutesOnlyMatchingStep(): void
+    {
+        $context = new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        );
+        $step = new Step($context);
+
+        $target_id = sha1('target-step');
+        $step->setTargetStepId($target_id);
+
+        // Non-matching steps return null silently
+        $result1 = $step->run('other-step', fn() => 'ignored');
+        $this->assertNull($result1);
+        $this->assertEmpty($step->getPlannedSteps());
+
+        // Matching step throws StepCompletedException
+        $this->expectException(\DealNews\Inngest\Error\StepCompletedException::class);
+        $step->run('target-step', fn() => 'executed-result');
+    }
+
+    public function testWasTargetStepFoundReturnsTrueAfterExecution(): void
+    {
+        $context = new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        );
+        $step = new Step($context);
+
+        $target_id = sha1('my-step');
+        $step->setTargetStepId($target_id);
+
+        $this->assertFalse($step->wasTargetStepFound());
+
+        try {
+            $step->run('my-step', fn() => 'result');
+        } catch (\DealNews\Inngest\Error\StepCompletedException $e) {
+            // expected
+        }
+
+        $this->assertTrue($step->wasTargetStepFound());
+        $executed = $step->getExecutedStep();
+        $this->assertNotNull($executed);
+        $this->assertSame('StepRun', $executed['op']);
+        $this->assertSame('result', $executed['data']);
+    }
+
+    public function testSendEvent(): void
+    {
+        $context = new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        );
+        $step = new Step($context);
+
+        $event = new \DealNews\Inngest\Event\Event('test/event', ['key' => 'value']);
+        $result = $step->sendEvent('send-notification', $event);
+
+        $this->assertNull($result);
+        $this->assertCount(1, $step->getPlannedSteps());
+
+        $planned = $step->getPlannedSteps()[0];
+        $this->assertSame('SendEvent', $planned['op']);
+        $this->assertSame('send-notification', $planned['displayName']);
+        $this->assertArrayHasKey('payload', $planned['opts']);
+        $this->assertCount(1, $planned['opts']['payload']);
+        $this->assertSame('test/event', $planned['opts']['payload'][0]['name']);
+    }
+
+    public function testFetch(): void
+    {
+        $context = new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        );
+        $step = new Step($context);
+
+        $result = $step->fetch('get-data', 'https://example.com/api', 'GET');
+
+        $this->assertNull($result);
+        $this->assertCount(1, $step->getPlannedSteps());
+
+        $planned = $step->getPlannedSteps()[0];
+        $this->assertSame('Gateway', $planned['op']);
+        $this->assertSame('get-data', $planned['displayName']);
+        $this->assertSame('https://example.com/api', $planned['opts']['url']);
+        $this->assertSame('GET', $planned['opts']['method']);
+    }
+
+    public function testAiInfer(): void
+    {
+        $context = new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        );
+        $step = new Step($context);
+
+        $result = $step->ai()->infer(
+            'get-completion',
+            'https://api.openai.com/v1/chat/completions',
+            ['model' => 'gpt-4', 'messages' => [['role' => 'user', 'content' => 'Hello']]]
+        );
+
+        $this->assertNull($result);
+        $this->assertCount(1, $step->getPlannedSteps());
+
+        $planned = $step->getPlannedSteps()[0];
+        $this->assertSame('AiGateway', $planned['op']);
+        $this->assertSame('get-completion', $planned['displayName']);
+        $this->assertSame('https://api.openai.com/v1/chat/completions', $planned['opts']['url']);
+        $this->assertArrayHasKey('body', $planned['opts']);
+    }
 }
