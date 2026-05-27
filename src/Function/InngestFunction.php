@@ -180,6 +180,11 @@ class InngestFunction
         return $this->singleton;
     }
 
+    public function isCheckpointing(): bool
+    {
+        return $this->checkpointing;
+    }
+
     /**
      * Execute the function handler
      *

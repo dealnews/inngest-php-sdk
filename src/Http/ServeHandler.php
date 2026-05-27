@@ -7,10 +7,12 @@ namespace DealNews\Inngest\Http;
 use DealNews\Inngest\Client\Inngest;
 use DealNews\Inngest\Error\NonRetriableError;
 use DealNews\Inngest\Error\RetryAfterError;
+use DealNews\Inngest\Error\StepCompletedException;
 use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Event\Event;
 use DealNews\Inngest\Function\FunctionContext;
 use DealNews\Inngest\Function\InngestFunction;
+use DealNews\Inngest\Middleware\AbstractMiddleware;
 use DealNews\Inngest\Step\Step;
 use DealNews\Inngest\Step\StepContext;
 
@@ -84,6 +86,8 @@ class ServeHandler
 
         $response_data = [
             'authentication_succeeded' => $authenticated,
+            'capabilities' => ['connect' => 'v1', 'in_band_sync' => 'v1'],
+            'extra' => (object)[],
             'function_count' => count($this->client->getFunctions()),
             'has_event_key' => $event_key !== null,
             'has_signing_key' => $signing_key !== null,
@@ -163,6 +167,7 @@ class ServeHandler
                 'capabilities' => [
                     'trust_probe' => 'v1',
                     'connect' => 'v1',
+                    'in_band_sync' => 'v1',
                 ],
                 'env' => $config->getEnv(),
                 'framework' => 'php',
@@ -237,6 +242,7 @@ class ServeHandler
                 'capabilities' => [
                     'trust_probe' => 'v1',
                     'connect' => 'v1',
+                    'in_band_sync' => 'v1',
                 ],
             ];
 
@@ -295,7 +301,9 @@ class ServeHandler
                 return $this->jsonResponse(['error' => 'Invalid payload'], 400);
             }
 
-            return $this->executeFunction($function, $payload, $query);
+            $step_id = $query['stepId'] ?? null;
+
+            return $this->executeFunction($function, $payload, $query, $step_id);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
         }
@@ -306,18 +314,26 @@ class ServeHandler
      * @param array<string, string> $query
      * @return array{status: int, headers: array<string, string>, body: string}
      */
-    protected function executeFunction(InngestFunction $function, array $payload, array $query): array
+    protected function executeFunction(InngestFunction $function, array $payload, array $query, ?string $step_id = null): array
     {
-        $event_data = $payload['event'] ?? [];
-        $events_data = $payload['events'] ?? [$event_data];
         $ctx_data = $payload['ctx'] ?? [];
-        $steps_data = $payload['steps'] ?? [];
+        $run_id = $ctx_data['run_id'] ?? '';
 
-        $event = $this->hydrateEvent($event_data);
+        if (!empty($ctx_data['use_api']) && $ctx_data['use_api'] === true) {
+            $api_payload = $this->fetchPayloadFromApi($run_id);
+            $events_data = $api_payload['events'];
+            $steps_data = $api_payload['steps'];
+        } else {
+            $event_data = $payload['event'] ?? [];
+            $events_data = $payload['events'] ?? [$event_data];
+            $steps_data = $payload['steps'] ?? [];
+        }
+
+        $event = $this->hydrateEvent($events_data[0] ?? []);
         $events = array_map(fn($e) => $this->hydrateEvent($e), $events_data);
 
         $step_context = new StepContext(
-            $ctx_data['run_id'] ?? '',
+            $run_id,
             $ctx_data['attempt'] ?? 0,
             $ctx_data['disable_immediate_execution'] ?? false,
             $ctx_data['use_api'] ?? false,
@@ -327,6 +343,10 @@ class ServeHandler
 
         $step = new Step($step_context);
 
+        if ($step_id !== null && $step_id !== 'step') {
+            $step->setTargetStepId($step_id);
+        }
+
         $function_context = new FunctionContext(
             $event,
             $events,
@@ -335,31 +355,153 @@ class ServeHandler
             $step
         );
 
+        $middleware = array_merge(
+            $this->client->getMiddleware(),
+            $function->getMiddleware()
+        );
+
+        // 1. transformInput — allows mutating memoized step data
+        foreach ($middleware as $mw) {
+            $mw->transformInput($function_context, $steps_data);
+        }
+
+        // 2. afterMemoization — transition from memo to live execution
+        foreach ($middleware as $mw) {
+            $mw->afterMemoization($function_context);
+        }
+
+        // 3. beforeExecution
+        foreach ($middleware as $mw) {
+            $mw->beforeExecution($function_context);
+        }
+
+        $result = null;
+        $exec_error = null;
+        $planned_steps = [];
+
         try {
             $result = $function->execute($function_context);
-
             $planned_steps = $step->getPlannedSteps();
-
-            if (!empty($planned_steps)) {
-                return $this->jsonResponse($planned_steps, 206, [
+        } catch (StepCompletedException $e) {
+            // Step-specific execution: return the executed step
+            if ($step_id !== null && $step_id !== 'step') {
+                // afterExecution
+                foreach ($middleware as $mw) {
+                    $mw->afterExecution($function_context);
+                }
+                $step_data = [$e->step_result];
+                foreach ($middleware as $mw) {
+                    $mw->transformOutput($function_context, $result, $exec_error, $step_data);
+                }
+                $response = $step_data;
+                foreach ($middleware as $mw) {
+                    $mw->beforeResponse($response);
+                }
+                return $this->jsonResponse($response, 206, [
                     Headers::SDK => $this->client->getSdkIdentifier(),
                     Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
                 ]);
             }
+            $exec_error = $e;
+        } catch (NonRetriableError $e) {
+            $exec_error = $e;
+        } catch (RetryAfterError $e) {
+            $exec_error = $e;
+        } catch (StepError $e) {
+            $exec_error = $e;
+        } catch (\Throwable $e) {
+            $exec_error = $e;
+        }
 
-            return $this->jsonResponse($result, 200, [
+        // afterExecution always runs
+        foreach ($middleware as $mw) {
+            $mw->afterExecution($function_context);
+        }
+
+        // Handle StepNotFound: target was set but step was not found
+        if ($step_id !== null && $step_id !== 'step' && !$step->wasTargetStepFound()) {
+            $step_data = [['id' => $step_id, 'op' => 'StepNotFound']];
+            foreach ($middleware as $mw) {
+                $mw->transformOutput($function_context, $result, $exec_error, $step_data);
+            }
+            $response = $step_data;
+            foreach ($middleware as $mw) {
+                $mw->beforeResponse($response);
+            }
+            return $this->jsonResponse($response, 206, [
                 Headers::SDK => $this->client->getSdkIdentifier(),
                 Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
             ]);
-        } catch (NonRetriableError $e) {
-            return $this->errorResponse($e, false);
-        } catch (RetryAfterError $e) {
-            return $this->errorResponse($e, true, $e->getRetryAfterHeader());
-        } catch (StepError $e) {
-            return $this->errorResponse($e, false);
-        } catch (\Throwable $e) {
-            return $this->errorResponse($e, true);
         }
+
+        // Handle errors
+        if ($exec_error !== null) {
+            $error_mw = $exec_error;
+            foreach ($middleware as $mw) {
+                $mw->transformOutput($function_context, $result, $error_mw, null);
+            }
+            if ($exec_error instanceof NonRetriableError) {
+                return $this->errorResponse($exec_error, false);
+            }
+            if ($exec_error instanceof RetryAfterError) {
+                return $this->errorResponse($exec_error, true, $exec_error->getRetryAfterHeader());
+            }
+            if ($exec_error instanceof StepError) {
+                return $this->errorResponse($exec_error, false);
+            }
+            return $this->errorResponse($exec_error, true);
+        }
+
+        // Build response
+        $step_data_for_mw = !empty($planned_steps) ? $planned_steps : null;
+        foreach ($middleware as $mw) {
+            $mw->transformOutput($function_context, $result, $exec_error, $step_data_for_mw);
+        }
+
+        if (!empty($planned_steps)) {
+            // Check for checkpointing
+            if ($function->isCheckpointing()) {
+                $async_opcodes = ['InvokeFunction', 'WaitForEvent', 'SendEvent', 'AiGateway', 'Gateway'];
+                $sync_steps = array_values(array_filter($planned_steps, fn($s) => !in_array($s['op'] ?? '', $async_opcodes)));
+                $async_steps = array_values(array_filter($planned_steps, fn($s) => in_array($s['op'] ?? '', $async_opcodes)));
+
+                if (!empty($async_steps) && $this->checkpointSteps($run_id, $async_steps)) {
+                    $response = $sync_steps;
+                    foreach ($middleware as $mw) {
+                        $mw->beforeResponse($response);
+                    }
+                    return $this->jsonResponse($response, 206, [
+                        Headers::SDK => $this->client->getSdkIdentifier(),
+                        Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+                    ]);
+                }
+            }
+
+            $response = $planned_steps;
+            foreach ($middleware as $mw) {
+                $mw->beforeResponse($response);
+            }
+            return $this->jsonResponse($response, 206, [
+                Headers::SDK => $this->client->getSdkIdentifier(),
+                Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+            ]);
+        }
+
+        if (is_array($result)) {
+            $response = $result;
+            foreach ($middleware as $mw) {
+                $mw->beforeResponse($response);
+            }
+            return $this->jsonResponse($response, 200, [
+                Headers::SDK => $this->client->getSdkIdentifier(),
+                Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+            ]);
+        }
+
+        return $this->jsonResponse($result, 200, [
+            Headers::SDK => $this->client->getSdkIdentifier(),
+            Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+        ]);
     }
 
     protected function errorResponse(\Throwable $e, bool $retriable = true, ?string $retry_after = null): array
@@ -498,6 +640,8 @@ class ServeHandler
 
         return [
             'authentication_succeeded' => null,
+            'capabilities' => ['connect' => 'v1', 'in_band_sync' => 'v1'],
+            'extra' => (object)[],
             'function_count' => count($this->client->getFunctions()),
             'has_event_key' => $event_key !== null,
             'has_signing_key' => $signing_key !== null,
@@ -519,6 +663,136 @@ class ServeHandler
                 ? hash('sha256', $config->getSigningKeyFallback())
                 : null,
         ];
+    }
+
+    /**
+     * Fetch payload (events and steps) from the Inngest API for use_api mode
+     *
+     * @return array{events: array<mixed>, steps: array<mixed>}
+     */
+    private function fetchPayloadFromApi(string $run_id): array
+    {
+        $config = $this->client->getConfig();
+        $api_origin = $config->getApiBaseUrl();
+        $signing_key = $config->getSigningKey();
+
+        if ($signing_key === null) {
+            throw new \Exception('No signing key configured for API fetch');
+        }
+
+        $hashed_key = $this->verifier->hashSigningKey($signing_key);
+        $auth_header = 'Authorization: Bearer ' . $hashed_key;
+
+        $events_url = $api_origin . '/v0/runs/' . $run_id . '/batch';
+        $steps_url = $api_origin . '/v0/runs/' . $run_id . '/actions';
+
+        $events_ch = curl_init($events_url);
+        curl_setopt_array($events_ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [$auth_header],
+        ]);
+        $events_response = curl_exec($events_ch);
+        $events_status = curl_getinfo($events_ch, CURLINFO_HTTP_CODE);
+        curl_close($events_ch);
+
+        if ($events_status !== 200) {
+            throw new \Exception("Failed to fetch events from API: HTTP {$events_status}");
+        }
+
+        $steps_ch = curl_init($steps_url);
+        curl_setopt_array($steps_ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [$auth_header],
+        ]);
+        $steps_response = curl_exec($steps_ch);
+        $steps_status = curl_getinfo($steps_ch, CURLINFO_HTTP_CODE);
+        curl_close($steps_ch);
+
+        if ($steps_status !== 200) {
+            throw new \Exception("Failed to fetch steps from API: HTTP {$steps_status}");
+        }
+
+        return [
+            'events' => json_decode($events_response, true) ?? [],
+            'steps' => json_decode($steps_response, true) ?? [],
+        ];
+    }
+
+    /**
+     * Checkpoint async steps via the Inngest API
+     *
+     * @param array<mixed> $async_steps
+     */
+    private function checkpointSteps(string $run_id, array $async_steps): bool
+    {
+        $config = $this->client->getConfig();
+        $api_origin = $config->getApiBaseUrl();
+        $signing_key = $config->getSigningKey();
+
+        if ($signing_key === null) {
+            return false;
+        }
+
+        $url = $api_origin . '/v0/runs/' . $run_id . '/actions/checkpoint';
+        $body = json_encode($async_steps);
+
+        $delays = [100000, 200000, 400000]; // microseconds: 100ms, 200ms, 400ms
+
+        for ($attempt = 0; $attempt <= 3; $attempt++) {
+            $hashed_key = $this->verifier->hashSigningKey($signing_key);
+            $headers = [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $hashed_key,
+                Headers::SDK . ': ' . $this->client->getSdkIdentifier(),
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $body,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => $headers,
+            ]);
+            $curl_response = curl_exec($ch);
+            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($status === 200 || $status === 204) {
+                return true;
+            }
+
+            // On 401, try fallback signing key
+            if ($status === 401) {
+                $fallback_key = $config->getSigningKeyFallback();
+                if ($fallback_key !== null) {
+                    $hashed_fallback = $this->verifier->hashSigningKey($fallback_key);
+                    $fallback_headers = [
+                        'Content-Type: application/json',
+                        'Authorization: Bearer ' . $hashed_fallback,
+                        Headers::SDK . ': ' . $this->client->getSdkIdentifier(),
+                    ];
+                    $ch2 = curl_init($url);
+                    curl_setopt_array($ch2, [
+                        CURLOPT_POST => true,
+                        CURLOPT_POSTFIELDS => $body,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_HTTPHEADER => $fallback_headers,
+                    ]);
+                    curl_exec($ch2);
+                    $fallback_status = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+                    curl_close($ch2);
+                    if ($fallback_status === 200 || $fallback_status === 204) {
+                        return true;
+                    }
+                }
+            }
+
+            if ($attempt < 3 && isset($delays[$attempt])) {
+                usleep($delays[$attempt]);
+            }
+        }
+
+        return false;
     }
 
     /**
