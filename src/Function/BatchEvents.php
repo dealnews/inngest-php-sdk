@@ -58,6 +58,19 @@ class BatchEvents
         if ($this->max_size < 1) {
             throw new \InvalidArgumentException('BatchEvents max_size must be at least 1');
         }
+
+        // Validate timeout is a valid time string in the 1s-60s range
+        if (!preg_match('/^(\d+)s$/', $this->timeout, $matches)) {
+            throw new \InvalidArgumentException(
+                'BatchEvents timeout must be a time string in seconds (e.g., "10s"). Got: ' . $this->timeout
+            );
+        }
+        $seconds = (int) $matches[1];
+        if ($seconds < 1 || $seconds > 60) {
+            throw new \InvalidArgumentException(
+                'BatchEvents timeout must be between 1s and 60s. Got: ' . $this->timeout
+            );
+        }
     }
 
     /**

@@ -151,4 +151,39 @@ class MiddlewareTest extends TestCase
         $this->assertArrayHasKey('injected', $steps);
         $this->assertSame(['data' => 'from-middleware'], $steps['injected']);
     }
+
+    public function testAfterMemoizationCalledOnlyWhenUnmemoizedStepEncountered(): void
+    {
+        $called = false;
+        $middleware = new class ($called) extends AbstractMiddleware {
+            public function __construct(private bool &$called)
+            {
+            }
+
+            public function afterMemoization(FunctionContext $ctx): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $event = new \DealNews\Inngest\Event\Event('test', []);
+        $step = new \DealNews\Inngest\Step\Step(
+            new \DealNews\Inngest\Step\StepContext('run', 0, false, false, [], [])
+        );
+        $ctx = new FunctionContext($event, [$event], 'run', 0, $step);
+
+        // Set callback - simulating what ServeHandler does
+        $step->setAfterMemoizationCallback(function () use ($middleware, $ctx) {
+            $middleware->afterMemoization($ctx);
+        });
+
+        // afterMemoization should NOT be called yet (no step encountered)
+        $this->assertFalse($called);
+
+        // Encounter first unmemoized step
+        $step->run('my-step', fn() => 'result');
+
+        // Now it should have been called
+        $this->assertTrue($called);
+    }
 }

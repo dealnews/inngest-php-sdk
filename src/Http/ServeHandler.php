@@ -360,17 +360,19 @@ class ServeHandler
             $function->getMiddleware()
         );
 
+        // Set afterMemoization callback - Step will call this when first unmemoized step is encountered
+        $step->setAfterMemoizationCallback(function () use ($middleware, $function_context) {
+            foreach ($middleware as $mw) {
+                $mw->afterMemoization($function_context);
+            }
+        });
+
         // 1. transformInput — allows mutating memoized step data
         foreach ($middleware as $mw) {
             $mw->transformInput($function_context, $steps_data);
         }
 
-        // 2. afterMemoization — transition from memo to live execution
-        foreach ($middleware as $mw) {
-            $mw->afterMemoization($function_context);
-        }
-
-        // 3. beforeExecution
+        // 2. beforeExecution — called after all memoized steps are replayed
         foreach ($middleware as $mw) {
             $mw->beforeExecution($function_context);
         }

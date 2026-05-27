@@ -1463,4 +1463,16 @@ class InngestFunctionTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         new \DealNews\Inngest\Function\BatchEvents(max_size: 0, timeout: '10s');
     }
+
+    public function testBatchEventsInvalidTimeoutFormatThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '5m');
+    }
+
+    public function testBatchEventsTimeoutTooLargeThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '61s');
+    }
 }

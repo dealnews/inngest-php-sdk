@@ -26,8 +26,26 @@ class Step
 
     protected ?AiStep $ai_step = null;
 
+    /** @var callable|null */
+    protected $after_memoization_callback = null;
+
+    protected bool $after_memoization_called = false;
+
     public function __construct(protected StepContext $context)
     {
+    }
+
+    public function setAfterMemoizationCallback(callable $callback): void
+    {
+        $this->after_memoization_callback = $callback;
+    }
+
+    private function triggerAfterMemoization(): void
+    {
+        if (!$this->after_memoization_called && $this->after_memoization_callback !== null) {
+            $this->after_memoization_called = true;
+            ($this->after_memoization_callback)();
+        }
     }
 
     public function setTargetStepId(string $id): void
@@ -60,6 +78,8 @@ class Step
         if ($this->context->hasStep($hashed_id)) {
             return $this->memoizeStep($hashed_id);
         }
+
+        $this->triggerAfterMemoization();
 
         if ($this->target_step_id !== null) {
             if ($hashed_id === $this->target_step_id) {
@@ -118,6 +138,8 @@ class Step
             return $this->memoizeStep($hashed_id);
         }
 
+        $this->triggerAfterMemoization();
+
         if ($this->target_step_id !== null) {
             return null;
         }
@@ -155,6 +177,8 @@ class Step
         if ($this->context->hasStep($hashed_id)) {
             return $this->memoizeStep($hashed_id);
         }
+
+        $this->triggerAfterMemoization();
 
         if ($this->target_step_id !== null) {
             return null;
@@ -198,6 +222,8 @@ class Step
             return $this->memoizeStep($hashed_id);
         }
 
+        $this->triggerAfterMemoization();
+
         if ($this->target_step_id !== null) {
             return null;
         }
@@ -232,6 +258,8 @@ class Step
         if ($this->context->hasStep($hashed_id)) {
             return $this->memoizeStep($hashed_id);
         }
+
+        $this->triggerAfterMemoization();
 
         if ($this->target_step_id !== null) {
             return null;
@@ -276,6 +304,8 @@ class Step
         if ($this->context->hasStep($hashed_id)) {
             return $this->memoizeStep($hashed_id);
         }
+
+        $this->triggerAfterMemoization();
 
         if ($this->target_step_id !== null) {
             return null;
@@ -340,6 +370,8 @@ class Step
         if ($this->context->hasStep($hashed_id)) {
             return $this->memoizeStep($hashed_id);
         }
+
+        $this->triggerAfterMemoization();
 
         if ($this->target_step_id !== null) {
             return null;
