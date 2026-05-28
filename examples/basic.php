@@ -30,8 +30,8 @@ $hello_function = new InngestFunction(
         $event = $ctx->getEvent();
         $name = $event->getData()['name'] ?? 'World';
 
-        echo "Processing event: {$event->getName()}\n";
-        echo "Hello, {$name}!\n";
+        error_log("Processing event: {$event->getName()}");
+        error_log("Hello, {$name}!");
 
         return [
             'message' => "Hello, {$name}!",
@@ -47,14 +47,14 @@ $hello_function = new InngestFunction(
 // Define a function with steps
 $workflow_function = new InngestFunction(
     id: 'user-onboarding',
-    handler: function ($ctx) {
+    handler: function (\DealNews\Inngest\Function\FunctionContext $ctx) {
         $step = $ctx->getStep();
         $event = $ctx->getEvent();
         $user_id = $event->getData()['user_id'];
 
         // Step 1: Create user account
         $user = $step->run('create-account', function () use ($user_id) {
-            echo "Creating account for user: {$user_id}\n";
+            error_log("Creating account for user: {$user_id}");
             return [
                 'id' => $user_id,
                 'created_at' => time(),
@@ -63,17 +63,17 @@ $workflow_function = new InngestFunction(
 
         // Step 2: Send welcome email
         $step->run('send-welcome-email', function () use ($user) {
-            echo "Sending welcome email to user: {$user['id']}\n";
+            error_log("Sending welcome email to user: {$user['id']}");
             // In a real app, this would send an actual email
             return ['email_sent' => true];
         });
 
         // Step 3: Wait before sending follow-up
-        $step->sleep('wait-for-follow-up', '24h');
+        $step->sleep('wait-for-follow-up', '1m');
 
         // Step 4: Send follow-up email
         $step->run('send-follow-up', function () use ($user) {
-            echo "Sending follow-up email to user: {$user['id']}\n";
+            error_log("Sending follow-up email to user: {$user['id']}");
             return ['follow_up_sent' => true];
         });
 
@@ -96,7 +96,7 @@ $daily_report_function = new InngestFunction(
 
         // Gather data
         $data = $step->run('gather-data', function () {
-            echo "Gathering daily report data\n";
+            error_log("Gathering daily report data");
             return [
                 'users' => 150,
                 'orders' => 42,
@@ -106,7 +106,7 @@ $daily_report_function = new InngestFunction(
 
         // Generate report
         $report = $step->run('generate-report', function () use ($data) {
-            echo "Generating daily report\n";
+            error_log("Generating daily report");
             return [
                 'report_id' => uniqid('report_'),
                 'data' => $data,
@@ -116,7 +116,7 @@ $daily_report_function = new InngestFunction(
 
         // Send report
         $step->run('send-report', function () use ($report) {
-            echo "Sending daily report: {$report['report_id']}\n";
+            error_log("Sending daily report: {$report['report_id']}");
             return ['sent' => true];
         });
 

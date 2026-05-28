@@ -28,11 +28,11 @@ $payment_processor_function = new InngestFunction(
         $event = $ctx->getEvent();
         $order_id = $event->getData()['order_id'];
 
-        echo "Processing payment for order: {$order_id}\n";
+        error_log("Processing payment for order: {$order_id}");
 
         // Step 1: Charge the customer
         $charge = $step->run('charge-customer', function () use ($order_id) {
-            echo "  Charging customer for order: {$order_id}\n";
+            error_log("  Charging customer for order: {$order_id}");
             return [
                 'charge_id' => uniqid('CHG-'),
                 'amount' => 99.99,

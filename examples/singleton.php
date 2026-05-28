@@ -30,13 +30,13 @@ $client = new Inngest('singleton-example');
 $basic_skip_function = new InngestFunction(
     id: 'sync-third-party-api',
     handler: function ($ctx) {
-        echo "Starting third-party API sync...\n";
-        echo "This takes 5 minutes. New sync requests will be skipped.\n";
+        error_log("Starting third-party API sync...");
+        error_log("This takes 5 minutes. New sync requests will be skipped.");
         
         // Simulate long-running API sync
         sleep(2);
         
-        echo "API sync complete!\n";
+        error_log("API sync complete!");
         return ['status' => 'synced', 'timestamp' => time()];
     },
     triggers: [new TriggerEvent('api/sync.requested')],
@@ -52,15 +52,14 @@ $per_user_function = new InngestFunction(
     handler: function ($ctx) {
         $user_id = $ctx->getEvent()->getData()['user_id'];
         
-        echo "Processing export for user {$user_id}...\n";
-        echo "While this runs, other export requests for user ";
-        echo "{$user_id} will be skipped.\n";
-        echo "But exports for OTHER users can run concurrently.\n";
+        error_log("Processing export for user {$user_id}...");
+        error_log("While this runs, other export requests for user {$user_id} will be skipped.");
+        error_log("But exports for OTHER users can run concurrently.");
         
         // Simulate export generation
         sleep(1);
         
-        echo "Export complete for user {$user_id}!\n";
+        error_log("Export complete for user {$user_id}!");
         return ['user_id' => $user_id, 'export_url' => 'https://...'];
     },
     triggers: [new TriggerEvent('export/requested')],
@@ -80,14 +79,14 @@ $cancel_mode_function = new InngestFunction(
         $user_id = $ctx->getEvent()->getData()['user_id'];
         $version = $ctx->getEvent()->getData()['version'];
         
-        echo "Syncing profile for user {$user_id} (version {$version})...\n";
-        echo "If user updates profile again, THIS run will be cancelled.\n";
-        echo "The new run will start with the latest data.\n";
+        error_log("Syncing profile for user {$user_id} (version {$version})...");
+        error_log("If user updates profile again, THIS run will be cancelled.");
+        error_log("The new run will start with the latest data.");
         
         // Simulate profile sync
         sleep(1);
         
-        echo "Profile synced for user {$user_id} (version {$version})!\n";
+        error_log("Profile synced for user {$user_id} (version {$version})!");
         return [
             'user_id' => $user_id,
             'version' => $version,
@@ -112,13 +111,13 @@ $complex_key_function = new InngestFunction(
         $customer = $data['customer_id'];
         $region = $data['region'];
         
-        echo "Generating report for customer {$customer} in {$region}...\n";
-        echo "One report per customer-region pair at a time.\n";
+        error_log("Generating report for customer {$customer} in {$region}...");
+        error_log("One report per customer-region pair at a time.");
         
         // Simulate report generation
         sleep(1);
         
-        echo "Report complete for {$customer} in {$region}!\n";
+        error_log("Report complete for {$customer} in {$region}!");
         return [
             'customer_id' => $customer,
             'region' => $region,
@@ -142,13 +141,13 @@ $ai_processing_function = new InngestFunction(
         $data = $ctx->getEvent()->getData();
         $document_id = $data['document_id'];
         
-        echo "Starting AI processing for document {$document_id}...\n";
-        echo "This is expensive! Skip duplicate requests.\n";
+        error_log("Starting AI processing for document {$document_id}...");
+        error_log("This is expensive! Skip duplicate requests.");
         
         // Simulate AI processing
         sleep(2);
         
-        echo "AI processing complete for document {$document_id}!\n";
+        error_log("AI processing complete for document {$document_id}!");
         return [
             'document_id' => $document_id,
             'summary' => 'AI-generated summary...',

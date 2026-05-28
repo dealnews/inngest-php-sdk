@@ -28,7 +28,7 @@ $weather_notifier_function = new InngestFunction(
         $event = $ctx->getEvent();
         $location = $event->getData()['location'] ?? 'New York';
 
-        echo "Checking weather for: {$location}\n";
+        error_log("Checking weather for: {$location}");
 
         // Step 1: Fetch weather data from API (retriable)
         $weather_response = $step->fetch(
@@ -41,11 +41,11 @@ $weather_notifier_function = new InngestFunction(
             ]
         );
 
-        echo "  Weather API response received\n";
+        error_log("  Weather API response received");
 
         // Step 2: Process the response
         $analysis = $step->run('analyze-weather', function () use ($weather_response, $location) {
-            echo "  Analyzing weather data for {$location}\n";
+            error_log("  Analyzing weather data for {$location}");
 
             // In a real application, you would parse the actual weather data
             // For this example, we'll just return a structured response

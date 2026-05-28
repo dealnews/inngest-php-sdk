@@ -29,11 +29,11 @@ $payment_workflow_function = new InngestFunction(
         $event = $ctx->getEvent();
         $order_id = $event->getData()['order_id'];
 
-        echo "Starting payment workflow for order: {$order_id}\n";
+        error_log("Starting payment workflow for order: {$order_id}");
 
         // Step 1: Synchronous - Validate order
         $validation = $step->run('validate-order', function () use ($order_id) {
-            echo "  Validating order: {$order_id}\n";
+            error_log("  Validating order: {$order_id}");
             return ['valid' => true, 'total_amount' => 150.00];
         });
 
@@ -42,24 +42,24 @@ $payment_workflow_function = new InngestFunction(
         }
 
         // Step 2: Asynchronous - Wait for payment to be initiated
-        echo "  Waiting for payment initiation event...\n";
+        error_log("  Waiting for payment initiation event...");
         $payment_init = $step->waitForEvent(
             id: 'wait-for-payment-init',
             event: 'payment/initiated',
-            timeout: '30m',
+            timeout: '5m',
             if: 'event.data.order_id == async.data.order_id'
         );
 
         if ($payment_init === null) {
-            echo "  No payment initiation event received (first run)\n";
+            error_log("  No payment initiation event received (first run)");
             return ['status' => 'awaiting_payment', 'order_id' => $order_id];
         }
 
-        echo "  Payment initiated, processing...\n";
+        error_log("  Payment initiated, processing...");
 
         // Step 3: Synchronous - Process payment
         $payment_result = $step->run('process-payment', function () use ($validation, $payment_init) {
-            echo "  Processing payment with provider...\n";
+            error_log("  Processing payment with provider...");
             return [
                 'payment_id' => uniqid('PAY-'),
                 'amount' => $validation['total_amount'],
@@ -68,7 +68,7 @@ $payment_workflow_function = new InngestFunction(
         });
 
         // Step 4: Asynchronous - Wait for payment confirmation
-        echo "  Waiting for payment confirmation...\n";
+        error_log("  Waiting for payment confirmation...");
         $payment_confirm = $step->waitForEvent(
             id: 'wait-for-payment-confirm',
             event: 'payment/confirmed',
@@ -77,15 +77,15 @@ $payment_workflow_function = new InngestFunction(
         );
 
         if ($payment_confirm === null) {
-            echo "  No payment confirmation yet (will retry when event arrives)\n";
+            error_log("  No payment confirmation yet (will retry when event arrives)");
             return ['status' => 'awaiting_confirmation', 'order_id' => $order_id];
         }
 
-        echo "  Payment confirmed!\n";
+        error_log("  Payment confirmed!");
 
         // Step 5: Synchronous - Fulfill order
         $fulfillment = $step->run('fulfill-order', function () use ($order_id, $payment_result) {
-            echo "  Fulfilling order: {$order_id}\n";
+            error_log("  Fulfilling order: {$order_id}");
             return [
                 'fulfillment_id' => uniqid('FUL-'),
                 'status' => 'shipped',

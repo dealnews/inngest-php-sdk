@@ -29,13 +29,13 @@ $process_order_batch_function = new InngestFunction(
         $events = $ctx->getEvents();
         $count = count($events);
 
-        echo "Processing batch of {$count} orders\n";
+        error_log("Processing batch of {$count} orders");
 
         $processed = [];
         foreach ($events as $event) {
             $order_id = $event->getData()['order_id'] ?? 'unknown';
             $customer_id = $event->getData()['customer_id'] ?? 'unknown';
-            echo "  - Order ID: {$order_id}, Customer: {$customer_id}\n";
+            error_log("  - Order ID: {$order_id}, Customer: {$customer_id}");
 
             $processed[] = [
                 'order_id' => $order_id,

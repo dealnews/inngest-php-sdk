@@ -32,8 +32,8 @@ $basic_function = new InngestFunction(
         $event = $ctx->getEvent();
         $data = $event->getData();
         
-        echo "Processing final user input: {$data['text']}\n";
-        echo "User stopped typing!\n";
+        error_log("Processing final user input: {$data['text']}");
+        error_log("User stopped typing!");
         
         return ['status' => 'processed', 'text' => $data['text']];
     },
@@ -51,8 +51,8 @@ $per_user_function = new InngestFunction(
         $event = $ctx->getEvent();
         $data = $event->getData();
         
-        echo "Syncing data for user: {$data['user_id']}\n";
-        echo "No more updates received, syncing now...\n";
+        error_log("Syncing data for user: {$data['user_id']}");
+        error_log("No more updates received, syncing now...");
         
         return ['status' => 'synced', 'user_id' => $data['user_id']];
     },
@@ -73,8 +73,8 @@ $webhook_function = new InngestFunction(
         $event = $ctx->getEvent();
         $data = $event->getData();
         
-        echo "Processing webhook for customer: {$data['customer_id']}\n";
-        echo "Either events stopped or timeout reached\n";
+        error_log("Processing webhook for customer: {$data['customer_id']}");
+        error_log("Either events stopped or timeout reached");
         
         return ['status' => 'processed', 'customer_id' => $data['customer_id']];
     },
@@ -95,8 +95,7 @@ $complex_function = new InngestFunction(
         $event = $ctx->getEvent();
         $data = $event->getData();
         
-        echo "Aggregating metrics for customer {$data['customer_id']} ";
-        echo "in region {$data['region']}\n";
+        error_log("Aggregating metrics for customer {$data['customer_id']} in region {$data['region']}");
         
         return [
             'status' => 'aggregated',

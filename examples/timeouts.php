@@ -28,21 +28,21 @@ $long_running_function = new InngestFunction(
         $step = $ctx->getStep();
         $event = $ctx->getEvent();
 
-        echo "Starting long-running task\n";
+        error_log("Starting long-running task");
 
         // Step 1: Initial work
         $step->run('initial-work', function () {
-            echo "Doing initial work...\n";
+            error_log("Doing initial work...");
             return ['work_id' => uniqid('WORK-')];
         });
 
         // Step 2: Long wait - takes up most of the 2-hour finish timeout
-        echo "Sleeping for 1 hour 59 minutes...\n";
+        error_log("Sleeping for 1 hour 59 minutes...");
         $step->sleep('long-sleep', '119m');
 
         // Step 3: Final work just before timeout
         $result = $step->run('final-work', function () {
-            echo "Completing final work before timeout\n";
+            error_log("Completing final work before timeout");
             return ['completed' => true];
         });
 

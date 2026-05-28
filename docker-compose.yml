@@ -1,0 +1,135 @@
+name: inngest-php-sdk
+
+# The inngest service always starts. Example services can be started by their names so you can
+# run one at a time:
+#
+#   docker compose up inngest               # just the dev server
+#   docker compose up batch-events          # inngest + batch-events
+#   docker compose up middleware            # inngest + middleware
+#
+# Open the dev UI at http://localhost:8288 to send events and watch runs.
+# PHP stdout (function logs) appears in the container logs:
+#
+#   docker compose logs -f batch-events
+
+x-php-env: &php-env
+  INNGEST_DEV: "http://inngest:8288"
+  INNGEST_SIGNING_KEY: "signkey-test-12345678"
+
+services:
+
+  inngest:
+    image: inngest/inngest
+    command: >
+      inngest dev
+      -u http://basic:8000/api/inngest
+      -u http://batch-events:8000/api/inngest
+      -u http://cancel:8000/api/inngest
+      -u http://timeouts:8000/api/inngest
+      -u http://step-send-event:8000/api/inngest
+      -u http://step-fetch:8000/api/inngest
+      -u http://step-ai:8000/api/inngest
+      -u http://middleware:8000/api/inngest
+      -u http://checkpointing:8000/api/inngest
+    ports:
+      - "8288:8288"
+
+  basic:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/basic.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest
+
+  batch-events:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/batch-events.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest
+
+  cancel:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/cancel.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest
+
+  timeouts:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/timeouts.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest
+
+  step-send-event:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/step-send-event.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest
+
+  step-fetch:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/step-fetch.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest
+
+  step-ai:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/step-ai.php
+    environment:
+      <<: *php-env
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+    depends_on:
+      - inngest
+
+  middleware:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/middleware.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest
+
+  checkpointing:
+    image: php:8.4-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: php -S 0.0.0.0:8000 examples/checkpointing.php
+    environment:
+      <<: *php-env
+    depends_on:
+      - inngest

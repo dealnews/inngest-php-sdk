@@ -25,7 +25,7 @@ $simple_rate_limit = new InngestFunction(
         $event = $ctx->getEvent();
         $user_id = $event->getData()['user_id'];
         
-        echo "Sending notification to user {$user_id}\n";
+        error_log("Sending notification to user {$user_id}");
         
         // Send notification logic here
         
@@ -42,7 +42,7 @@ $per_user_rate_limit = new InngestFunction(
         $event = $ctx->getEvent();
         $user_id = $event->getData()['user_id'];
         
-        echo "Sending notification to user {$user_id}\n";
+        error_log("Sending notification to user {$user_id}");
         
         return ['sent' => true];
     },
@@ -65,14 +65,14 @@ $api_sync = new InngestFunction(
         
         // Fetch data from external API
         $data = $step->run('fetch-data', function () use ($customer_id) {
-            echo "Fetching data for customer {$customer_id}\n";
+            error_log("Fetching data for customer {$customer_id}");
             // API call here
             return ['items' => []];
         });
         
         // Process the data
         $step->run('process-data', function () use ($data) {
-            echo "Processing " . count($data['items']) . " items\n";
+            error_log("Processing " . count($data['items']) . " items");
             // Process items
         });
         
@@ -93,7 +93,7 @@ $webhook_processor = new InngestFunction(
         $event = $ctx->getEvent();
         $data = $event->getData();
         
-        echo "Processing webhook for {$data['account_id']}/{$data['region']}\n";
+        error_log("Processing webhook for {$data['account_id']}/{$data['region']}");
         
         return ['processed' => true];
     },

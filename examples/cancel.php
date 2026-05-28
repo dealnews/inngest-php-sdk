@@ -29,11 +29,11 @@ $process_order_function = new InngestFunction(
         $event = $ctx->getEvent();
         $order_id = $event->getData()['order_id'];
 
-        echo "Starting order processing for: {$order_id}\n";
+        error_log("Starting order processing for: {$order_id}");
 
         // Step 1: Validate order
         $validation = $step->run('validate-order', function () use ($order_id) {
-            echo "  Validating order: {$order_id}\n";
+            error_log("  Validating order: {$order_id}");
             return ['valid' => true];
         });
 
@@ -42,18 +42,18 @@ $process_order_function = new InngestFunction(
         }
 
         // Step 2: Long wait for payment processing
-        echo "  Waiting for payment processing (can be cancelled during this step)...\n";
-        $step->sleep('wait-for-payment', '30m');
+        error_log("  Waiting for payment processing (can be cancelled during this step)...");
+        $step->sleep('wait-for-payment', '5m');
 
         // Step 3: Process payment
         $payment = $step->run('process-payment', function () use ($order_id) {
-            echo "  Processing payment for: {$order_id}\n";
+            error_log("  Processing payment for: {$order_id}");
             return ['payment_id' => uniqid('PAY-')];
         });
 
         // Step 4: Fulfill order
         $step->run('fulfill-order', function () use ($order_id) {
-            echo "  Fulfilling order: {$order_id}\n";
+            error_log("  Fulfilling order: {$order_id}");
             return ['fulfilled' => true];
         });
 

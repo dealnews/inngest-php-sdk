@@ -35,7 +35,7 @@ class PerformanceLoggingMiddleware extends AbstractMiddleware
     {
         $event = $ctx->getEvent();
         $run_id = $ctx->getRunId();
-        echo "[MW] transformInput: Run {$run_id} triggered by {$event->getName()}\n";
+        error_log("[MW] transformInput: Run {$run_id} triggered by {$event->getName()}");
     }
 
     /**
@@ -45,7 +45,7 @@ class PerformanceLoggingMiddleware extends AbstractMiddleware
     {
         $this->start_time = microtime(true);
         $run_id = $ctx->getRunId();
-        echo "[MW] beforeExecution: Starting timer for run {$run_id}\n";
+        error_log("[MW] beforeExecution: Starting timer for run {$run_id}");
     }
 
     /**
@@ -56,7 +56,7 @@ class PerformanceLoggingMiddleware extends AbstractMiddleware
         if ($this->start_time !== null) {
             $duration = (microtime(true) - $this->start_time) * 1000;
             $run_id = $ctx->getRunId();
-            echo "[MW] afterExecution: Run {$run_id} took {$duration}ms\n";
+            error_log("[MW] afterExecution: Run {$run_id} took {$duration}ms");
         }
     }
 
@@ -67,9 +67,9 @@ class PerformanceLoggingMiddleware extends AbstractMiddleware
     {
         $run_id = $ctx->getRunId();
         if ($error !== null) {
-            echo "[MW] transformOutput: Run {$run_id} had error: {$error->getMessage()}\n";
+            error_log("[MW] transformOutput: Run {$run_id} had error: {$error->getMessage()}");
         } else {
-            echo "[MW] transformOutput: Run {$run_id} succeeded with result\n";
+            error_log("[MW] transformOutput: Run {$run_id} succeeded with result");
         }
     }
 
@@ -78,7 +78,7 @@ class PerformanceLoggingMiddleware extends AbstractMiddleware
      */
     public function beforeSendEvents(array &$events): void
     {
-        echo "[MW] beforeSendEvents: Adding source metadata to " . count($events) . " event(s)\n";
+        error_log("[MW] beforeSendEvents: Adding source metadata to " . count($events) . " event(s)");
         foreach ($events as &$event) {
             if (!isset($event['data'])) {
                 $event['data'] = [];
@@ -94,9 +94,9 @@ class PerformanceLoggingMiddleware extends AbstractMiddleware
     public function afterSendEvents(array $event_ids, ?\Throwable $error = null): void
     {
         if ($error !== null) {
-            echo "[MW] afterSendEvents: Error sending events: {$error->getMessage()}\n";
+            error_log("[MW] afterSendEvents: Error sending events: {$error->getMessage()}");
         } else {
-            echo "[MW] afterSendEvents: Successfully sent " . count($event_ids) . " event(s)\n";
+            error_log("[MW] afterSendEvents: Successfully sent " . count($event_ids) . " event(s)");
         }
     }
 }
@@ -110,7 +110,7 @@ class EventDetailLoggingMiddleware extends AbstractMiddleware
     {
         $event = $ctx->getEvent();
         $event_data = json_encode($event->getData(), JSON_PRETTY_PRINT);
-        echo "[DETAIL] Event data for {$event->getName()}:\n{$event_data}\n";
+        error_log("[DETAIL] Event data for {$event->getName()}:\n{$event_data}");
     }
 }
 
@@ -128,11 +128,11 @@ $user_signup_function = new InngestFunction(
         $event = $ctx->getEvent();
         $user_email = $event->getData()['email'] ?? 'unknown';
 
-        echo "Processing user signup for: {$user_email}\n";
+        error_log("Processing user signup for: {$user_email}");
 
         // Step 1: Create user account
         $user = $step->run('create-account', function () use ($user_email) {
-            echo "  Creating account...\n";
+            error_log("  Creating account...");
             return [
                 'user_id' => uniqid('USER-'),
                 'email' => $user_email,
@@ -142,7 +142,7 @@ $user_signup_function = new InngestFunction(
 
         // Step 2: Send welcome email
         $step->run('send-welcome-email', function () use ($user) {
-            echo "  Sending welcome email to {$user['email']}\n";
+            error_log("  Sending welcome email to {$user['email']}");
             return ['email_sent' => true];
         });
 

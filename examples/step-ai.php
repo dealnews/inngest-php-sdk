@@ -29,7 +29,7 @@ $content_moderator_function = new InngestFunction(
         $content = $event->getData()['content'] ?? '';
         $content_id = $event->getData()['content_id'] ?? uniqid();
 
-        echo "Moderating content: {$content_id}\n";
+        error_log("Moderating content: {$content_id}");
 
         // Step 1: Use AI to analyze content moderation
         $moderation_response = $step->ai()->infer(
@@ -55,11 +55,11 @@ $content_moderator_function = new InngestFunction(
             format: 'json'
         );
 
-        echo "  AI moderation complete\n";
+        error_log("  AI moderation complete");
 
         // Step 2: Process the moderation result
         $decision = $step->run('make-decision', function () use ($moderation_response, $content_id) {
-            echo "  Making moderation decision for: {$content_id}\n";
+            error_log("  Making moderation decision for: {$content_id}");
 
             // Parse the AI response
             $is_safe = true;
