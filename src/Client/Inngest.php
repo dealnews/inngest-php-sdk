@@ -97,7 +97,10 @@ class Inngest
     {
         $event_key = $this->config->getEventKey();
         if ($event_key === null) {
-            throw new \Exception('No event key configured');
+            if (!$this->config->isDev()) {
+                throw new \Exception('No event key configured');
+            }
+            $event_key = 'local';
         }
 
         $events_array = is_array($events) ? $events : [$events];

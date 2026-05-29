@@ -486,8 +486,9 @@ class ServeHandler
         // Handle errors
         if ($exec_error !== null) {
             $error_mw = $exec_error;
+            $no_step = null;
             foreach ($middleware as $mw) {
-                $mw->transformOutput($function_context, $result, $error_mw, null);
+                $mw->transformOutput($function_context, $result, $error_mw, $no_step);
             }
             if ($exec_error instanceof NonRetriableError) {
                 return $this->errorResponse($exec_error, false);
@@ -501,8 +502,9 @@ class ServeHandler
             return $this->errorResponse($exec_error, true);
         }
 
+        $no_step = null;
         foreach ($middleware as $mw) {
-            $mw->transformOutput($function_context, $result, $exec_error, null);
+            $mw->transformOutput($function_context, $result, $exec_error, $no_step);
         }
 
         if (is_array($result)) {
