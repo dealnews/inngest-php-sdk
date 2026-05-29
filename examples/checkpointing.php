@@ -17,6 +17,7 @@ use DealNews\Inngest\Event\Event;
 use DealNews\Inngest\Function\InngestFunction;
 use DealNews\Inngest\Function\TriggerEvent;
 use DealNews\Inngest\Http\ServeHandler;
+use DealNews\Inngest\Error\NonRetriableError;
 
 // Create the Inngest client
 $client = new Inngest('checkpointing-app');
@@ -68,17 +69,24 @@ $payment_workflow_function = new InngestFunction(
         });
 
         // Step 4: Asynchronous - Wait for payment confirmation
+        // CEL can only reference the original trigger event and the incoming event,
+        // so we route by order_id, then verify the payment_id in code below.
         error_log("  Waiting for payment confirmation...");
         $payment_confirm = $step->waitForEvent(
             id: 'wait-for-payment-confirm',
             event: 'payment/confirmed',
             timeout: '5m',
-            if: 'event.data.payment_id == async.data.payment_id'
+            if: 'event.data.order_id == async.data.order_id'
         );
 
         if ($payment_confirm === null) {
             error_log("  No payment confirmation yet (will retry when event arrives)");
             return ['status' => 'awaiting_confirmation', 'order_id' => $order_id];
+        }
+
+        if (($payment_confirm['payment_id'] ?? null) !== $payment_result['payment_id']) {
+            error_log("  Payment confirmation mismatch — unexpected payment_id: " . var_export($payment_confirm, true));
+            throw new NonRetriableError('Payment confirmation mismatch, received payment_id: ' . ($payment_confirm['payment_id'] ?? 'null'));
         }
 
         error_log("  Payment confirmed!");
@@ -101,7 +109,7 @@ $payment_workflow_function = new InngestFunction(
         ];
     },
     triggers: [new TriggerEvent('order/process')],
-    checkpointing: true  // Enable checkpointing to reduce round-trips
+    checkpointing: new \DealNews\Inngest\Function\Checkpoint(0, "3s")  // Enable checkpointing to reduce round-trips
 );
 
 // Register the function
@@ -151,11 +159,12 @@ if (php_sapi_name() === 'cli') {
     echo "  3. process-payment (sync step - runs)\n";
     echo "  4. wait-for-payment-confirm (async step - returns null, exits)\n";
     echo "  5. Function returns 'awaiting_confirmation'\n\n";
-    echo "When payment/confirmed event arrives:\n";
+    echo "When payment/confirmed event arrives (must include order_id + payment_id):\n";
     echo "  1. Previous steps skipped (cached)\n";
     echo "  2. wait-for-payment-confirm (returns event data - continues)\n";
-    echo "  3. fulfill-order (sync step - runs)\n";
-    echo "  4. Function returns 'completed'\n\n";
+    echo "  3. payment_id verified against process-payment result in code\n";
+    echo "  4. fulfill-order (sync step - runs)\n";
+    echo "  5. Function returns 'completed'\n\n";
     echo "Benefits of checkpointing:\n";
     echo "- Sync steps run only once, then cached\n";
     echo "- No re-execution of expensive operations\n";

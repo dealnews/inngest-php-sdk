@@ -284,8 +284,7 @@ class Step
         }
 
         $this->executed_step = $step_data;
-        \Fiber::suspend($this->executed_step);
-        return null;
+        return \Fiber::suspend($this->executed_step);
     }
 
     /**

@@ -316,6 +316,8 @@ class ServeHandler
     {
         $ctx_data = $payload['ctx'] ?? [];
         $run_id = $ctx_data['run_id'] ?? '';
+        $qi_id = $ctx_data['qi_id'] ?? null;
+        $fn_id = $query['fnId'] ?? '';
 
         if (!empty($ctx_data['use_api']) && $ctx_data['use_api'] === true) {
             $api_payload = $this->fetchPayloadFromApi($run_id);
@@ -394,6 +396,35 @@ class ServeHandler
             $exec_error = $e;
         } catch (\Throwable $e) {
             $exec_error = $e;
+        }
+
+        // Checkpointing: for sync opcodes (StepRun only), POST results to the checkpoint API
+        // and resume the fiber with the actual step data so the next step gets the real value.
+        // On async opcode (Sleep, WaitForEvent, etc.) or checkpoint failure, fall back to 206.
+        if ($fiber->isSuspended() && $function->isCheckpointing() && $run_id !== '') {
+            while ($fiber->isSuspended() && $exec_error === null) {
+                if (($step_suspension['op'] ?? null) !== 'StepRun') {
+                    break; // async opcode — yield with 206 below
+                }
+
+                if (!$this->checkpointSteps($run_id, $fn_id, $qi_id, [$step_suspension])) {
+                    break; // checkpoint failed — fall back to 206 below
+                }
+
+                $resume_value = $step_suspension['data'] ?? null;
+                $step_suspension = null;
+                try {
+                    $step_suspension = $fiber->resume($resume_value);
+                } catch (NonRetriableError $e) {
+                    $exec_error = $e;
+                } catch (RetryAfterError $e) {
+                    $exec_error = $e;
+                } catch (StepError $e) {
+                    $exec_error = $e;
+                } catch (\Throwable $e) {
+                    $exec_error = $e;
+                }
+            }
         }
 
         if ($fiber->isSuspended()) {
@@ -705,11 +736,9 @@ class ServeHandler
     }
 
     /**
-     * Checkpoint async steps via the Inngest API
-     *
-     * @param array<mixed> $async_steps
+     * @param array<mixed> $steps
      */
-    private function checkpointSteps(string $run_id, array $async_steps): bool
+    private function checkpointSteps(string $run_id, string $fn_id, ?string $qi_id, array $steps): bool
     {
         $config = $this->client->getConfig();
         $api_origin = $config->getApiBaseUrl();
@@ -719,8 +748,13 @@ class ServeHandler
             return false;
         }
 
-        $url = $api_origin . '/v0/runs/' . $run_id . '/actions/checkpoint';
-        $body = json_encode($async_steps);
+        $url = $api_origin . '/v1/checkpoint/' . $run_id . '/async';
+        $body = json_encode([
+            'run_id' => $run_id,
+            'fn_id' => $fn_id,
+            'qi_id' => $qi_id,
+            'steps' => $steps,
+        ]);
 
         $delays = [100000, 200000, 400000]; // microseconds: 100ms, 200ms, 400ms
 

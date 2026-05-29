@@ -31,7 +31,7 @@ class InngestFunction
      * @param Timeouts|null $timeouts Optional timeout configuration for start and finish operations
      * @param BatchEvents|null $batch_events Optional batch event configuration
      * @param array<Cancel>|null $cancel Optional array of cancellation triggers
-     * @param bool $checkpointing Whether to enable checkpointing for this function
+     * @param Checkpoint|null $checkpointing Optional checkpointing configuration; null disables checkpointing
      */
     public function __construct(
         protected string $id,
@@ -50,7 +50,7 @@ class InngestFunction
         protected ?Timeouts $timeouts = null,
         protected ?BatchEvents $batch_events = null,
         protected ?array $cancel = null,
-        protected bool $checkpointing = false
+        protected ?Checkpoint $checkpointing = null
     ) {
         if (empty($triggers)) {
             throw new \InvalidArgumentException('Function must have at least one trigger');
@@ -182,6 +182,11 @@ class InngestFunction
 
     public function isCheckpointing(): bool
     {
+        return $this->checkpointing !== null;
+    }
+
+    public function getCheckpoint(): ?Checkpoint
+    {
         return $this->checkpointing;
     }
 
@@ -218,8 +223,8 @@ class InngestFunction
             ],
         ];
 
-        if ($this->checkpointing) {
-            $data['steps']['step']['checkpoint'] = ['enabled' => true];
+        if ($this->checkpointing !== null) {
+            $data['steps']['step']['checkpoint'] = $this->checkpointing->toArray();
         }
 
         if ($this->description !== null) {

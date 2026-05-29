@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Tests\Unit;
 
+use DealNews\Inngest\Function\Checkpoint;
 use DealNews\Inngest\Function\Concurrency;
 use DealNews\Inngest\Function\Debounce;
 use DealNews\Inngest\Function\InngestFunction;
@@ -1427,12 +1428,14 @@ class InngestFunctionTest extends TestCase
             id: 'test-function',
             handler: fn() => 'result',
             triggers: [new TriggerEvent('test/event')],
-            checkpointing: true
+            checkpointing: new Checkpoint()
         );
         $this->assertTrue($function->isCheckpointing());
         $array = $function->toArray();
         $this->assertArrayHasKey('checkpoint', $array['steps']['step']);
-        $this->assertTrue($array['steps']['step']['checkpoint']['enabled']);
+        $this->assertSame(0, $array['steps']['step']['checkpoint']['batch_steps']);
+        $this->assertSame('0s', $array['steps']['step']['checkpoint']['batch_interval']);
+        $this->assertSame('0s', $array['steps']['step']['checkpoint']['max_runtime']);
     }
 
     public function testFunctionWithoutCheckpointing(): void
