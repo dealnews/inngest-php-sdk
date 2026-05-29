@@ -342,6 +342,7 @@ class ServeHandler
         );
 
         $step = new Step($step_context);
+        $step->setSendCallback(fn(array $events) => $this->client->send($events));
 
         if ($step_id !== null && $step_id !== 'step') {
             $step->setTargetStepId($step_id);

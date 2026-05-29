@@ -24,6 +24,9 @@ class Step
     /** @var callable|null */
     protected $after_memoization_callback = null;
 
+    /** @var callable|null */
+    protected $send_callback = null;
+
     protected bool $after_memoization_called = false;
 
     public function __construct(protected StepContext $context)
@@ -33,6 +36,11 @@ class Step
     public function setAfterMemoizationCallback(callable $callback): void
     {
         $this->after_memoization_callback = $callback;
+    }
+
+    public function setSendCallback(callable $callback): void
+    {
+        $this->send_callback = $callback;
     }
 
     private function triggerAfterMemoization(): void
@@ -137,7 +145,14 @@ class Step
     {
         $events_array = is_array($events) ? $events : [$events];
 
-        return $this->_executeStep($id, 'SendEvent', ['payload' => array_map(fn($e) => $e->toArray(), $events_array)]);
+        $send = $this->send_callback;
+
+        return $this->run($id, function () use ($events_array, $send) {
+            if ($send === null) {
+                throw new \RuntimeException('Step::sendEvent requires a send callback — call setSendCallback() before use');
+            }
+            return $send($events_array);
+        });
     }
 
     /**

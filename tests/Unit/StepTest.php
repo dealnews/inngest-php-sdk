@@ -312,17 +312,25 @@ class StepTest extends TestCase
         );
 
         $step = new Step($context);
+
+        $received_events = null;
+        $step->setSendCallback(function (array $events) use (&$received_events) {
+            $received_events = $events;
+            return ['ids' => ['event-id-1']];
+        });
+
         $event = new \DealNews\Inngest\Event\Event('test/event', ['key' => 'value']);
 
         $fiber = new \Fiber(fn() => $step->sendEvent('send-notification', $event));
         $executed = $fiber->start();
 
         $this->assertTrue($fiber->isSuspended());
-        $this->assertSame('SendEvent', $executed['op']);
+        $this->assertSame('StepRun', $executed['op']);
         $this->assertSame('send-notification', $executed['displayName']);
-        $this->assertArrayHasKey('payload', $executed['opts']);
-        $this->assertCount(1, $executed['opts']['payload']);
-        $this->assertSame('test/event', $executed['opts']['payload'][0]['name']);
+        $this->assertArrayHasKey('data', $executed);
+        $this->assertSame(['ids' => ['event-id-1']], $executed['data']);
+        $this->assertCount(1, $received_events);
+        $this->assertSame('test/event', $received_events[0]->getName());
     }
 
     public function testFetch(): void
