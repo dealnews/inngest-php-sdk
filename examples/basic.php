@@ -88,6 +88,108 @@ $workflow_function = new InngestFunction(
     name: 'User Onboarding Workflow'
 );
 
+// Demonstrates that inngest will pick up where it left off if a step fails
+$first_attempt_fail_step = new InngestFunction(
+    id: 'first-attempt-fail-step',
+    handler: function (\DealNews\Inngest\Function\FunctionContext $ctx) {
+        $step = $ctx->getStep();
+        $attempt = $ctx->getAttempt();
+
+        $step->run('initial-step', function () {
+            error_log("Running initial-step");
+            return [
+                'ran' => true,
+            ];
+        });
+
+        $failed_return = $step->run('first-attempt-fail', function () use ($attempt) {
+            error_log("Running first-attempt-fail step");
+            if ($attempt <= 0) {
+                throw new \RuntimeException('First attempt fail step failed');
+            }
+            return [
+                'attempt' => $attempt,
+            ];
+        });
+
+        if (empty($failed_return) || !is_array($failed_return) || !array_key_exists('attempt', $failed_return) || $failed_return['attempt'] <= 0) {
+            return [
+                'status' => 'failed',
+                'failed_return' => $failed_return ?? null,
+            ];
+        }
+
+        $step->run('standard-step-1', function () use ($failed_return) {
+            $attempt_value = 'Unknown';
+            if (!empty($failed_return) && is_array($failed_return) && array_key_exists('attempt', $failed_return)) {
+                $attempt_value = $failed_return['attempt'];
+            }
+            error_log("Running standard-step-1: {$attempt_value}");
+            return [
+                'ran' => true,
+                'attempt_value' => $attempt_value,
+            ];
+        });
+
+        $step->run('standard-step-2', function () use ($failed_return) {
+            $attempt_value = 'Unknown';
+            if (!empty($failed_return) && is_array($failed_return) && array_key_exists('attempt', $failed_return)) {
+                $attempt_value = $failed_return['attempt'];
+            }
+            error_log("Running standard-step-2: {$attempt_value}");
+            return [
+                'ran' => true,
+                'attempt_value' => $attempt_value,
+            ];
+        });
+
+        $step->run('standard-step-3', function () use ($failed_return) {
+            $attempt_value = 'Unknown';
+            if (!empty($failed_return) && is_array($failed_return) && array_key_exists('attempt', $failed_return)) {
+                $attempt_value = $failed_return['attempt'];
+            }
+            error_log("Running standard-step-3: {$attempt_value}");
+            return [
+                'ran' => true,
+                'attempt_value' => $attempt_value,
+            ];
+        });
+
+        $step->run('standard-step-4', function () use ($failed_return) {
+            $attempt_value = 'Unknown';
+            if (!empty($failed_return) && is_array($failed_return) && array_key_exists('attempt', $failed_return)) {
+                $attempt_value = $failed_return['attempt'];
+            }
+            error_log("Running standard-step-4: {$attempt_value}");
+            return [
+                'ran' => true,
+                'attempt_value' => $attempt_value,
+            ];
+        });
+
+        $step->run('standard-step-5', function () use ($failed_return) {
+            $attempt_value = 'Unknown';
+            if (!empty($failed_return) && is_array($failed_return) && array_key_exists('attempt', $failed_return)) {
+                $attempt_value = $failed_return['attempt'];
+            }
+            error_log("Running standard-step-5: {$attempt_value}");
+            return [
+                'ran' => true,
+                'attempt_value' => $attempt_value,
+            ];
+        });
+
+        return [
+            'status' => 'complete',
+            'failed_return' => $failed_return,
+        ];
+    },
+    triggers: [
+        new TriggerEvent('basic/first-attempt')
+    ],
+    name: 'First Attempt Fail Step'
+);
+
 // Define a cron-triggered function
 $daily_report_function = new InngestFunction(
     id: 'daily-report',
@@ -132,6 +234,7 @@ $daily_report_function = new InngestFunction(
 $client->registerFunction($hello_function);
 $client->registerFunction($workflow_function);
 $client->registerFunction($daily_report_function);
+$client->registerFunction($first_attempt_fail_step);
 
 // Create the serve handler
 $handler = new ServeHandler($client, '/api/inngest');

@@ -12,13 +12,8 @@ use DealNews\Inngest\Event\Event;
  */
 class Step
 {
-    /** @var array<string> */
-    protected array $planned_steps = [];
-
     /** @var array<string, int> */
     protected array $step_counts = [];
-
-    protected int $total_steps = 0;
 
     protected ?string $target_step_id = null;
 
@@ -63,6 +58,11 @@ class Step
         return $this->executed_step !== null;
     }
 
+    public function wasAfterMemoizationCalled(): bool
+    {
+        return $this->after_memoization_called;
+    }
+
     /**
      * Execute a retriable block of code
      *
@@ -73,53 +73,7 @@ class Step
      */
     public function run(string $id, callable $fn): mixed
     {
-        $hashed_id = $this->hashId($id);
-
-        if ($this->context->hasStep($hashed_id)) {
-            return $this->memoizeStep($hashed_id);
-        }
-
-        $this->triggerAfterMemoization();
-
-        if ($this->target_step_id !== null) {
-            if ($hashed_id === $this->target_step_id) {
-                try {
-                    $result = $fn();
-                    $this->executed_step = [
-                        'id' => $hashed_id,
-                        'op' => 'StepRun',
-                        'displayName' => $id,
-                        'data' => $result,
-                    ];
-                    throw new \DealNews\Inngest\Error\StepCompletedException($this->executed_step);
-                } catch (\DealNews\Inngest\Error\StepCompletedException $e) {
-                    throw $e;
-                } catch (\Throwable $e) {
-                    $this->executed_step = [
-                        'id' => $hashed_id,
-                        'op' => 'StepError',
-                        'displayName' => $id,
-                        'error' => [
-                            'name' => get_class($e),
-                            'message' => $e->getMessage(),
-                            'stack' => $e->getTraceAsString(),
-                        ],
-                    ];
-                    throw new \DealNews\Inngest\Error\StepCompletedException($this->executed_step);
-                }
-            }
-            return null;
-        }
-
-        $this->planned_steps[] = [
-            'id' => $hashed_id,
-            'op' => 'StepPlanned',
-            'displayName' => $id,
-        ];
-
-        $this->total_steps++;
-
-        return $fn();
+        return $this->_executeStep($id, ['StepRun', 'StepError'], null, $fn);
     }
 
     /**
@@ -132,32 +86,9 @@ class Step
      */
     public function sleep(string $id, string|int $duration): mixed
     {
-        $hashed_id = $this->hashId($id);
-
-        if ($this->context->hasStep($hashed_id)) {
-            return $this->memoizeStep($hashed_id);
-        }
-
-        $this->triggerAfterMemoization();
-
-        if ($this->target_step_id !== null) {
-            return null;
-        }
-
         $duration_str = is_int($duration) ? "{$duration}s" : $duration;
 
-        $this->planned_steps[] = [
-            'id' => $hashed_id,
-            'op' => 'Sleep',
-            'displayName' => $id,
-            'opts' => [
-                'duration' => $duration_str,
-            ],
-        ];
-
-        $this->total_steps++;
-
-        return null;
+        return $this->_executeStep($id, 'Sleep', ['duration' => $duration_str]);
     }
 
     /**
@@ -172,37 +103,12 @@ class Step
      */
     public function waitForEvent(string $id, string $event, string $timeout, ?string $if = null): ?array
     {
-        $hashed_id = $this->hashId($id);
-
-        if ($this->context->hasStep($hashed_id)) {
-            return $this->memoizeStep($hashed_id);
-        }
-
-        $this->triggerAfterMemoization();
-
-        if ($this->target_step_id !== null) {
-            return null;
-        }
-
-        $opts = [
-            'event' => $event,
-            'timeout' => $timeout,
-        ];
-
+        $opts = ['event' => $event, 'timeout' => $timeout];
         if ($if !== null) {
             $opts['if'] = $if;
         }
 
-        $this->planned_steps[] = [
-            'id' => $hashed_id,
-            'op' => 'WaitForEvent',
-            'displayName' => $id,
-            'opts' => $opts,
-        ];
-
-        $this->total_steps++;
-
-        return null;
+        return $this->_executeStep($id, 'WaitForEvent', $opts);
     }
 
     /**
@@ -216,31 +122,7 @@ class Step
      */
     public function invoke(string $id, string $function_id, array $payload): mixed
     {
-        $hashed_id = $this->hashId($id);
-
-        if ($this->context->hasStep($hashed_id)) {
-            return $this->memoizeStep($hashed_id);
-        }
-
-        $this->triggerAfterMemoization();
-
-        if ($this->target_step_id !== null) {
-            return null;
-        }
-
-        $this->planned_steps[] = [
-            'id' => $hashed_id,
-            'op' => 'InvokeFunction',
-            'displayName' => $id,
-            'opts' => [
-                'function_id' => $function_id,
-                'payload' => $payload,
-            ],
-        ];
-
-        $this->total_steps++;
-
-        return null;
+        return $this->_executeStep($id, 'InvokeFunction', ['function_id' => $function_id, 'payload' => $payload]);
     }
 
     /**
@@ -253,32 +135,9 @@ class Step
      */
     public function sendEvent(string $id, Event|array $events): mixed
     {
-        $hashed_id = $this->hashId($id);
-
-        if ($this->context->hasStep($hashed_id)) {
-            return $this->memoizeStep($hashed_id);
-        }
-
-        $this->triggerAfterMemoization();
-
-        if ($this->target_step_id !== null) {
-            return null;
-        }
-
         $events_array = is_array($events) ? $events : [$events];
 
-        $this->planned_steps[] = [
-            'id' => $hashed_id,
-            'op' => 'SendEvent',
-            'displayName' => $id,
-            'opts' => [
-                'payload' => array_map(fn($e) => $e->toArray(), $events_array),
-            ],
-        ];
-
-        $this->total_steps++;
-
-        return null;
+        return $this->_executeStep($id, 'SendEvent', ['payload' => array_map(fn($e) => $e->toArray(), $events_array)]);
     }
 
     /**
@@ -299,41 +158,15 @@ class Step
         ?array $headers = null,
         mixed $body = null
     ): mixed {
-        $hashed_id = $this->hashId($id);
-
-        if ($this->context->hasStep($hashed_id)) {
-            return $this->memoizeStep($hashed_id);
-        }
-
-        $this->triggerAfterMemoization();
-
-        if ($this->target_step_id !== null) {
-            return null;
-        }
-
-        $opts = [
-            'url' => $url,
-            'method' => $method,
-        ];
-
+        $opts = ['url' => $url, 'method' => $method];
         if ($headers !== null) {
             $opts['headers'] = $headers;
         }
-
         if ($body !== null) {
             $opts['body'] = $body;
         }
 
-        $this->planned_steps[] = [
-            'id' => $hashed_id,
-            'op' => 'Gateway',
-            'displayName' => $id,
-            'opts' => $opts,
-        ];
-
-        $this->total_steps++;
-
-        return null;
+        return $this->_executeStep($id, 'Gateway', $opts);
     }
 
     /**
@@ -365,54 +198,15 @@ class Step
         ?array $headers = null,
         ?string $format = null
     ): mixed {
-        $hashed_id = $this->hashId($id);
-
-        if ($this->context->hasStep($hashed_id)) {
-            return $this->memoizeStep($hashed_id);
-        }
-
-        $this->triggerAfterMemoization();
-
-        if ($this->target_step_id !== null) {
-            return null;
-        }
-
-        $opts = [
-            'url' => $url,
-            'body' => $body,
-        ];
-
+        $opts = ['url' => $url, 'body' => $body];
         if ($headers !== null) {
             $opts['headers'] = $headers;
         }
-
         if ($format !== null) {
             $opts['format'] = $format;
         }
 
-        $this->planned_steps[] = [
-            'id' => $hashed_id,
-            'op' => 'AiGateway',
-            'displayName' => $id,
-            'opts' => $opts,
-        ];
-
-        $this->total_steps++;
-
-        return null;
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    public function getPlannedSteps(): array
-    {
-        return $this->planned_steps;
-    }
-
-    public function getTotalSteps(): int
-    {
-        return $this->total_steps;
+        return $this->_executeStep($id, 'AiGateway', $opts);
     }
 
     protected function hashId(string $id): string
@@ -429,6 +223,72 @@ class Step
     }
 
     /**
+     * Either return the cached step or execute the step and suspend further execution
+     *
+     * @param   string          $id         Step identifier
+     * @param   string|array    $opcode     Specifies the type of Step being reported.
+     *                                      If the opcode is dependent on the outcome of the provided function, then
+     *                                      should provide an array where the first value is the "success" opcode if the function was successful
+     *                                      and the second value is the "error" opcode if the function throws an exception.
+     * @param   array|null      $opts       Step options
+     * @param   callable|null   $function   Function to be called as part of this step
+     *
+     * @return  mixed
+     *
+     * @throws StepError
+     * @throws \Throwable
+     */
+    protected function _executeStep(string $id, string|array $opcode, ?array $opts = null, ?callable $function = null): mixed
+    {
+        $hashed_id = $this->hashId($id);
+
+        if ($this->context->hasStep($hashed_id)) {
+            return $this->memoizeStep($hashed_id);
+        }
+
+        $this->triggerAfterMemoization();
+
+        if ($this->target_step_id !== null && $hashed_id !== $this->target_step_id) {
+            return null;
+        }
+
+        $success_opcode = $opcode;
+        $error_opcode = $opcode;
+        if (is_array($opcode)) {
+            $success_opcode = $opcode[0];
+            $error_opcode = $opcode[1];
+        }
+
+        $step_data = [
+            'id' => $hashed_id,
+            'op' => $success_opcode,
+            'displayName' => $id,
+        ];
+
+        if (!is_null($opts)) {
+            $step_data['opts'] = $opts;
+        }
+        if (!is_null($function)) {
+            try {
+                $result = $function();
+                $step_data['data'] = $result;
+            } catch (\Throwable $e) {
+                $step_data['op'] = $error_opcode;
+                $error = [
+                    'name' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'stack' => $e->getTraceAsString(),
+                ];
+                $step_data['error'] = $error;
+            }
+        }
+
+        $this->executed_step = $step_data;
+        \Fiber::suspend($this->executed_step);
+        return null;
+    }
+
+    /**
      * @throws StepError
      */
     protected function memoizeStep(string $hashed_id): mixed
@@ -436,7 +296,7 @@ class Step
         $step_data = $this->context->getStep($hashed_id);
 
         if (is_array($step_data)) {
-            if (isset($step_data['data'])) {
+            if (array_key_exists('data', $step_data)) {
                 return $step_data['data'];
             }
 

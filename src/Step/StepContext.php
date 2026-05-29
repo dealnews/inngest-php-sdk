@@ -73,7 +73,7 @@ class StepContext
 
     public function hasStep(string $id): bool
     {
-        return isset($this->steps[$id]);
+        return array_key_exists($id, $this->steps);
     }
 
     /**

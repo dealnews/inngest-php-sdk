@@ -180,8 +180,9 @@ class MiddlewareTest extends TestCase
         // afterMemoization should NOT be called yet (no step encountered)
         $this->assertFalse($called);
 
-        // Encounter first unmemoized step
-        $step->run('my-step', fn() => 'result');
+        // Encounter first unmemoized step — fiber suspends, afterMemoization fires before suspension
+        $fiber = new \Fiber(fn() => $step->run('my-step', fn() => 'result'));
+        $fiber->start();
 
         // Now it should have been called
         $this->assertTrue($called);

@@ -7,12 +7,10 @@ namespace DealNews\Inngest\Http;
 use DealNews\Inngest\Client\Inngest;
 use DealNews\Inngest\Error\NonRetriableError;
 use DealNews\Inngest\Error\RetryAfterError;
-use DealNews\Inngest\Error\StepCompletedException;
 use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Event\Event;
 use DealNews\Inngest\Function\FunctionContext;
 use DealNews\Inngest\Function\InngestFunction;
-use DealNews\Inngest\Middleware\AbstractMiddleware;
 use DealNews\Inngest\Step\Step;
 use DealNews\Inngest\Step\StepContext;
 
@@ -360,51 +358,34 @@ class ServeHandler
             $function->getMiddleware()
         );
 
-        // Set afterMemoization callback - Step will call this when first unmemoized step is encountered
+        // afterMemoization + beforeExecution fire together when the first unmemoized step is
+        // encountered, which is the correct point per spec: after all memoized steps have been
+        // replayed and before any new code executes.
         $step->setAfterMemoizationCallback(function () use ($middleware, $function_context) {
             foreach ($middleware as $mw) {
                 $mw->afterMemoization($function_context);
             }
+            foreach ($middleware as $mw) {
+                $mw->beforeExecution($function_context);
+            }
         });
 
-        // 1. transformInput — allows mutating memoized step data
+        // transformInput — allows mutating memoized step data before execution
         foreach ($middleware as $mw) {
             $mw->transformInput($function_context, $steps_data);
         }
 
-        // 2. beforeExecution — called after all memoized steps are replayed
-        foreach ($middleware as $mw) {
-            $mw->beforeExecution($function_context);
-        }
-
         $result = null;
         $exec_error = null;
-        $planned_steps = [];
+
+        $fiber = new \Fiber(function () use ($function, $function_context): mixed {
+            return $function->execute($function_context);
+        });
+
+        $step_suspension = null;
 
         try {
-            $result = $function->execute($function_context);
-            $planned_steps = $step->getPlannedSteps();
-        } catch (StepCompletedException $e) {
-            // Step-specific execution: return the executed step
-            if ($step_id !== null && $step_id !== 'step') {
-                // afterExecution
-                foreach ($middleware as $mw) {
-                    $mw->afterExecution($function_context);
-                }
-                $step_data = [$e->step_result];
-                foreach ($middleware as $mw) {
-                    $mw->transformOutput($function_context, $result, $exec_error, $step_data);
-                }
-                $response = $step_data;
-                foreach ($middleware as $mw) {
-                    $mw->beforeResponse($response);
-                }
-                return $this->jsonResponse($response, 206, [
-                    Headers::SDK => $this->client->getSdkIdentifier(),
-                    Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
-                ]);
-            }
-            $exec_error = $e;
+            $step_suspension = $fiber->start();
         } catch (NonRetriableError $e) {
             $exec_error = $e;
         } catch (RetryAfterError $e) {
@@ -413,6 +394,40 @@ class ServeHandler
             $exec_error = $e;
         } catch (\Throwable $e) {
             $exec_error = $e;
+        }
+
+        if ($fiber->isSuspended()) {
+            foreach ($middleware as $mw) {
+                $mw->afterExecution($function_context);
+            }
+            $step_data = [$step_suspension];
+            foreach ($middleware as $mw) {
+                $mw->transformOutput($function_context, $result, $exec_error, $step_data);
+            }
+            $response = $step_data;
+            foreach ($middleware as $mw) {
+                $mw->beforeResponse($response);
+            }
+            return $this->jsonResponse($response, 206, [
+                Headers::SDK => $this->client->getSdkIdentifier(),
+                Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+            ]);
+        }
+
+        // Fiber terminated — get return value if no error
+        if ($exec_error === null) {
+            $result = $fiber->getReturn();
+        }
+
+        // Fallback: if all steps were memoized and the function ran to completion, the callback
+        // never fired. Call afterMemoization + beforeExecution now to preserve lifecycle order.
+        if (!$step->wasAfterMemoizationCalled()) {
+            foreach ($middleware as $mw) {
+                $mw->afterMemoization($function_context);
+            }
+            foreach ($middleware as $mw) {
+                $mw->beforeExecution($function_context);
+            }
         }
 
         // afterExecution always runs
@@ -454,39 +469,8 @@ class ServeHandler
             return $this->errorResponse($exec_error, true);
         }
 
-        // Build response
-        $step_data_for_mw = !empty($planned_steps) ? $planned_steps : null;
         foreach ($middleware as $mw) {
-            $mw->transformOutput($function_context, $result, $exec_error, $step_data_for_mw);
-        }
-
-        if (!empty($planned_steps)) {
-            // Check for checkpointing
-            if ($function->isCheckpointing()) {
-                $async_opcodes = ['InvokeFunction', 'WaitForEvent', 'SendEvent', 'AiGateway', 'Gateway'];
-                $sync_steps = array_values(array_filter($planned_steps, fn($s) => !in_array($s['op'] ?? '', $async_opcodes)));
-                $async_steps = array_values(array_filter($planned_steps, fn($s) => in_array($s['op'] ?? '', $async_opcodes)));
-
-                if (!empty($async_steps) && $this->checkpointSteps($run_id, $async_steps)) {
-                    $response = $sync_steps;
-                    foreach ($middleware as $mw) {
-                        $mw->beforeResponse($response);
-                    }
-                    return $this->jsonResponse($response, 206, [
-                        Headers::SDK => $this->client->getSdkIdentifier(),
-                        Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
-                    ]);
-                }
-            }
-
-            $response = $planned_steps;
-            foreach ($middleware as $mw) {
-                $mw->beforeResponse($response);
-            }
-            return $this->jsonResponse($response, 206, [
-                Headers::SDK => $this->client->getSdkIdentifier(),
-                Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
-            ]);
+            $mw->transformOutput($function_context, $result, $exec_error, null);
         }
 
         if (is_array($result)) {
