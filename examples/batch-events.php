@@ -53,7 +53,10 @@ $process_order_batch_function = new InngestFunction(
     triggers: [new TriggerEvent('order/created')],
     batch_events: new BatchEvents(
         max_size: 50,
-        timeout: '10s',
+        timeout: '1m',
+        // key groups events into separate batches per unique value — events with the same
+        // customer_id batch together; events with different customer_ids each get their own run.
+        // Omit key to batch all matching events together regardless of their data.
         key: 'event.data.customer_id'
     )
 );

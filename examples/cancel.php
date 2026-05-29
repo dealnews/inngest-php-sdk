@@ -43,7 +43,7 @@ $process_order_function = new InngestFunction(
 
         // Step 2: Long wait for payment processing
         error_log("  Waiting for payment processing (can be cancelled during this step)...");
-        $step->sleep('wait-for-payment', '5m');
+        $step->sleep('wait-for-payment', '20m');
 
         // Step 3: Process payment
         $payment = $step->run('process-payment', function () use ($order_id) {

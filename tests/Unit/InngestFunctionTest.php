@@ -1467,12 +1467,24 @@ class InngestFunctionTest extends TestCase
     public function testBatchEventsInvalidTimeoutFormatThrowsException(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '5m');
+        new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: 'invalid');
     }
 
-    public function testBatchEventsTimeoutTooLargeThrowsException(): void
+    public function testBatchEventsTimeoutMinutesIsValid(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '61s');
+        $batch = new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '5m');
+        $this->assertSame('5m', $batch->getTimeout());
+    }
+
+    public function testBatchEventsTimeoutHoursIsValid(): void
+    {
+        $batch = new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '1h');
+        $this->assertSame('1h', $batch->getTimeout());
+    }
+
+    public function testBatchEventsTimeoutLargeSecondsIsValid(): void
+    {
+        $batch = new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '120s');
+        $this->assertSame('120s', $batch->getTimeout());
     }
 }
