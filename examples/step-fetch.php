@@ -23,7 +23,7 @@ $client = new Inngest('fetch-app');
 // Define a function that makes HTTP requests
 $weather_notifier_function = new InngestFunction(
     id: 'check-weather',
-    handler: function ($ctx) {
+    handler: function (\DealNews\Inngest\Function\FunctionContext $ctx) {
         $step = $ctx->getStep();
         $event = $ctx->getEvent();
         $location = $event->getData()['location'] ?? 'New York';
@@ -31,6 +31,7 @@ $weather_notifier_function = new InngestFunction(
         error_log("Checking weather for: {$location}");
 
         // Step 1: Fetch weather data from API (retriable)
+        // FYI: real request, but not expecting actual weather data from it
         $weather_response = $step->fetch(
             id: 'fetch-weather-api',
             url: 'https://httpbin.org/get?location=' . urlencode($location),
@@ -44,7 +45,20 @@ $weather_notifier_function = new InngestFunction(
         error_log("  Weather API response received");
 
         // Step 2: Process the response
-        $analysis = $step->run('analyze-weather', function () use ($weather_response, $location) {
+        $analysis = $step->run('analyze-weather', function () use ($weather_response) {
+            if (!is_array($weather_response) || empty($weather_response['body'])) {
+                error_log("API response is: " . var_export($weather_response, true));
+                throw new \DealNews\Inngest\Error\NonRetriableError('Did not receive a valid response');
+            }
+
+            $parsed_response = json_decode($weather_response['body'], true);
+            if (empty($parsed_response['args']['location'])) {
+                error_log("API parsed response is: " . var_export($parsed_response, true));
+                throw new \DealNews\Inngest\Error\NonRetriableError('Could not parse response');
+            }
+
+            $location = $parsed_response['args']['location'];
+
             error_log("  Analyzing weather data for {$location}");
 
             // In a real application, you would parse the actual weather data
