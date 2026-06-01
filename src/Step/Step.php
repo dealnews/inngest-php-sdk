@@ -224,7 +224,7 @@ class Step
         ?string $format = null,
         ?string $auth_key = null
     ): mixed {
-        $opts = ['url' => $url, 'body' => $body];
+        $opts = ['type' => 'step.ai.infer', 'url' => $url, 'body' => $body];
         if ($headers !== null) {
             $opts['headers'] = $headers;
         }
@@ -235,7 +235,7 @@ class Step
             $opts['auth_key'] = $auth_key;
         }
 
-        return $this->_executeStep($id, 'AiGateway', $opts);
+        return $this->_executeStep($id, 'AIGateway', $opts);
     }
 
     protected function hashId(string $id): string

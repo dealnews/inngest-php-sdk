@@ -369,7 +369,7 @@ class StepTest extends TestCase
 
         $step = new Step($context);
 
-        $fiber = new \Fiber(fn() => $step->ai()->infer(
+        $fiber = new \Fiber(fn() => $step->ai->infer(
             'get-completion',
             'https://api.openai.com/v1/chat/completions',
             ['model' => 'gpt-4', 'messages' => [['role' => 'user', 'content' => 'Hello']]]
@@ -377,7 +377,7 @@ class StepTest extends TestCase
         $executed = $fiber->start();
 
         $this->assertTrue($fiber->isSuspended());
-        $this->assertSame('AiGateway', $executed['op']);
+        $this->assertSame('AIGateway', $executed['op']);
         $this->assertSame('get-completion', $executed['displayName']);
         $this->assertSame('https://api.openai.com/v1/chat/completions', $executed['opts']['url']);
         $this->assertArrayHasKey('body', $executed['opts']);

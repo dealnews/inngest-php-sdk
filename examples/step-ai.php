@@ -53,9 +53,6 @@ $content_moderator_function = new InngestFunction(
                     ],
                 ],
             ],
-            headers: [
-                'Authorization' => 'Bearer ' . $openai_key,
-            ],
             format: 'openai-chat',
             auth_key: $openai_key
         );
@@ -107,8 +104,17 @@ $content_moderator_function = new InngestFunction(
     retries: 3
 );
 
+$fail_function = new InngestFunction(
+    id: 'fail-function',
+    handler: function (\DealNews\Inngest\Function\FunctionContext $ctx) {
+        error_log("Function Failed: " . var_export((array)$ctx, true));
+    },
+    triggers: [new TriggerEvent('inngest/function.failed')]
+);
+
 // Register the function
 $client->registerFunction($content_moderator_function);
+$client->registerFunction($fail_function);
 
 // Create the serve handler
 $handler = new ServeHandler($client, '/api/inngest');

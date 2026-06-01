@@ -36,9 +36,9 @@ $long_running_function = new InngestFunction(
             return ['work_id' => uniqid('WORK-')];
         });
 
-        // Step 2: Long wait - takes up most of the 2-hour finish timeout
-        error_log("Sleeping for 1 hour 59 minutes...");
-        $step->sleep('long-sleep', '119m');
+        // Step 2: Long wait
+        error_log("Sleeping for 36 minutes...");
+        $step->sleep('long-sleep', '36m');
 
         // Step 3: Final work just before timeout
         $result = $step->run('final-work', function () {
@@ -55,7 +55,7 @@ $long_running_function = new InngestFunction(
     triggers: [new TriggerEvent('task/long-running')],
     timeouts: new Timeouts(
         start: '30m',      // Must start within 30 minutes of being scheduled
-        finish: '2h'       // Must complete within 2 hours once started
+        finish: '35m'       // Must complete within 2 hours once started
     )
 );
 
