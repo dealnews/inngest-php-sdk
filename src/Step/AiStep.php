@@ -28,8 +28,9 @@ class AiStep
         string $url,
         array $body,
         ?array $headers = null,
-        ?string $format = null
+        ?string $format = null,
+        ?string $auth_key = null
     ): mixed {
-        return $this->step->aiInfer($id, $url, $body, $headers, $format);
+        return $this->step->aiInfer($id, $url, $body, $headers, $format, $auth_key);
     }
 }

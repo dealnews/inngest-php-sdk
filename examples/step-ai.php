@@ -23,7 +23,7 @@ $client = new Inngest('ai-app');
 // Define a function that uses AI inference
 $content_moderator_function = new InngestFunction(
     id: 'moderate-content',
-    handler: function ($ctx) {
+    handler: function (\DealNews\Inngest\Function\FunctionContext $ctx) {
         $step = $ctx->getStep();
         $event = $ctx->getEvent();
         $content = $event->getData()['content'] ?? '';
@@ -32,7 +32,12 @@ $content_moderator_function = new InngestFunction(
         error_log("Moderating content: {$content_id}");
 
         // Step 1: Use AI to analyze content moderation
-        $moderation_response = $step->ai()->infer(
+        $openai_key = getenv('OPENAI_API_KEY') ?: null;
+        if ($openai_key === null) {
+            throw new \RuntimeException('OPENAI_API_KEY environment variable is not set');
+        }
+
+        $moderation_response = $step->ai->infer(
             id: 'ai-moderate-content',
             url: 'https://api.openai.com/v1/chat/completions',
             body: [
@@ -49,10 +54,10 @@ $content_moderator_function = new InngestFunction(
                 ],
             ],
             headers: [
-                // NOTE: In production, use environment variables for API keys
-                // 'Authorization' => 'Bearer ' . getenv('OPENAI_API_KEY'),
+                'Authorization' => 'Bearer ' . $openai_key,
             ],
-            format: 'json'
+            format: 'openai-chat',
+            auth_key: $openai_key
         );
 
         error_log("  AI moderation complete");

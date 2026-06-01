@@ -9,6 +9,8 @@ use DealNews\Inngest\Event\Event;
 
 /**
  * Step execution engine
+ *
+ * @property-read   AiStep      $ai
  */
 class Step
 {
@@ -29,8 +31,16 @@ class Step
 
     protected bool $after_memoization_called = false;
 
+
     public function __construct(protected StepContext $context)
     {
+    }
+
+    public function __get(string $name): mixed {
+        if ($name === 'ai') {
+            return $this->_getAI();
+        }
+        return null;
     }
 
     public function setAfterMemoizationCallback(callable $callback): void
@@ -187,7 +197,7 @@ class Step
     /**
      * Get the AI step helper
      */
-    public function ai(): AiStep
+    protected function _getAI(): AiStep
     {
         if ($this->ai_step === null) {
             $this->ai_step = new AiStep($this);
@@ -211,7 +221,8 @@ class Step
         string $url,
         array $body,
         ?array $headers = null,
-        ?string $format = null
+        ?string $format = null,
+        ?string $auth_key = null
     ): mixed {
         $opts = ['url' => $url, 'body' => $body];
         if ($headers !== null) {
@@ -219,6 +230,9 @@ class Step
         }
         if ($format !== null) {
             $opts['format'] = $format;
+        }
+        if ($auth_key !== null) {
+            $opts['auth_key'] = $auth_key;
         }
 
         return $this->_executeStep($id, 'AiGateway', $opts);
