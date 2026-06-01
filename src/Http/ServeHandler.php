@@ -342,7 +342,6 @@ class ServeHandler
         );
 
         $step = new Step($step_context);
-        $step->setSendCallback(fn(array $events) => $this->client->send($events));
 
         if ($step_id !== null && $step_id !== 'step') {
             $step->setTargetStepId($step_id);
@@ -361,6 +360,28 @@ class ServeHandler
             $function->getMiddleware()
         );
 
+        $step->setSendCallback(function (array $events) use ($function) {
+            $events_payload = array_map(fn($e) => $e->toArray(), $events);
+            foreach ($function->getMiddleware() as $mw) {
+                $mw->beforeSendEvents($events_payload);
+            }
+            $send_error = null;
+            $result = [];
+            try {
+                $result = $this->client->send($events);
+            } catch (\Throwable $e) {
+                $send_error = $e;
+            }
+            $event_ids = $result['ids'] ?? [];
+            foreach ($function->getMiddleware() as $mw) {
+                $mw->afterSendEvents($event_ids, $send_error);
+            }
+            if ($send_error !== null) {
+                throw $send_error;
+            }
+            return $result;
+        });
+
         // afterMemoization + beforeExecution fire together when the first unmemoized step is
         // encountered, which is the correct point per spec: after all memoized steps have been
         // replayed and before any new code executes.
@@ -377,6 +398,7 @@ class ServeHandler
         foreach ($middleware as $mw) {
             $mw->transformInput($function_context, $steps_data);
         }
+        $step_context->setSteps($steps_data);
 
         $result = null;
         $exec_error = null;
@@ -429,9 +451,6 @@ class ServeHandler
         }
 
         if ($fiber->isSuspended()) {
-            foreach ($middleware as $mw) {
-                $mw->afterExecution($function_context);
-            }
             $step_data = [$step_suspension];
             foreach ($middleware as $mw) {
                 $mw->transformOutput($function_context, $result, $exec_error, $step_data);

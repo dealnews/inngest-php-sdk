@@ -55,7 +55,7 @@ $long_running_function = new InngestFunction(
     triggers: [new TriggerEvent('task/long-running')],
     timeouts: new Timeouts(
         start: '30m',      // Must start within 30 minutes of being scheduled
-        finish: '35m'       // Must complete within 2 hours once started
+        finish: '35m'       // Must complete within 35 minutes once started
     )
 );
 

@@ -81,6 +81,6 @@ class StepContext
      */
     public function getStep(string $id): mixed
     {
-        return $this->steps[$id] ?? null;
+        return $this->steps[$id];
     }
 }

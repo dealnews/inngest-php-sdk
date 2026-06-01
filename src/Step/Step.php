@@ -40,7 +40,7 @@ class Step
         if ($name === 'ai') {
             return $this->_getAI();
         }
-        return null;
+        throw new \RuntimeException("Undefined property: Step::\${$name}");
     }
 
     public function setAfterMemoizationCallback(callable $callback): void
@@ -150,6 +150,7 @@ class Step
      * @param Event|array<Event> $events Event or array of events to send
      * @return mixed
      * @throws StepError
+     * @throws \RuntimeException if setSendCallback() was not called before use
      */
     public function sendEvent(string $id, Event|array $events): mixed
     {
