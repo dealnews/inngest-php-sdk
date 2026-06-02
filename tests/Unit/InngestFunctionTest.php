@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Tests\Unit;
 
+use DealNews\Inngest\Function\Checkpoint;
 use DealNews\Inngest\Function\Concurrency;
 use DealNews\Inngest\Function\Debounce;
 use DealNews\Inngest\Function\InngestFunction;
@@ -1357,5 +1358,136 @@ class InngestFunctionTest extends TestCase
         $this->assertSame([
             'run' => 'event.data.plan == "enterprise" ? 120 : 0',
         ], $array['priority']);
+    }
+
+    public function testFunctionWithTimeouts(): void
+    {
+        $timeouts = new \DealNews\Inngest\Function\Timeouts(start: '30m', finish: '2h');
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            timeouts: $timeouts
+        );
+        $array = $function->toArray();
+        $this->assertArrayHasKey('timeouts', $array);
+        $this->assertSame(['start' => '30m', 'finish' => '2h'], $array['timeouts']);
+    }
+
+    public function testFunctionWithBatchEvents(): void
+    {
+        $batch = new \DealNews\Inngest\Function\BatchEvents(max_size: 50, timeout: '10s', key: 'event.data.customer_id');
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            batch_events: $batch
+        );
+        $array = $function->toArray();
+        $this->assertArrayHasKey('batchEvents', $array);
+        $this->assertSame(50, $array['batchEvents']['maxSize']);
+        $this->assertSame('10s', $array['batchEvents']['timeout']);
+        $this->assertSame('event.data.customer_id', $array['batchEvents']['key']);
+    }
+
+    public function testFunctionWithCancel(): void
+    {
+        $cancel = new \DealNews\Inngest\Function\Cancel(
+            event: 'order/cancelled',
+            if: 'event.data.order_id == async.data.order_id'
+        );
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            cancel: [$cancel]
+        );
+        $array = $function->toArray();
+        $this->assertArrayHasKey('cancel', $array);
+        $this->assertCount(1, $array['cancel']);
+        $this->assertSame('order/cancelled', $array['cancel'][0]['event']);
+        $this->assertSame('event.data.order_id == async.data.order_id', $array['cancel'][0]['if']);
+    }
+
+    public function testFunctionWithIdempotency(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            idempotency: 'event.data.order_id'
+        );
+        $array = $function->toArray();
+        $this->assertArrayHasKey('idempotency', $array);
+        $this->assertSame('event.data.order_id', $array['idempotency']);
+    }
+
+    public function testFunctionWithCheckpointing(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            checkpointing: new Checkpoint()
+        );
+        $this->assertTrue($function->isCheckpointing());
+        $array = $function->toArray();
+        $this->assertArrayHasKey('checkpoint', $array['steps']['step']);
+        $this->assertSame(0, $array['steps']['step']['checkpoint']['batch_steps']);
+        $this->assertSame('0s', $array['steps']['step']['checkpoint']['batch_interval']);
+        $this->assertSame('0s', $array['steps']['step']['checkpoint']['max_runtime']);
+    }
+
+    public function testFunctionWithoutCheckpointing(): void
+    {
+        $function = new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')]
+        );
+        $this->assertFalse($function->isCheckpointing());
+        $array = $function->toArray();
+        $this->assertArrayNotHasKey('checkpoint', $array['steps']['step']);
+    }
+
+    public function testInvalidCancelArrayThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new InngestFunction(
+            id: 'test-function',
+            handler: fn() => 'result',
+            triggers: [new TriggerEvent('test/event')],
+            cancel: ['not-a-cancel-instance']
+        );
+    }
+
+    public function testBatchEventsMaxSizeValidation(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new \DealNews\Inngest\Function\BatchEvents(max_size: 0, timeout: '10s');
+    }
+
+    public function testBatchEventsInvalidTimeoutFormatThrowsException(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: 'invalid');
+    }
+
+    public function testBatchEventsTimeoutMinutesIsValid(): void
+    {
+        $batch = new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '5m');
+        $this->assertSame('5m', $batch->getTimeout());
+    }
+
+    public function testBatchEventsTimeoutHoursIsValid(): void
+    {
+        $batch = new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '1h');
+        $this->assertSame('1h', $batch->getTimeout());
+    }
+
+    public function testBatchEventsTimeoutLargeSecondsIsValid(): void
+    {
+        $batch = new \DealNews\Inngest\Function\BatchEvents(max_size: 10, timeout: '120s');
+        $this->assertSame('120s', $batch->getTimeout());
     }
 }

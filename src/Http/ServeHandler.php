@@ -84,6 +84,8 @@ class ServeHandler
 
         $response_data = [
             'authentication_succeeded' => $authenticated,
+            'capabilities' => ['connect' => 'v1', 'in_band_sync' => 'v1'],
+            'extra' => (object)[],
             'function_count' => count($this->client->getFunctions()),
             'has_event_key' => $event_key !== null,
             'has_signing_key' => $signing_key !== null,
@@ -163,6 +165,7 @@ class ServeHandler
                 'capabilities' => [
                     'trust_probe' => 'v1',
                     'connect' => 'v1',
+                    'in_band_sync' => 'v1',
                 ],
                 'env' => $config->getEnv(),
                 'framework' => 'php',
@@ -237,6 +240,7 @@ class ServeHandler
                 'capabilities' => [
                     'trust_probe' => 'v1',
                     'connect' => 'v1',
+                    'in_band_sync' => 'v1',
                 ],
             ];
 
@@ -295,7 +299,9 @@ class ServeHandler
                 return $this->jsonResponse(['error' => 'Invalid payload'], 400);
             }
 
-            return $this->executeFunction($function, $payload, $query);
+            $step_id = $query['stepId'] ?? null;
+
+            return $this->executeFunction($function, $payload, $query, $step_id);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
         }
@@ -306,18 +312,28 @@ class ServeHandler
      * @param array<string, string> $query
      * @return array{status: int, headers: array<string, string>, body: string}
      */
-    protected function executeFunction(InngestFunction $function, array $payload, array $query): array
+    protected function executeFunction(InngestFunction $function, array $payload, array $query, ?string $step_id = null): array
     {
-        $event_data = $payload['event'] ?? [];
-        $events_data = $payload['events'] ?? [$event_data];
         $ctx_data = $payload['ctx'] ?? [];
-        $steps_data = $payload['steps'] ?? [];
+        $run_id = $ctx_data['run_id'] ?? '';
+        $qi_id = $ctx_data['qi_id'] ?? null;
+        $fn_id = $query['fnId'] ?? '';
 
-        $event = $this->hydrateEvent($event_data);
+        if (!empty($ctx_data['use_api']) && $ctx_data['use_api'] === true) {
+            $api_payload = $this->fetchPayloadFromApi($run_id);
+            $events_data = $api_payload['events'];
+            $steps_data = $api_payload['steps'];
+        } else {
+            $event_data = $payload['event'] ?? [];
+            $events_data = $payload['events'] ?? [$event_data];
+            $steps_data = $payload['steps'] ?? [];
+        }
+
+        $event = $this->hydrateEvent($events_data[0] ?? []);
         $events = array_map(fn($e) => $this->hydrateEvent($e), $events_data);
 
         $step_context = new StepContext(
-            $ctx_data['run_id'] ?? '',
+            $run_id,
             $ctx_data['attempt'] ?? 0,
             $ctx_data['disable_immediate_execution'] ?? false,
             $ctx_data['use_api'] ?? false,
@@ -327,6 +343,10 @@ class ServeHandler
 
         $step = new Step($step_context);
 
+        if ($step_id !== null && $step_id !== 'step') {
+            $step->setTargetStepId($step_id);
+        }
+
         $function_context = new FunctionContext(
             $event,
             $events,
@@ -335,31 +355,192 @@ class ServeHandler
             $step
         );
 
-        try {
-            $result = $function->execute($function_context);
+        $middleware = array_merge(
+            $this->client->getMiddleware(),
+            $function->getMiddleware()
+        );
 
-            $planned_steps = $step->getPlannedSteps();
-
-            if (!empty($planned_steps)) {
-                return $this->jsonResponse($planned_steps, 206, [
-                    Headers::SDK => $this->client->getSdkIdentifier(),
-                    Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
-                ]);
+        $step->setSendCallback(function (array $events) use ($function) {
+            $events_payload = array_map(fn($e) => $e->toArray(), $events);
+            foreach ($function->getMiddleware() as $mw) {
+                $mw->beforeSendEvents($events_payload);
             }
+            $send_error = null;
+            $result = [];
+            try {
+                $result = $this->client->send($events);
+            } catch (\Throwable $e) {
+                $send_error = $e;
+            }
+            $event_ids = $result['ids'] ?? [];
+            foreach ($function->getMiddleware() as $mw) {
+                $mw->afterSendEvents($event_ids, $send_error);
+            }
+            if ($send_error !== null) {
+                throw $send_error;
+            }
+            return $result;
+        });
 
-            return $this->jsonResponse($result, 200, [
+        // afterMemoization + beforeExecution fire together when the first unmemoized step is
+        // encountered, which is the correct point per spec: after all memoized steps have been
+        // replayed and before any new code executes.
+        $step->setAfterMemoizationCallback(function () use ($middleware, $function_context) {
+            foreach ($middleware as $mw) {
+                $mw->afterMemoization($function_context);
+            }
+            foreach ($middleware as $mw) {
+                $mw->beforeExecution($function_context);
+            }
+        });
+
+        // transformInput — allows mutating memoized step data before execution
+        foreach ($middleware as $mw) {
+            $mw->transformInput($function_context, $steps_data);
+        }
+        $step_context->setSteps($steps_data);
+
+        $result = null;
+        $exec_error = null;
+
+        $fiber = new \Fiber(function () use ($function, $function_context): mixed {
+            return $function->execute($function_context);
+        });
+
+        $step_suspension = null;
+
+        try {
+            $step_suspension = $fiber->start();
+        } catch (NonRetriableError $e) {
+            $exec_error = $e;
+        } catch (RetryAfterError $e) {
+            $exec_error = $e;
+        } catch (StepError $e) {
+            $exec_error = $e;
+        } catch (\Throwable $e) {
+            $exec_error = $e;
+        }
+
+        // Checkpointing: for sync opcodes (StepRun only), POST results to the checkpoint API
+        // and resume the fiber with the actual step data so the next step gets the real value.
+        // On async opcode (Sleep, WaitForEvent, etc.) or checkpoint failure, fall back to 206.
+        if ($fiber->isSuspended() && $function->isCheckpointing() && $run_id !== '') {
+            while ($fiber->isSuspended() && $exec_error === null) {
+                if (($step_suspension['op'] ?? null) !== 'StepRun') {
+                    break; // async opcode — yield with 206 below
+                }
+
+                if (!$this->checkpointSteps($run_id, $fn_id, $qi_id, [$step_suspension])) {
+                    break; // checkpoint failed — fall back to 206 below
+                }
+
+                $resume_value = $step_suspension['data'] ?? null;
+                $step_suspension = null;
+                try {
+                    $step_suspension = $fiber->resume($resume_value);
+                } catch (NonRetriableError $e) {
+                    $exec_error = $e;
+                } catch (RetryAfterError $e) {
+                    $exec_error = $e;
+                } catch (StepError $e) {
+                    $exec_error = $e;
+                } catch (\Throwable $e) {
+                    $exec_error = $e;
+                }
+            }
+        }
+
+        if ($fiber->isSuspended()) {
+            $step_data = [$step_suspension];
+            foreach ($middleware as $mw) {
+                $mw->transformOutput($function_context, $result, $exec_error, $step_data);
+            }
+            $response = $step_data;
+            foreach ($middleware as $mw) {
+                $mw->beforeResponse($response);
+            }
+            return $this->jsonResponse($response, 206, [
                 Headers::SDK => $this->client->getSdkIdentifier(),
                 Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
             ]);
-        } catch (NonRetriableError $e) {
-            return $this->errorResponse($e, false);
-        } catch (RetryAfterError $e) {
-            return $this->errorResponse($e, true, $e->getRetryAfterHeader());
-        } catch (StepError $e) {
-            return $this->errorResponse($e, false);
-        } catch (\Throwable $e) {
-            return $this->errorResponse($e, true);
         }
+
+        // Fiber terminated — get return value if no error
+        if ($exec_error === null) {
+            $result = $fiber->getReturn();
+        }
+
+        // Fallback: if all steps were memoized and the function ran to completion, the callback
+        // never fired. Call afterMemoization + beforeExecution now to preserve lifecycle order.
+        if (!$step->wasAfterMemoizationCalled()) {
+            foreach ($middleware as $mw) {
+                $mw->afterMemoization($function_context);
+            }
+            foreach ($middleware as $mw) {
+                $mw->beforeExecution($function_context);
+            }
+        }
+
+        // afterExecution always runs
+        foreach ($middleware as $mw) {
+            $mw->afterExecution($function_context);
+        }
+
+        // Handle StepNotFound: target was set but step was not found
+        if ($step_id !== null && $step_id !== 'step' && !$step->wasTargetStepFound()) {
+            $step_data = [['id' => $step_id, 'op' => 'StepNotFound']];
+            foreach ($middleware as $mw) {
+                $mw->transformOutput($function_context, $result, $exec_error, $step_data);
+            }
+            $response = $step_data;
+            foreach ($middleware as $mw) {
+                $mw->beforeResponse($response);
+            }
+            return $this->jsonResponse($response, 206, [
+                Headers::SDK => $this->client->getSdkIdentifier(),
+                Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+            ]);
+        }
+
+        // Handle errors
+        if ($exec_error !== null) {
+            $error_mw = $exec_error;
+            $no_step = null;
+            foreach ($middleware as $mw) {
+                $mw->transformOutput($function_context, $result, $error_mw, $no_step);
+            }
+            if ($exec_error instanceof NonRetriableError) {
+                return $this->errorResponse($exec_error, false);
+            }
+            if ($exec_error instanceof RetryAfterError) {
+                return $this->errorResponse($exec_error, true, $exec_error->getRetryAfterHeader());
+            }
+            if ($exec_error instanceof StepError) {
+                return $this->errorResponse($exec_error, false);
+            }
+            return $this->errorResponse($exec_error, true);
+        }
+
+        $no_step = null;
+        foreach ($middleware as $mw) {
+            $mw->transformOutput($function_context, $result, $exec_error, $no_step);
+        }
+
+        if (is_array($result)) {
+            $response = $result;
+            foreach ($middleware as $mw) {
+                $mw->beforeResponse($response);
+            }
+            return $this->jsonResponse($response, 200, [
+                Headers::SDK => $this->client->getSdkIdentifier(),
+                Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+            ]);
+        }
+
+        return $this->jsonResponse($result, 200, [
+            Headers::SDK => $this->client->getSdkIdentifier(),
+            Headers::REQ_VERSION => Headers::REQ_VERSION_CURRENT,
+        ]);
     }
 
     protected function errorResponse(\Throwable $e, bool $retriable = true, ?string $retry_after = null): array
@@ -498,6 +679,8 @@ class ServeHandler
 
         return [
             'authentication_succeeded' => null,
+            'capabilities' => ['connect' => 'v1', 'in_band_sync' => 'v1'],
+            'extra' => (object)[],
             'function_count' => count($this->client->getFunctions()),
             'has_event_key' => $event_key !== null,
             'has_signing_key' => $signing_key !== null,
@@ -519,6 +702,139 @@ class ServeHandler
                 ? hash('sha256', $config->getSigningKeyFallback())
                 : null,
         ];
+    }
+
+    /**
+     * Fetch payload (events and steps) from the Inngest API for use_api mode
+     *
+     * @return array{events: array<mixed>, steps: array<mixed>}
+     */
+    private function fetchPayloadFromApi(string $run_id): array
+    {
+        $config = $this->client->getConfig();
+        $api_origin = $config->getApiBaseUrl();
+        $signing_key = $config->getSigningKey();
+
+        if ($signing_key === null) {
+            throw new \Exception('No signing key configured for API fetch');
+        }
+
+        $hashed_key = $this->verifier->hashSigningKey($signing_key);
+        $auth_header = 'Authorization: Bearer ' . $hashed_key;
+
+        $events_url = $api_origin . '/v0/runs/' . $run_id . '/batch';
+        $steps_url = $api_origin . '/v0/runs/' . $run_id . '/actions';
+
+        $events_ch = curl_init($events_url);
+        curl_setopt_array($events_ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [$auth_header],
+        ]);
+        $events_response = curl_exec($events_ch);
+        $events_status = curl_getinfo($events_ch, CURLINFO_HTTP_CODE);
+        curl_close($events_ch);
+
+        if ($events_status !== 200) {
+            throw new \Exception("Failed to fetch events from API: HTTP {$events_status}");
+        }
+
+        $steps_ch = curl_init($steps_url);
+        curl_setopt_array($steps_ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [$auth_header],
+        ]);
+        $steps_response = curl_exec($steps_ch);
+        $steps_status = curl_getinfo($steps_ch, CURLINFO_HTTP_CODE);
+        curl_close($steps_ch);
+
+        if ($steps_status !== 200) {
+            throw new \Exception("Failed to fetch steps from API: HTTP {$steps_status}");
+        }
+
+        return [
+            'events' => json_decode($events_response, true) ?? [],
+            'steps' => json_decode($steps_response, true) ?? [],
+        ];
+    }
+
+    /**
+     * @param array<mixed> $steps
+     */
+    private function checkpointSteps(string $run_id, string $fn_id, ?string $qi_id, array $steps): bool
+    {
+        $config = $this->client->getConfig();
+        $api_origin = $config->getApiBaseUrl();
+        $signing_key = $config->getSigningKey();
+
+        if ($signing_key === null) {
+            return false;
+        }
+
+        $url = $api_origin . '/v1/checkpoint/' . $run_id . '/async';
+        $body = json_encode([
+            'run_id' => $run_id,
+            'fn_id' => $fn_id,
+            'qi_id' => $qi_id,
+            'steps' => $steps,
+        ]);
+
+        $delays = [100000, 200000, 400000]; // microseconds: 100ms, 200ms, 400ms
+
+        for ($attempt = 0; $attempt <= 3; $attempt++) {
+            $hashed_key = $this->verifier->hashSigningKey($signing_key);
+            $headers = [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $hashed_key,
+                Headers::SDK . ': ' . $this->client->getSdkIdentifier(),
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $body,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => $headers,
+            ]);
+            $curl_response = curl_exec($ch);
+            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($status === 200 || $status === 204) {
+                return true;
+            }
+
+            // On 401, try fallback signing key
+            if ($status === 401) {
+                $fallback_key = $config->getSigningKeyFallback();
+                if ($fallback_key !== null) {
+                    $hashed_fallback = $this->verifier->hashSigningKey($fallback_key);
+                    $fallback_headers = [
+                        'Content-Type: application/json',
+                        'Authorization: Bearer ' . $hashed_fallback,
+                        Headers::SDK . ': ' . $this->client->getSdkIdentifier(),
+                    ];
+                    $ch2 = curl_init($url);
+                    curl_setopt_array($ch2, [
+                        CURLOPT_POST => true,
+                        CURLOPT_POSTFIELDS => $body,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_HTTPHEADER => $fallback_headers,
+                    ]);
+                    curl_exec($ch2);
+                    $fallback_status = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+                    curl_close($ch2);
+                    if ($fallback_status === 200 || $fallback_status === 204) {
+                        return true;
+                    }
+                }
+            }
+
+            if ($attempt < 3 && isset($delays[$attempt])) {
+                usleep($delays[$attempt]);
+            }
+        }
+
+        return false;
     }
 
     /**

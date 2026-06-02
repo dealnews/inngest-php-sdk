@@ -29,6 +29,10 @@ composer require dealnews/inngest-php-sdk
 - ✅ **Rate limiting** - Hard limit on function runs per time period
 - ✅ **Throttling** - FIFO queueing with burst support
 - ✅ **Singleton** - Ensure only one run executes at a time
+- ✅ **Send events from steps** - Emit events as retriable steps
+- ✅ **HTTP fetch steps** - Make durable HTTP requests as retriable steps
+- ✅ **Checkpointing** - Execute multiple steps per invocation for efficiency
+- ✅ **Middleware** - Hook into function execution lifecycle
 - ✅ **Dev mode** - Local development with Inngest dev server
 - ✅ **Type safety** - Full PHP 8.1+ type declarations
 
@@ -150,6 +154,26 @@ $result = $step->invoke(
     id: 'call-function',
     function_id: 'my-app-other-function',
     payload: ['data' => ['foo' => 'bar']]
+);
+```
+
+### Send Events from a Step
+
+```php
+$step->sendEvent('notify-team', new Event(
+    name: 'order/fulfilled',
+    data: ['order_id' => $order['id']]
+));
+```
+
+### HTTP Fetch as a Step
+
+```php
+$response = $step->fetch(
+    id: 'get-user',
+    url: 'https://api.example.com/users/123',
+    method: 'GET',
+    headers: ['Authorization' => 'Bearer ' . $token]
 );
 ```
 
@@ -896,6 +920,83 @@ The burst parameter handles traffic spikes:
 - Supports longer periods (7 days) vs rate limiting (24 hours max)
 
 See [examples/throttle.php](examples/throttle.php) for more examples and [Inngest Throttling Documentation](https://www.inngest.com/docs/guides/throttling) for details.
+
+## Checkpointing
+
+Checkpointing allows the SDK to execute multiple steps within a single HTTP invocation by persisting step results to Inngest in the background. This reduces round-trip overhead for functions with many fast steps.
+
+```php
+use DealNews\Inngest\Function\Checkpoint;
+
+$function = new InngestFunction(
+    id: 'bulk-processor',
+    handler: function ($ctx) {
+        $step = $ctx->getStep();
+        // Steps execute without yielding after each one
+        $a = $step->run('step-a', fn() => computeA());
+        $b = $step->run('step-b', fn() => computeB());
+        return ['a' => $a, 'b' => $b];
+    },
+    triggers: [new TriggerEvent('bulk/process')],
+    checkpointing: new Checkpoint()
+);
+```
+
+Three static presets are available:
+
+```php
+Checkpoint::safe()        // Checkpoint after every step (most durable, default)
+Checkpoint::performant()  // Buffer up to 1000 steps (fastest, least durable)
+Checkpoint::blended()     // Buffer 3 steps or 3 seconds, whichever comes first
+```
+
+Or configure manually:
+
+```php
+new Checkpoint(
+    bufferedSteps: 10,      // Steps to buffer before flushing
+    maxInterval: '5s',      // Flush at least every 5 seconds
+    maxRuntime: '30s'       // Maximum total execution time per invocation
+)
+```
+
+## Middleware
+
+Middleware hooks into the function execution lifecycle for logging, monitoring, input/output transformation, and event interception.
+
+```php
+use DealNews\Inngest\Middleware\AbstractMiddleware;
+use DealNews\Inngest\Function\FunctionContext;
+
+class LoggingMiddleware extends AbstractMiddleware
+{
+    public function beforeExecution(FunctionContext $ctx): void
+    {
+        error_log('Executing: ' . $ctx->getEvent()->getName());
+    }
+
+    public function afterExecution(FunctionContext $ctx): void
+    {
+        error_log('Completed: ' . $ctx->getEvent()->getName());
+    }
+}
+
+$client = new Inngest('my-app');
+$client->addMiddleware(new LoggingMiddleware());
+```
+
+Available lifecycle hooks (all optional):
+
+| Hook | When it fires |
+|------|---------------|
+| `transformInput()` | Before handler; can mutate memoized step data |
+| `afterMemoization()` | When first encountering an unmemoized step |
+| `beforeExecution()` | Immediately before handler runs |
+| `afterExecution()` | Immediately after handler returns |
+| `transformOutput()` | Before response building; can mutate result/error |
+| `beforeResponse()` | Before building the response array |
+| `beforeSendEvents()` | Before events are sent via the client |
+| `afterSendEvents()` | After events have been sent |
 
 ## Development
 

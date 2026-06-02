@@ -24,5 +24,5 @@ class Headers
 
     public const SDK_VERSION = '0.1.13';
     public const SDK_NAME = 'php';
-    public const REQ_VERSION_CURRENT = '1';
+    public const REQ_VERSION_CURRENT = '2';
 }

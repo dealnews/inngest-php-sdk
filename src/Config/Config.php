@@ -25,6 +25,7 @@ class Config
      * @param string|null $serve_path Path for serving functions
      * @param string|null $log_level Logging level
      * @param string|null $app_version Application version for deployment tracking
+     * @param string|null $base_url Base URL for both API and event API (when neither is already set)
      */
     public function __construct(
         protected ?string $event_key = null,
@@ -37,7 +38,8 @@ class Config
         protected ?string $serve_origin = null,
         protected ?string $serve_path = null,
         protected ?string $log_level = null,
-        protected ?string $app_version = null
+        protected ?string $app_version = null,
+        protected ?string $base_url = null
     ) {
         $this->loadFromEnvironment();
     }
@@ -85,6 +87,26 @@ class Config
             $event_url = getenv('INNGEST_EVENT_API_BASE_URL');
             if ($event_url !== false) {
                 $this->event_api_base_url = $event_url;
+            }
+        }
+
+        // INNGEST_BASE_URL sets both api and event base URLs when neither is already set
+        if ($this->base_url !== null) {
+            if ($this->api_base_url === null) {
+                $this->api_base_url = $this->base_url;
+            }
+            if ($this->event_api_base_url === null) {
+                $this->event_api_base_url = $this->base_url;
+            }
+        }
+
+        $base_url_env = getenv('INNGEST_BASE_URL');
+        if ($base_url_env !== false && $base_url_env !== '') {
+            if ($this->api_base_url === null) {
+                $this->api_base_url = $base_url_env;
+            }
+            if ($this->event_api_base_url === null) {
+                $this->event_api_base_url = $base_url_env;
             }
         }
 

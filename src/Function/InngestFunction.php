@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Function;
 
+use DealNews\Inngest\Middleware\AbstractMiddleware;
+
 /**
  * Represents an Inngest function
  */
 class InngestFunction
 {
+    /** @var array<AbstractMiddleware> */
+    protected array $middleware = [];
+
     /**
      * @param string $id Unique identifier for the function
      * @param callable $handler Function handler
@@ -22,6 +27,11 @@ class InngestFunction
      * @param Throttle|null $throttle Optional throttle to enqueue excess function runs over time period
      * @param Singleton|null $singleton Optional singleton to ensure only one run executes at a time
      * @param string|null $description Function description
+     * @param string|null $idempotency Optional idempotency key expression
+     * @param Timeouts|null $timeouts Optional timeout configuration for start and finish operations
+     * @param BatchEvents|null $batch_events Optional batch event configuration
+     * @param array<Cancel>|null $cancel Optional array of cancellation triggers
+     * @param Checkpoint|null $checkpointing Optional checkpointing configuration; null disables checkpointing
      */
     public function __construct(
         protected string $id,
@@ -35,7 +45,12 @@ class InngestFunction
         protected ?RateLimit $rate_limit = null,
         protected ?Throttle $throttle = null,
         protected ?Singleton $singleton = null,
-        protected ?string $description = null
+        protected ?string $description = null,
+        protected ?string $idempotency = null,
+        protected ?Timeouts $timeouts = null,
+        protected ?BatchEvents $batch_events = null,
+        protected ?array $cancel = null,
+        protected ?Checkpoint $checkpointing = null
     ) {
         if (empty($triggers)) {
             throw new \InvalidArgumentException('Function must have at least one trigger');
@@ -52,6 +67,24 @@ class InngestFunction
                 }
             }
         }
+
+        if ($cancel !== null) {
+            foreach ($cancel as $item) {
+                if (!$item instanceof Cancel) {
+                    throw new \InvalidArgumentException('Cancel array must contain only Cancel instances');
+                }
+            }
+        }
+    }
+
+    public function addMiddleware(AbstractMiddleware $mw): void
+    {
+        $this->middleware[] = $mw;
+    }
+
+    public function getMiddleware(): array
+    {
+        return $this->middleware;
     }
 
     public function getId(): string
@@ -147,6 +180,16 @@ class InngestFunction
         return $this->singleton;
     }
 
+    public function isCheckpointing(): bool
+    {
+        return $this->checkpointing !== null;
+    }
+
+    public function getCheckpoint(): ?Checkpoint
+    {
+        return $this->checkpointing;
+    }
+
     /**
      * Execute the function handler
      *
@@ -180,8 +223,16 @@ class InngestFunction
             ],
         ];
 
+        if ($this->checkpointing !== null) {
+            $data['steps']['step']['checkpoint'] = $this->checkpointing->toArray();
+        }
+
         if ($this->description !== null) {
             $data['description'] = $this->description;
+        }
+
+        if ($this->idempotency !== null) {
+            $data['idempotency'] = $this->idempotency;
         }
 
         if ($this->concurrency !== null && count($this->concurrency) > 0) {
@@ -206,6 +257,18 @@ class InngestFunction
 
         if ($this->singleton !== null) {
             $data['singleton'] = $this->singleton->toArray();
+        }
+
+        if ($this->timeouts !== null) {
+            $data['timeouts'] = $this->timeouts->toArray();
+        }
+
+        if ($this->batch_events !== null) {
+            $data['batchEvents'] = $this->batch_events->toArray();
+        }
+
+        if ($this->cancel !== null && count($this->cancel) > 0) {
+            $data['cancel'] = array_map(fn($c) => $c->toArray(), $this->cancel);
         }
 
         return $data;

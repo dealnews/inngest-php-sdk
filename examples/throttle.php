@@ -26,7 +26,7 @@ $simple_throttle = new InngestFunction(
         $event = $ctx->getEvent();
         $user_id = $event->getData()['user_id'];
         
-        echo "Sending notification to user {$user_id}\n";
+        error_log("Sending notification to user {$user_id}");
         
         // Send notification logic here
         
@@ -44,7 +44,7 @@ $burst_throttle = new InngestFunction(
         $event = $ctx->getEvent();
         $webhook_id = $event->getData()['webhook_id'];
         
-        echo "Processing webhook {$webhook_id}\n";
+        error_log("Processing webhook {$webhook_id}");
         
         return ['processed' => true];
     },
@@ -65,7 +65,7 @@ $per_user_throttle = new InngestFunction(
         $user_id = $event->getData()['user_id'];
         $action = $event->getData()['action'];
         
-        echo "User {$user_id} performed action: {$action}\n";
+        error_log("User {$user_id} performed action: {$action}");
         
         return ['executed' => true];
     },
@@ -89,15 +89,15 @@ $api_sync = new InngestFunction(
         
         // Fetch data from external API
         $data = $step->run('fetch-api-data', function () use ($customer_id) {
-            echo "Fetching data for customer {$customer_id} from API\n";
+            error_log("Fetching data for customer {$customer_id} from API");
             // API call here - respects their 100/hour rate limit
             return ['items' => []];
         });
         
         // Process the data
         $step->run('save-data', function () use ($data, $customer_id) {
-            echo "Saving " . count($data['items']) . 
-                 " items for customer {$customer_id}\n";
+            error_log("Saving " . count($data['items']) .
+                 " items for customer {$customer_id}\n");
         });
         
         return ['synced' => true];
@@ -118,8 +118,8 @@ $regional_throttle = new InngestFunction(
         $event = $ctx->getEvent();
         $data = $event->getData();
         
-        echo "Processing for account {$data['account_id']} ".
-             "in region {$data['region']}\n";
+        error_log("Processing for account {$data['account_id']} ".
+             "in region {$data['region']}");
         
         return ['processed' => true];
     },
