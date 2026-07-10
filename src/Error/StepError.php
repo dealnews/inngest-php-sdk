@@ -50,6 +50,11 @@ class StepError extends InngestException
             $error['stack'] = $this->step_stack;
         }
 
+        $previous = $this->getPrevious();
+        if ($previous !== null) {
+            $error['cause'] = ErrorFormatter::format($previous);
+        }
+
         return $error;
     }
 }
