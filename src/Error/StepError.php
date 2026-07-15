@@ -37,9 +37,10 @@ class StepError extends InngestException
     }
 
     /**
+     * @param  int $depth Current depth in the cause chain
      * @return array<string, mixed>
      */
-    public function toArray(): array
+    public function toArray(int $depth = 0): array
     {
         $error = [
             'name' => $this->step_name,
@@ -48,6 +49,11 @@ class StepError extends InngestException
 
         if ($this->step_stack !== null) {
             $error['stack'] = $this->step_stack;
+        }
+
+        $previous = $this->getPrevious();
+        if ($previous !== null && $depth < ErrorFormatter::MAX_CAUSE_DEPTH) {
+            $error['cause'] = ErrorFormatter::format($previous, $depth + 1);
         }
 
         return $error;

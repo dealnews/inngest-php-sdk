@@ -34,6 +34,37 @@ class StepTest extends TestCase
         $this->assertSame(sha1('test-step'), $executed['id']);
     }
 
+    public function testRunStepReportsCauseChainOnFailure(): void
+    {
+        $context = new StepContext(
+            run_id: 'test-run',
+            attempt: 0,
+            disable_immediate_execution: false,
+            use_api: false,
+            stack: [],
+            steps: []
+        );
+
+        $step = new Step($context);
+
+        $fiber = new \Fiber(
+            fn() => $step->run(
+                'failing-step', function () {
+                    $cause = new \LogicException('root cause');
+                    throw new \RuntimeException('step failed', 0, $cause);
+                }
+            )
+        );
+        $executed = $fiber->start();
+
+        $this->assertTrue($fiber->isSuspended());
+        $this->assertSame('StepError', $executed['op']);
+        $this->assertSame('step failed', $executed['error']['message']);
+        $this->assertArrayHasKey('cause', $executed['error']);
+        $this->assertSame(\LogicException::class, $executed['error']['cause']['name']);
+        $this->assertSame('root cause', $executed['error']['cause']['message']);
+    }
+
     public function testRunStepWithMemoizedData(): void
     {
         $hashed_id = sha1('memoized-step');

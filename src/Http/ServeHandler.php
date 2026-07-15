@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DealNews\Inngest\Http;
 
 use DealNews\Inngest\Client\Inngest;
+use DealNews\Inngest\Error\ErrorFormatter;
 use DealNews\Inngest\Error\NonRetriableError;
 use DealNews\Inngest\Error\RetryAfterError;
 use DealNews\Inngest\Error\StepError;
@@ -545,11 +546,7 @@ class ServeHandler
 
     protected function errorResponse(\Throwable $e, bool $retriable = true, ?string $retry_after = null): array
     {
-        $error_data = [
-            'name' => get_class($e),
-            'message' => $e->getMessage(),
-            'stack' => $e->getTraceAsString(),
-        ];
+        $error_data = ErrorFormatter::format($e);
 
         $headers = [
             Headers::SDK => $this->client->getSdkIdentifier(),

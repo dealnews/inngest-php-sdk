@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Step;
 
+use DealNews\Inngest\Error\ErrorFormatter;
 use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Event\Event;
 
@@ -304,12 +305,7 @@ class Step
                 $step_data['data'] = $result;
             } catch (\Throwable $e) {
                 $step_data['op'] = $error_opcode;
-                $error = [
-                    'name' => get_class($e),
-                    'message' => $e->getMessage(),
-                    'stack' => $e->getTraceAsString(),
-                ];
-                $step_data['error'] = $error;
+                $step_data['error'] = ErrorFormatter::format($e);
             }
         }
 
