@@ -12,6 +12,7 @@ use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Event\Event;
 use DealNews\Inngest\Function\FunctionContext;
 use DealNews\Inngest\Function\InngestFunction;
+use DealNews\Inngest\Function\TimeStr;
 use DealNews\Inngest\Step\Step;
 use DealNews\Inngest\Step\StepContext;
 
@@ -22,11 +23,15 @@ class ServeHandler
 {
     protected SignatureVerifier $verifier;
 
+    protected HttpTransportInterface $transport;
+
     public function __construct(
         protected Inngest $client,
-        protected string $serve_path = '/api/inngest'
+        protected string $serve_path = '/api/inngest',
+        ?HttpTransportInterface $transport = null
     ) {
         $this->verifier = new SignatureVerifier($client->getConfig());
+        $this->transport = $transport ?? new CurlTransport();
     }
 
     /**
@@ -336,7 +341,6 @@ class ServeHandler
         $step_context = new StepContext(
             $run_id,
             $ctx_data['attempt'] ?? 0,
-            $ctx_data['disable_immediate_execution'] ?? false,
             $ctx_data['use_api'] ?? false,
             $ctx_data['stack'] ?? [],
             $steps_data
@@ -422,21 +426,46 @@ class ServeHandler
             $exec_error = $e;
         }
 
-        // Checkpointing: for sync opcodes (StepRun only), POST results to the checkpoint API
-        // and resume the fiber with the actual step data so the next step gets the real value.
-        // On async opcode (Sleep, WaitForEvent, etc.) or checkpoint failure, fall back to 206.
+        // Checkpointing: buffer sync opcodes (StepRun only) in memory and flush batches to
+        // the checkpoint API per the function's bufferedSteps/maxInterval config, resuming
+        // the fiber with the actual step data so subsequent steps get their real value. On
+        // an async opcode (Sleep, WaitForEvent, etc.) or a flush failure, fall back to the
+        // standard 206 response.
+        $buffer = null;
+        $step_suspension_in_buffer = false;
+
         if ($fiber->isSuspended() && $function->isCheckpointing() && $run_id !== '') {
+            $checkpoint = $function->getCheckpoint();
+            $max_interval_ms = $checkpoint->maxInterval !== null
+                ? TimeStr::toMilliseconds($checkpoint->maxInterval)
+                : null;
+            $buffer = new CheckpointBuffer($checkpoint->bufferedSteps, $max_interval_ms);
+
             while ($fiber->isSuspended() && $exec_error === null) {
                 if (($step_suspension['op'] ?? null) !== 'StepRun') {
-                    break; // async opcode — yield with 206 below
+                    // Async opcode: flush any buffered StepRun results first, then fall
+                    // through to yield this opcode via the 206 response below.
+                    if (!$buffer->isEmpty() && $this->checkpointSteps($run_id, $fn_id, $qi_id, $buffer->peek())) {
+                        $buffer->drain();
+                    }
+                    $step_suspension_in_buffer = false;
+                    break;
                 }
 
-                if (!$this->checkpointSteps($run_id, $fn_id, $qi_id, [$step_suspension])) {
-                    break; // checkpoint failed — fall back to 206 below
+                $buffer->add($step_suspension);
+                $step_suspension_in_buffer = true;
+
+                if ($buffer->shouldFlush()) {
+                    if (!$this->checkpointSteps($run_id, $fn_id, $qi_id, $buffer->peek())) {
+                        break; // flush failed — fall back to 206 below with buffered steps included
+                    }
+                    $buffer->drain();
+                    $step_suspension_in_buffer = false;
                 }
 
                 $resume_value = $step_suspension['data'] ?? null;
                 $step_suspension = null;
+                $step_suspension_in_buffer = false;
                 try {
                     $step_suspension = $fiber->resume($resume_value);
                 } catch (NonRetriableError $e) {
@@ -449,10 +478,32 @@ class ServeHandler
                     $exec_error = $e;
                 }
             }
+
+            // Fiber completed (returned or threw) with steps still buffered: best-effort
+            // final flush. A failure here is intentionally swallowed — the function's
+            // result is already computed and authoritative, so failing this request would
+            // force Inngest to retry the whole function and re-run already-succeeded,
+            // potentially non-idempotent side effects just to persist checkpoint bookkeeping.
+            if (!$fiber->isSuspended() && !$buffer->isEmpty()) {
+                if ($this->checkpointSteps($run_id, $fn_id, $qi_id, $buffer->peek())) {
+                    $buffer->drain();
+                }
+            }
         }
 
         if ($fiber->isSuspended()) {
-            $step_data = [$step_suspension];
+            $buffered_remaining = $buffer !== null ? $buffer->peek() : [];
+            if ($step_suspension_in_buffer) {
+                // The current step_suspension is already the last element of the buffer
+                // (a mid-loop flush failed).
+                $step_data = $buffered_remaining;
+            } elseif ($buffered_remaining !== []) {
+                // Async opcode encountered but the pre-flush of prior buffered steps
+                // failed, so both must be reported together.
+                $step_data = array_merge($buffered_remaining, [$step_suspension]);
+            } else {
+                $step_data = [$step_suspension];
+            }
             foreach ($middleware as $mw) {
                 $mw->transformOutput($function_context, $result, $exec_error, $step_data);
             }
@@ -627,22 +678,7 @@ class ServeHandler
             Headers::AUTHORIZATION . ': Bearer ' . $hashed_key,
         ];
 
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $body,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => $headers,
-        ]);
-
-        $response_body = curl_exec($ch);
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        return [
-            'status' => $status,
-            'body' => $response_body ?: '',
-        ];
+        return $this->transport->post($url, $body, $headers);
     }
 
     /**
@@ -722,35 +758,19 @@ class ServeHandler
         $events_url = $api_origin . '/v0/runs/' . $run_id . '/batch';
         $steps_url = $api_origin . '/v0/runs/' . $run_id . '/actions';
 
-        $events_ch = curl_init($events_url);
-        curl_setopt_array($events_ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [$auth_header],
-        ]);
-        $events_response = curl_exec($events_ch);
-        $events_status = curl_getinfo($events_ch, CURLINFO_HTTP_CODE);
-        curl_close($events_ch);
-
-        if ($events_status !== 200) {
-            throw new \Exception("Failed to fetch events from API: HTTP {$events_status}");
+        $events_response = $this->transport->get($events_url, [$auth_header]);
+        if ($events_response['status'] !== 200) {
+            throw new \Exception("Failed to fetch events from API: HTTP {$events_response['status']}");
         }
 
-        $steps_ch = curl_init($steps_url);
-        curl_setopt_array($steps_ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [$auth_header],
-        ]);
-        $steps_response = curl_exec($steps_ch);
-        $steps_status = curl_getinfo($steps_ch, CURLINFO_HTTP_CODE);
-        curl_close($steps_ch);
-
-        if ($steps_status !== 200) {
-            throw new \Exception("Failed to fetch steps from API: HTTP {$steps_status}");
+        $steps_response = $this->transport->get($steps_url, [$auth_header]);
+        if ($steps_response['status'] !== 200) {
+            throw new \Exception("Failed to fetch steps from API: HTTP {$steps_response['status']}");
         }
 
         return [
-            'events' => json_decode($events_response, true) ?? [],
-            'steps' => json_decode($steps_response, true) ?? [],
+            'events' => json_decode($events_response['body'], true) ?? [],
+            'steps' => json_decode($steps_response['body'], true) ?? [],
         ];
     }
 
@@ -785,23 +805,14 @@ class ServeHandler
                 Headers::SDK . ': ' . $this->client->getSdkIdentifier(),
             ];
 
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => $body,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => $headers,
-            ]);
-            $curl_response = curl_exec($ch);
-            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+            $response = $this->transport->post($url, $body, $headers);
 
-            if ($status === 200 || $status === 204) {
+            if ($response['status'] === 200 || $response['status'] === 204) {
                 return true;
             }
 
             // On 401, try fallback signing key
-            if ($status === 401) {
+            if ($response['status'] === 401) {
                 $fallback_key = $config->getSigningKeyFallback();
                 if ($fallback_key !== null) {
                     $hashed_fallback = $this->verifier->hashSigningKey($fallback_key);
@@ -810,17 +821,8 @@ class ServeHandler
                         'Authorization: Bearer ' . $hashed_fallback,
                         Headers::SDK . ': ' . $this->client->getSdkIdentifier(),
                     ];
-                    $ch2 = curl_init($url);
-                    curl_setopt_array($ch2, [
-                        CURLOPT_POST => true,
-                        CURLOPT_POSTFIELDS => $body,
-                        CURLOPT_RETURNTRANSFER => true,
-                        CURLOPT_HTTPHEADER => $fallback_headers,
-                    ]);
-                    curl_exec($ch2);
-                    $fallback_status = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-                    curl_close($ch2);
-                    if ($fallback_status === 200 || $fallback_status === 204) {
+                    $fallback_response = $this->transport->post($url, $body, $fallback_headers);
+                    if ($fallback_response['status'] === 200 || $fallback_response['status'] === 204) {
                         return true;
                     }
                 }

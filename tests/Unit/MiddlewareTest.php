@@ -70,7 +70,7 @@ class MiddlewareTest extends TestCase
         // Call hooks in spec order and verify log
         $event = new \DealNews\Inngest\Event\Event('test', []);
         $step = new \DealNews\Inngest\Step\Step(
-            new \DealNews\Inngest\Step\StepContext('run', 0, false, false, [], [])
+            new \DealNews\Inngest\Step\StepContext('run', 0, false, [], [])
         );
         $ctx = new FunctionContext($event, [$event], 'run', 0, $step);
         $steps = [];
@@ -107,7 +107,7 @@ class MiddlewareTest extends TestCase
 
         $event = new \DealNews\Inngest\Event\Event('test', []);
         $step = new \DealNews\Inngest\Step\Step(
-            new \DealNews\Inngest\Step\StepContext('run', 0, false, false, [], [])
+            new \DealNews\Inngest\Step\StepContext('run', 0, false, [], [])
         );
         $ctx = new FunctionContext($event, [$event], 'run', 0, $step);
         $steps = [];
@@ -141,7 +141,7 @@ class MiddlewareTest extends TestCase
 
         $event = new \DealNews\Inngest\Event\Event('test', []);
         $step = new \DealNews\Inngest\Step\Step(
-            new \DealNews\Inngest\Step\StepContext('run', 0, false, false, [], [])
+            new \DealNews\Inngest\Step\StepContext('run', 0, false, [], [])
         );
         $ctx = new FunctionContext($event, [$event], 'run', 0, $step);
         $steps = [];
@@ -168,7 +168,7 @@ class MiddlewareTest extends TestCase
 
         $event = new \DealNews\Inngest\Event\Event('test', []);
         $step = new \DealNews\Inngest\Step\Step(
-            new \DealNews\Inngest\Step\StepContext('run', 0, false, false, [], [])
+            new \DealNews\Inngest\Step\StepContext('run', 0, false, [], [])
         );
         $ctx = new FunctionContext($event, [$event], 'run', 0, $step);
 

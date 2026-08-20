@@ -16,7 +16,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -39,7 +38,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -72,7 +70,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: [
@@ -94,7 +91,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: [
@@ -121,7 +117,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -143,7 +138,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -163,7 +157,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -191,7 +184,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -217,7 +209,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -247,7 +238,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -277,7 +267,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -309,7 +298,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -336,7 +324,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -369,7 +356,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []
@@ -392,7 +378,6 @@ class StepTest extends TestCase
         $context = new StepContext(
             run_id: 'test-run',
             attempt: 0,
-            disable_immediate_execution: false,
             use_api: false,
             stack: [],
             steps: []

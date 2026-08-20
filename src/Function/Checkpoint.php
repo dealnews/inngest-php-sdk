@@ -14,7 +14,10 @@ namespace DealNews\Inngest\Function;
 class Checkpoint
 {
     /**
-     * @param int $bufferedSteps Maximum steps to buffer before flushing (0 = checkpoint after every step)
+     * @param int $bufferedSteps Maximum steps to buffer before flushing. Both 0 (this SDK's
+     *                           default, matching the Go SDK) and 1 (the TypeScript SDK's
+     *                           default) mean "checkpoint after every step" — they express the
+     *                           same behavior via different internal counting conventions.
      * @param string|null $maxInterval Maximum time between flushes (e.g. "3s"); null = disabled
      * @param string|null $maxRuntime Maximum total execution time per invocation; null = disabled
      */
