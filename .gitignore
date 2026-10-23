@@ -1,11 +1,25 @@
-/vendor/
-/composer.lock
-/.phpunit.cache/
-/phpunit.xml.dist
-/.php-cs-fixer.cache
-/.phpunit.result.cache
+# Temporary files
 .DS_Store
-.idea/
-.vscode/
-*.log
+*~
+*.sw[aop]
+.php-cs-fixer.cache
+
+# Developer directory
 /.dev
+
+# Deployment dependencies
+vendor
+composer.lock
+phpunit.xml
+
+# IDE project settings
+.project
+.settings
+.idea
+*.sublime-workspace
+*.sublime-project
+
+# test artifacts
+tests/fixtures/test_copy.db
+.phpunit.result.cache
+.phpunit.cache
