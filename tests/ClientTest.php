@@ -13,6 +13,8 @@ use DealNews\Inngest\Config\Env;
 use DealNews\Inngest\Event\Event;
 use DealNews\Inngest\Event\EventMeta;
 use DealNews\Inngest\Event\SendEventResult;
+use DealNews\Inngest\Functions\FunctionOptions;
+use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Http\Headers;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
@@ -42,6 +44,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Event::class)]
 #[UsesClass(EventMeta::class)]
 #[UsesClass(SendEventResult::class)]
+#[UsesClass(FunctionOptions::class)]
+#[UsesClass(InngestFunction::class)]
 #[UsesClass(Headers::class)]
 #[UsesClass(Retry::class)]
 #[UsesClass(Url::class)]
@@ -80,6 +84,63 @@ class ClientTest extends TestCase {
     public function testEmptyAppId(): void {
         $this->expectException(\InvalidArgumentException::class);
         new Client('', env: new Env([]));
+    }
+
+    /**
+     * Functions are created, listed, and found by ID
+     *
+     * @return void
+     */
+    public function testCreateFunction(): void {
+        $client = new Client('app', env: new Env([]));
+
+        $one = $client->createFunction(
+            new FunctionOptions(id: 'one'),
+            static fn () => 1
+        );
+        $two = $client->createFunction(
+            new FunctionOptions(id: 'two', on_failure: static fn () => null),
+            static fn () => 2
+        );
+
+        $this->assertInstanceOf(InngestFunction::class, $one);
+        $this->assertSame('app-one', $one->absoluteId());
+        $this->assertSame([$one, $two], $client->getFunctions());
+        $this->assertSame($one, $client->getFunction('app-one'));
+        $this->assertSame($two, $client->getFunction('app-two'));
+        $this->assertSame($two, $client->getFunction('app-two-failure'));
+        $this->assertNull($client->getFunction('app-three'));
+    }
+
+    /**
+     * Duplicate IDs are rejected, including failure handler IDs
+     *
+     * @return void
+     */
+    public function testDuplicateFunctionIds(): void {
+        $client = new Client('app', env: new Env([]));
+        $client->createFunction(
+            new FunctionOptions(id: 'fn', on_failure: static fn () => null),
+            static fn () => null
+        );
+
+        foreach (['fn', 'fn-failure'] as $id) {
+            try {
+                $client->createFunction(
+                    new FunctionOptions(id: $id),
+                    static fn () => null
+                );
+                $this->fail("Expected duplicate ID \"$id\" to fail");
+            } catch (\InvalidArgumentException $e) {
+                $this->assertSame(9101, $e->getCode());
+                $this->assertStringContainsString(
+                    "Duplicate function ID \"app-$id\"",
+                    $e->getMessage()
+                );
+            }
+        }
+
+        $this->assertCount(1, $client->getFunctions());
     }
 
     /**

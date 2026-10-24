@@ -85,6 +85,75 @@ class Url {
     }
 
     /**
+     * Sets query parameters like JS `URLSearchParams.set()`
+     *
+     * An existing parameter is replaced in place (later duplicates are
+     * dropped); new ones are appended. The whole query is re-serialized
+     * the way `URLSearchParams` does it: spaces become `+`, and only
+     * `*-._` and alphanumerics are left unescaped.
+     *
+     * @param string                $url    Absolute URL
+     * @param array<string, string> $params Parameters to set
+     *
+     * @return string
+     */
+    public static function withQuery(string $url, array $params): string {
+        $uri   = new Uri($url);
+        $pairs = [];
+
+        $query = $uri->getQuery();
+        if ($query !== '') {
+            foreach (explode('&', $query) as $pair) {
+                $parts   = explode('=', $pair, 2);
+                $pairs[] = [
+                    urldecode($parts[0]),
+                    urldecode($parts[1] ?? ''),
+                ];
+            }
+        }
+
+        foreach ($params as $name => $value) {
+            $found = false;
+            $kept  = [];
+            foreach ($pairs as $pair) {
+                if ($pair[0] === $name) {
+                    if (!$found) {
+                        $kept[] = [$name, $value];
+                        $found  = true;
+                    }
+                } else {
+                    $kept[] = $pair;
+                }
+            }
+            if (!$found) {
+                $kept[] = [$name, $value];
+            }
+            $pairs = $kept;
+        }
+
+        $encoded = [];
+        foreach ($pairs as $pair) {
+            $encoded[] = static::formEncode($pair[0]) . '=' .
+                         static::formEncode($pair[1]);
+        }
+
+        return (string)static::withRootPath(
+            $uri->withQuery(implode('&', $encoded))
+        );
+    }
+
+    /**
+     * Encodes a query component like `application/x-www-form-urlencoded`
+     *
+     * @param string $value Raw value
+     *
+     * @return string
+     */
+    protected static function formEncode(string $value): string {
+        return str_replace('%2A', '*', urlencode($value));
+    }
+
+    /**
      * Gives a URL with an authority an explicit `/` path when empty
      *
      * @param Uri|\Psr\Http\Message\UriInterface $uri URL

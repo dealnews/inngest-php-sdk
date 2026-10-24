@@ -97,6 +97,56 @@ class UrlTest extends TestCase {
     }
 
     /**
+     * Query setting matches JS `URLSearchParams.set()` + `href`
+     *
+     * @param string                $url      URL
+     * @param array<string, string> $params   Params to set
+     * @param string                $expected Result
+     *
+     * @return void
+     */
+    #[DataProvider('withQueryProvider')]
+    public function testWithQuery(
+        string $url,
+        array $params,
+        string $expected
+    ): void {
+        $this->assertSame($expected, Url::withQuery($url, $params));
+    }
+
+    /**
+     * Cases for testWithQuery (expected values from JS)
+     *
+     * @return array<string, array{string, array<string, string>, string}>
+     */
+    public static function withQueryProvider(): array {
+        return [
+            'adds root path'    => [
+                'https://example.com',
+                ['fnId' => 'a', 'stepId' => 'step'],
+                'https://example.com/?fnId=a&stepId=step',
+            ],
+            'replaces in place' => [
+                'https://example.com/api/inngest?foo=bar&fnId=old&x=a+b',
+                ['fnId' => 'new', 'stepId' => 'step'],
+                'https://example.com/api/inngest?foo=bar&fnId=new&x=a+b' .
+                '&stepId=step',
+            ],
+            'drops duplicates'  => [
+                'https://example.com/?fnId=1&fnId=2&y',
+                ['fnId' => '3'],
+                'https://example.com/?fnId=3&y=',
+            ],
+            'form encoding'     => [
+                'https://example.com',
+                ['fnId' => "testclient-my fn*~'()!/x"],
+                'https://example.com/?fnId=testclient-my+fn*%7E%27%28%29' .
+                '%21%2Fx',
+            ],
+        ];
+    }
+
+    /**
      * Normalization matches JS `new URL(normalizeUrl(x)).href`
      *
      * @param string      $input    URL

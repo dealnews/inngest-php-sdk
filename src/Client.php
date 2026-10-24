@@ -12,6 +12,8 @@ use DealNews\Inngest\Config\Env;
 use DealNews\Inngest\Config\Mode;
 use DealNews\Inngest\Event\Event;
 use DealNews\Inngest\Event\SendEventResult;
+use DealNews\Inngest\Functions\FunctionOptions;
+use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Http\Headers;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
@@ -108,6 +110,13 @@ class Client {
     protected Retry $retry;
 
     /**
+     * Functions created with this client, keyed by every ID they register
+     *
+     * @var array<string, InngestFunction>
+     */
+    protected array $functions = [];
+
+    /**
      * Creates a client
      *
      * @param string               $app_id      Your app's ID; keep it stable
@@ -193,6 +202,85 @@ class Client {
      */
     public function getHeaders(): Headers {
         return $this->headers;
+    }
+
+    /**
+     * Creates a function and registers it with this client
+     *
+     * Usage:
+     *
+     * ```php
+     * $inngest->createFunction(
+     *     new FunctionOptions(
+     *         id: 'hello-world',
+     *         triggers: [new EventTrigger('test/hello.world')],
+     *     ),
+     *     fn (Context $ctx) => 'Hello, ' . $ctx->event->data['name']
+     * );
+     * ```
+     *
+     * @param FunctionOptions $options Function options
+     * @param callable        $handler Handler, called with a Context
+     *
+     * @throws \InvalidArgumentException When the function's ID (or its
+     *                                   failure handler's ID) is already
+     *                                   used (code 9101)
+     *
+     * @return InngestFunction
+     */
+    public function createFunction(
+        FunctionOptions $options,
+        callable $handler
+    ): InngestFunction {
+        $function = new InngestFunction(
+            $this->config->app_id,
+            $options,
+            $handler
+        );
+
+        foreach ($function->configIds() as $id) {
+            if (isset($this->functions[$id])) {
+                throw new \InvalidArgumentException(
+                    "Duplicate function ID \"$id\"; please change a " .
+                    "function's name or provide an explicit ID to avoid " .
+                    'conflicts.',
+                    9101
+                );
+            }
+        }
+
+        foreach ($function->configIds() as $id) {
+            $this->functions[$id] = $function;
+        }
+
+        return $function;
+    }
+
+    /**
+     * Returns the functions created with this client, in creation order
+     *
+     * @return list<InngestFunction>
+     */
+    public function getFunctions(): array {
+        $result = [];
+        foreach ($this->functions as $function) {
+            if (!in_array($function, $result, true)) {
+                $result[] = $function;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Finds a function by any ID it registers (including `-failure` IDs)
+     *
+     * @param string $id Full function ID
+     *
+     * @return InngestFunction|null
+     */
+    public function getFunction(string $id): ?InngestFunction {
+        return $this->functions[$id] ?? null;
     }
 
     /**

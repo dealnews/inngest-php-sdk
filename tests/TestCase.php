@@ -43,6 +43,75 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
     }
 
     /**
+     * Asserts two JSON documents hold the same data
+     *
+     * Object key order is ignored (JS key order often follows user input);
+     * list order, types, and `{}` vs `[]` are not.
+     *
+     * @param string $expected Expected JSON
+     * @param string $actual   Actual JSON
+     * @param string $message  Failure message
+     *
+     * @return void
+     */
+    protected function assertJsonDataSame(
+        string $expected,
+        string $actual,
+        string $message = ''
+    ): void {
+        $this->assertSame(
+            static::canonicalJson($expected),
+            static::canonicalJson($actual),
+            $message
+        );
+    }
+
+    /**
+     * Re-encodes JSON with object keys sorted, keeping `{}` vs `[]`
+     *
+     * @param string $json JSON
+     *
+     * @return string
+     */
+    protected static function canonicalJson(string $json): string {
+        $data = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
+
+        return (string)json_encode(
+            static::sortObjects($data),
+            JSON_PRETTY_PRINT      |
+            JSON_UNESCAPED_SLASHES |
+            JSON_UNESCAPED_UNICODE
+        );
+    }
+
+    /**
+     * Recursively sorts object keys
+     *
+     * @param mixed $value Decoded JSON (objects as stdClass)
+     *
+     * @return mixed
+     */
+    protected static function sortObjects(mixed $value): mixed {
+        $result = $value;
+
+        if ($value instanceof \stdClass) {
+            $props = get_object_vars($value);
+            ksort($props, SORT_STRING);
+            $result = new \stdClass();
+            foreach ($props as $key => $item) {
+                $result->$key = static::sortObjects($item);
+            }
+        } elseif (is_array($value)) {
+            $result = array_map(
+                static fn ($item) => static::sortObjects($item),
+                $value
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * Loads a JSON fixture and decodes it to an associative array
      *
      * @param string $name Path relative to tests/fixtures

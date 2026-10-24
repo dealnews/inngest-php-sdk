@@ -163,6 +163,31 @@ class ValueObjectTest extends TestCase {
     }
 
     /**
+     * A value object with nothing set encodes as {}, alone or nested
+     *
+     * @return void
+     */
+    public function testEmptyValueObjectIsJsonObject(): void {
+        $empty = new class() extends ValueObject {
+            /**
+             * @var string|null
+             */
+            public ?string $optional = null;
+        };
+
+        $this->assertSame('{}', $empty->toJson());
+        $this->assertSame([], $empty->toArray());
+
+        $parent       = new SampleParent();
+        $parent->data = ['nested' => $empty];
+        $this->assertStringContainsString(
+            '"data":{"nested":{}}',
+            $parent->toJson()
+        );
+        $this->assertSame(['nested' => []], $parent->toArray()['data']);
+    }
+
+    /**
      * JSON output doesn't escape slashes or unicode, like JS
      *
      * @return void

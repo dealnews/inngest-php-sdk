@@ -19,7 +19,7 @@ namespace DealNews\Inngest\ValueObject;
  *   properties are left out unless listed in `KEEP_NULL`.
  * - **Empty objects.** An empty PHP array encodes as `[]`, but some fields
  *   must be `{}`. Properties listed in `OBJECT_KEYS` encode as `{}` when
- *   empty.
+ *   empty, and a value object with nothing set always encodes as `{}`.
  * - **Typed collections.** Arrays of value objects (lists or keyed maps)
  *   are declared in `COLLECTION_TYPES` so `fromArray()` can hydrate them.
  *
@@ -154,10 +154,11 @@ abstract class ValueObject implements \JsonSerializable {
     /**
      * Returns data for json_encode(), with empty objects preserved as `{}`
      *
-     * @return array<string, mixed>
+     * @return array<string, mixed>|\stdClass An empty object when nothing
+     *                                         is set
      */
-    public function jsonSerialize(): array {
-        return $this->export(true);
+    public function jsonSerialize(): array|\stdClass {
+        return static::emptyAsObject($this->export(true));
     }
 
     /**
@@ -231,6 +232,9 @@ abstract class ValueObject implements \JsonSerializable {
 
         if ($value instanceof ValueObject) {
             $result = $value->export($for_json);
+            if ($for_json) {
+                $result = static::emptyAsObject($result);
+            }
         } elseif ($value instanceof \BackedEnum) {
             $result = $value->value;
         } elseif ($value instanceof \JsonSerializable) {
@@ -248,6 +252,17 @@ abstract class ValueObject implements \JsonSerializable {
         }
 
         return $result;
+    }
+
+    /**
+     * Returns an empty array as an empty object, so it encodes as `{}`
+     *
+     * @param array<string, mixed> $data Exported data
+     *
+     * @return array<string, mixed>|\stdClass
+     */
+    protected static function emptyAsObject(array $data): array|\stdClass {
+        return $data === [] ? new \stdClass() : $data;
     }
 
     /**
