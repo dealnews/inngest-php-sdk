@@ -78,13 +78,15 @@ class ServeHarness {
      *
      * @param ClientOptions|null $options   Client options
      * @param list<mixed>        $responses Queued outbound HTTP responses
-     * @param bool               $functions Whether to add the functions
+     * @param bool|\Closure       $functions Whether to add the default
+     *                                       functions, or a closure that
+     *                                       adds functions to the client
      * @param Signature|null     $signature Signature helper for the handler
      */
     public function __construct(
         ?ClientOptions $options = null,
         array $responses = [],
-        bool $functions = true,
+        bool|\Closure $functions = true,
         ?Signature $signature = null
     ) {
         $this->http   = new MockHttp($responses);
@@ -98,7 +100,9 @@ class ServeHarness {
             new FixedVersion('1.2.3')
         );
 
-        if ($functions) {
+        if ($functions instanceof \Closure) {
+            $functions($this->client);
+        } elseif ($functions) {
             $this->client->createFunction(
                 new FunctionOptions(
                     id: 'fn1',

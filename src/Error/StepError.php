@@ -79,7 +79,7 @@ class StepError extends RemoteError {
      * @return array<string, mixed> Keys: name (string), message (string),
      *                              stack (?string), cause (mixed)
      */
-    protected static function normalize(mixed $error): array {
+    public static function normalize(mixed $error): array {
         $data = is_array($error) ? $error : [];
 
         foreach (['name', 'error', 'message', 'stack'] as $key) {

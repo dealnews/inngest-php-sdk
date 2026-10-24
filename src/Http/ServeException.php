@@ -14,7 +14,6 @@ namespace DealNews\Inngest\Http;
  * - 5103: `fnId` doesn't match any function
  * - 5104: in-band sync without a body
  * - 5105: in-band sync URL isn't an absolute URL
- * - 5199: function execution isn't available yet
  *
  * @package DealNews\Inngest\Http
  */

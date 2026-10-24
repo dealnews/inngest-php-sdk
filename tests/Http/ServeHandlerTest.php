@@ -9,8 +9,21 @@ use DealNews\Inngest\Client;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
+use DealNews\Inngest\Context;
 use DealNews\Inngest\Error\ErrorSerializer;
+use DealNews\Inngest\Error\RemoteError;
 use DealNews\Inngest\Error\SerializedError;
+use DealNews\Inngest\Error\StepError;
+use DealNews\Inngest\Event\Event;
+use DealNews\Inngest\Execution\Engine;
+use DealNews\Inngest\Execution\ExecutionException;
+use DealNews\Inngest\Execution\ExecutionResult;
+use DealNews\Inngest\Execution\FoundStep;
+use DealNews\Inngest\Execution\OutgoingOp;
+use DealNews\Inngest\Execution\RunRequest;
+use DealNews\Inngest\Execution\StepIdResolver;
+use DealNews\Inngest\Execution\StepOp;
+use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\Config\FunctionConfig;
 use DealNews\Inngest\Functions\Config\StepConfig;
 use DealNews\Inngest\Functions\Config\StepRetries;
@@ -36,6 +49,8 @@ use DealNews\Inngest\Http\SignatureResult;
 use DealNews\Inngest\Http\Sync\InBandRegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterResult;
+use DealNews\Inngest\Step\StepOptions;
+use DealNews\Inngest\Step\StepTools;
 use DealNews\Inngest\Support\Duration;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
@@ -61,6 +76,21 @@ use PHPUnit\Framework\Attributes\UsesClass;
  */
 #[CoversClass(ServeHandler::class)]
 #[UsesClass(ApiClient::class)]
+#[UsesClass(Context::class)]
+#[UsesClass(Engine::class)]
+#[UsesClass(Event::class)]
+#[UsesClass(ExecutionException::class)]
+#[UsesClass(ExecutionResult::class)]
+#[UsesClass(FoundStep::class)]
+#[UsesClass(OutgoingOp::class)]
+#[UsesClass(RemoteError::class)]
+#[UsesClass(RunRequest::class)]
+#[UsesClass(StepError::class)]
+#[UsesClass(StepIdResolver::class)]
+#[UsesClass(StepOp::class)]
+#[UsesClass(StepOptions::class)]
+#[UsesClass(StepState::class)]
+#[UsesClass(StepTools::class)]
 #[UsesClass(AuthenticatedIntrospection::class)]
 #[UsesClass(Capabilities::class)]
 #[UsesClass(Client::class)]
@@ -1129,8 +1159,9 @@ class ServeHandlerTest extends TestCase {
             'empty probe'      => ['?probe=&fnId=', 5102],
             'unknown fnId'     => ['?fnId=nope', 5103],
             'unprefixed fnId'  => ['?fnId=fn1', 5103],
-            'known fnId'       => ['?fnId=test-app-fn1', 5199],
-            'failure fnId'     => ['?fnId=test-app-fn1-failure', 5199],
+            // Known IDs reach execution, which rejects the `{}` body.
+            'known fnId'       => ['?fnId=test-app-fn1', 7001],
+            'failure fnId'     => ['?fnId=test-app-fn1-failure', 7001],
         ];
     }
 
@@ -1180,5 +1211,90 @@ class ServeHandlerTest extends TestCase {
         $harness = new ServeHarness(static::dev());
 
         $this->assertSame(200, $harness->request('get')->status);
+    }
+
+    /**
+     * The step to run can come from the `X-Inngest-Step-Id` header when
+     * the query doesn't name one
+     *
+     * @return void
+     */
+    public function testStepIdFromHeader(): void {
+        $harness = new ServeHarness(
+            static::dev(),
+            [],
+            static function (Client $client): void {
+                $client->createFunction(
+                    new FunctionOptions(id: 'steps'),
+                    static fn (Context $ctx) => $ctx->step->run(
+                        'A',
+                        static fn () => 'ran A'
+                    )
+                );
+            }
+        );
+        $body = '{"event":{},"ctx":{"run_id":"r",' .
+                '"disable_immediate_execution":true}}';
+
+        $response = $harness->request(
+            'POST',
+            ServeHarness::URL . '?fnId=test-app-steps',
+            [Headers::STEP_ID => sha1('A')],
+            $body
+        );
+        $this->assertSame(206, $response->status);
+        $this->assertSame('ran A', static::body($response)[0]['data']);
+
+        // `stepId=step` in the query wins over the header and means "none".
+        $response = $harness->request(
+            'POST',
+            ServeHarness::URL . '?fnId=test-app-steps&stepId=step',
+            [Headers::STEP_ID => sha1('A')],
+            $body
+        );
+        $this->assertSame(206, $response->status);
+        $this->assertSame(
+            'StepPlanned',
+            static::body($response)[0]['op']
+        );
+    }
+
+    /**
+     * Step-not-found messages list at most the capped steps and say how
+     * many there were
+     *
+     * @return void
+     */
+    public function testStepNotFoundMessage(): void {
+        $harness = new ServeHarness(static::dev());
+        $handler = new class($harness->client) extends ServeHandler {
+            public function respond(ExecutionResult $result): Response {
+                return $this->executionResponse($result);
+            }
+        };
+
+        $found = [
+            ['id' => 'aaa', 'name' => 'a', 'displayName' => 'Step A'],
+            ['id' => 'bbb'],
+        ];
+        $body = static::body($handler->respond(
+            ExecutionResult::stepNotFound('zzz', $found, 30)
+        ));
+
+        $this->assertSame(
+            'Could not find step "zzz" to run; timed out. Found new ' .
+            "steps: \nStep A (aaa)\nbbb (bbb). (showing 2 of 30)",
+            $body['error']
+        );
+        $this->assertSame('zzz', $body['requestedStep']);
+        $this->assertSame(30, $body['totalFoundSteps']);
+
+        $body = static::body($handler->respond(
+            ExecutionResult::stepNotFound('zzz', [], 0)
+        ));
+        $this->assertSame(
+            'Could not find step "zzz" to run; timed out.',
+            $body['error']
+        );
     }
 }

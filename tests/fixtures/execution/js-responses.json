@@ -1,0 +1,1242 @@
+{
+  "no_steps": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "ok": true,
+      "n": 1,
+      "count": 1
+    },
+    "apiCalls": []
+  },
+  "returns_undefined": {
+    "request": {
+      "fnId": "returns-undefined",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": null,
+    "apiCalls": []
+  },
+  "throws": {
+    "request": {
+      "fnId": "throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "boom",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:65:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "throws_last_attempt": {
+    "request": {
+      "fnId": "throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":2,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":3}}"
+    },
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "true",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "boom",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:65:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "throws_not_last_attempt": {
+    "request": {
+      "fnId": "throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":1,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":3}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "boom",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:65:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "throws_non_retriable": {
+    "request": {
+      "fnId": "throws-non-retriable",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "true",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "NonRetriableError",
+      "message": "nope",
+      "stack": "NonRetriableError: nope\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:68:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "throws_retry_after": {
+    "request": {
+      "fnId": "throws-retry-after",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "5",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "RetryAfterError",
+      "message": "later",
+      "stack": "RetryAfterError: later\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:71:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "a_to_b_first": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "A",
+        "timing": {
+          "a": 1792878313014000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "a_to_b_second": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"type\":\"data\",\"data\":\"A\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": "B",
+        "timing": {
+          "a": 1792878313017000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "a_to_b_done": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"A\"},\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\":{\"data\":\"B\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\",\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\"],\"current\":1}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": null,
+    "apiCalls": []
+  },
+  "a_to_b_no_stack": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"A\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":null}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": "B",
+        "timing": {
+          "a": 1792878313029000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "a_to_b_raw_state": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":\"A\"},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": "B",
+        "timing": {
+          "a": 1792878313031000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "a_to_b_disable_immediate": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":true,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "displayName": "A",
+        "op": "StepPlanned",
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "name": "A",
+        "opts": {},
+        "userland": {
+          "id": "A"
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "a_to_b_requested_step": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":true,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "A",
+        "timing": {
+          "a": 1792878313037000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "a_to_b_requested_second": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"A\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":true,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": "B",
+        "timing": {
+          "a": 1792878313039000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "returns_step_data_first": {
+    "request": {
+      "fnId": "returns-step-data",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": {
+          "x": 1,
+          "nested": {
+            "y": [
+              1,
+              2
+            ]
+          }
+        },
+        "timing": {
+          "a": 1792878313040000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "returns_step_data_second": {
+    "request": {
+      "fnId": "returns-step-data",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":{\"x\":1,\"nested\":{\"y\":[1,2]}}}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": null,
+        "timing": {
+          "a": 1792878313041000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "returns_step_data_done": {
+    "request": {
+      "fnId": "returns-step-data",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":{\"x\":1,\"nested\":{\"y\":[1,2]}}},\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\":{\"data\":null}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "a": {
+        "x": 1,
+        "nested": {
+          "y": [
+            1,
+            2
+          ]
+        }
+      },
+      "b": null
+    },
+    "apiCalls": []
+  },
+  "step_throws": {
+    "request": {
+      "fnId": "step-throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepError",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "Error",
+          "message": "step failed",
+          "stack": "Error: step failed\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:84:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792878313044000000,
+          "b": 0
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "step_throws_last_attempt": {
+    "request": {
+      "fnId": "step-throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":3,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "true",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepFailed",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "Error",
+          "message": "step failed",
+          "stack": "Error: step failed\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:84:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792878313050000000,
+          "b": 0
+        },
+        "data": {
+          "__serialized": true,
+          "name": "Error",
+          "message": "step failed",
+          "stack": ""
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "step_non_retriable": {
+    "request": {
+      "fnId": "step-non-retriable",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "true",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepFailed",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "NonRetriableError",
+          "message": "bad step",
+          "stack": "NonRetriableError: bad step\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:89:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792878313051000000,
+          "b": 1000000
+        },
+        "data": {
+          "__serialized": true,
+          "name": "NonRetriableError",
+          "message": "bad step",
+          "stack": ""
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "step_retry_after": {
+    "request": {
+      "fnId": "step-retry-after",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepError",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "RetryAfterError",
+          "message": "slow down",
+          "stack": "RetryAfterError: slow down\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:94:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792878313054000000,
+          "b": 1000000
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "step_error_uncaught": {
+    "request": {
+      "fnId": "step-throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"type\":\"error\",\"error\":{\"name\":\"Error\",\"message\":\"step failed\",\"stack\":\"Error: step failed\\n    at somewhere\",\"__serialized\":true}}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "true",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "step failed",
+      "stack": "Error: step failed\n    at somewhere",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "step_error_caught": {
+    "request": {
+      "fnId": "catches-step-error",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"error\":{\"name\":\"Error\",\"message\":\"it broke\",\"stack\":\"Error: it broke\\n    at somewhere\",\"__serialized\":true}}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": "caught: it broke",
+    "apiCalls": []
+  },
+  "step_error_rethrown_different": {
+    "request": {
+      "fnId": "rethrows-other-error",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"error\":{\"name\":\"Error\",\"message\":\"it broke\",\"stack\":\"Error: it broke\\n    at somewhere\",\"__serialized\":true}}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "different",
+      "stack": "Error: different\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:109:13)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "input_first": {
+    "request": {
+      "fnId": "input",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {
+          "input": [
+            1,
+            2
+          ]
+        },
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": 3,
+        "timing": {
+          "a": 1792878313064000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "input_replay": {
+    "request": {
+      "fnId": "input",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"input\":[5,6]}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {
+          "input": [
+            5,
+            6
+          ]
+        },
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": 11,
+        "timing": {
+          "a": 1792878313065000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "input_done": {
+    "request": {
+      "fnId": "input",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":3}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": 3,
+    "apiCalls": []
+  },
+  "duplicate_ids_third": {
+    "request": {
+      "fnId": "duplicate-ids",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":0},\"3c782d85a10d2b0600979de846390aae2b5b50ba\":{\"data\":1}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "8ac01954e36ad3a7e2472526fe50ebcbe1e59638",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A",
+          "index": 2
+        },
+        "data": 2,
+        "timing": {
+          "a": 1792878313067000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "duplicate_ids_done": {
+    "request": {
+      "fnId": "duplicate-ids",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":0},\"3c782d85a10d2b0600979de846390aae2b5b50ba\":{\"data\":1},\"8ac01954e36ad3a7e2472526fe50ebcbe1e59638\":{\"data\":2}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      0,
+      1,
+      2
+    ],
+    "apiCalls": []
+  },
+  "named_step": {
+    "request": {
+      "fnId": "named-step",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "Pretty A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "A",
+        "timing": {
+          "a": 1792878313068000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "named_step_disable_immediate": {
+    "request": {
+      "fnId": "named-step",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":true,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "displayName": "Pretty A",
+        "op": "StepPlanned",
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "name": "A",
+        "opts": {},
+        "userland": {
+          "id": "A"
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "step_not_found": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "909f99a779adb66a76fc53ab56c7dd1caf35d0fd",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"A\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "error": "Could not find step \"909f99a779adb66a76fc53ab56c7dd1caf35d0fd\" to run; timed out. Found new steps: \nB (ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec).",
+      "requestedStep": "909f99a779adb66a76fc53ab56c7dd1caf35d0fd",
+      "foundSteps": [
+        {
+          "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "name": "B",
+          "displayName": "B"
+        }
+      ],
+      "totalFoundSteps": 1
+    },
+    "apiCalls": []
+  },
+  "step_not_found_after_return": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "909f99a779adb66a76fc53ab56c7dd1caf35d0fd",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "ok": true,
+      "n": 1,
+      "count": 1
+    },
+    "apiCalls": []
+  },
+  "on_failure": {
+    "request": {
+      "fnId": "with-failure-failure",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"inngest/function.failed\",\"data\":{\"function_id\":\"test-app-with-failure\",\"run_id\":\"run-0\",\"error\":{\"name\":\"Error\",\"message\":\"main broke\",\"stack\":\"Error: main broke\\n    at somewhere\",\"__serialized\":true}}},\"events\":[],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": "handled: main broke (Error) for test-app-with-failure",
+    "apiCalls": []
+  },
+  "use_api": {
+    "request": {
+      "fnId": "a-to-b",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":true,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": "B",
+        "timing": {
+          "a": 1792878323105000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": [
+      "/v0/runs/run-1/batch",
+      "/v0/runs/run-1/actions"
+    ]
+  },
+  "version_header_one": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {
+        "x-inngest-req-version": "1"
+      },
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "ok": true,
+      "n": 1,
+      "count": 1
+    },
+    "apiCalls": []
+  },
+  "version_zero": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":0,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "type": "internal",
+      "name": "Error",
+      "message": "Failed to parse data from executor Function execution can't continue. To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html",
+      "stack": "Error: Failed to parse data from executor Function execution can't continue. To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html\n    at parseFnData (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/functions.ts:184:11)\n    at InngestCommHandler.runStep (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:2248:29)\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1850:42)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:319:25)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "version_missing": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "ok": true,
+      "n": 1,
+      "count": 1
+    },
+    "apiCalls": []
+  },
+  "invalid_event": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":\"nope\",\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "type": "internal",
+      "name": "Error",
+      "message": "Failed to parse data from executor Function execution can't continue. [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"string\",\n    \"path\": [\n      \"event\"\n    ],\n    \"message\": \"Expected object, received string\"\n  }\n] To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html",
+      "stack": "Error: Failed to parse data from executor Function execution can't continue. [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"string\",\n    \"path\": [\n      \"event\"\n    ],\n    \"message\": \"Expected object, received string\"\n  }\n] To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html\n    at parseFnData (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/functions.ts:184:11)\n    at InngestCommHandler.runStep (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:2248:29)\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1850:42)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:319:25)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "missing_ctx": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2}"
+    },
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "ok": true,
+      "n": 1,
+      "count": 1
+    },
+    "apiCalls": []
+  }
+}

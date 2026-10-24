@@ -8,6 +8,12 @@ use DealNews\Inngest\Client;
 use DealNews\Inngest\Config\Env;
 use DealNews\Inngest\Config\Mode;
 use DealNews\Inngest\Error\ErrorSerializer;
+use DealNews\Inngest\Execution\Engine;
+use DealNews\Inngest\Execution\ExecutionException;
+use DealNews\Inngest\Execution\ExecutionResult;
+use DealNews\Inngest\Execution\OutgoingOp;
+use DealNews\Inngest\Execution\ResultType;
+use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Support\Url;
 use GuzzleHttp\Psr7\Uri;
@@ -277,12 +283,7 @@ class ServeHandler {
                 );
             }
 
-            $response = $this->runFunction(
-                $request,
-                $function,
-                $fn_id,
-                $signature
-            );
+            $response = $this->runFunction($request, $function, $fn_id);
         }
 
         return $response;
@@ -314,28 +315,157 @@ class ServeHandler {
     }
 
     /**
-     * Runs a function (phase 5 of the port)
+     * Runs a function and turns the result into a response
      *
-     * @param Request         $request   Incoming request
-     * @param InngestFunction $function  Function to run
-     * @param string          $fn_id     Requested function ID (the failure
-     *                                   handler's ID runs `on_failure`)
-     * @param SignatureResult $signature Signature check result
+     * @param Request         $request  Incoming request
+     * @param InngestFunction $function Function to run
+     * @param string          $fn_id    Requested function ID (the failure
+     *                                  handler's ID runs `on_failure`)
      *
-     * @throws ServeException Always, until the execution engine exists
+     * @throws ExecutionException When the request body can't be parsed or
+     *                            run data can't be fetched
      *
      * @return Response
      */
     protected function runFunction(
         Request $request,
         InngestFunction $function,
-        string $fn_id,
-        SignatureResult $signature
+        string $fn_id
     ): Response {
-        throw new ServeException(
-            'Function execution is not implemented yet',
-            5199
+        $run = RunRequest::parse(
+            (string)$request->body,
+            $request->header(Headers::REQUEST_VERSION)
+        )->withApiData($this->client->getApi());
+
+        $step_id = $request->query(self::QUERY_STEP_ID);
+        if ($step_id === null || $step_id === '') {
+            $step_id = $request->header(Headers::STEP_ID);
+        }
+        if ($step_id === '' || $step_id === InngestFunction::STEP_ID) {
+            $step_id = null;
+        }
+
+        $engine = new Engine(
+            $function,
+            $fn_id === $function->failureId(),
+            $run,
+            $step_id,
+            $this->logger,
+            $this->serializer
         );
+
+        return $this->executionResponse($engine->execute());
+    }
+
+    /**
+     * Maps an execution result to a response (JS `resultHandlers`)
+     *
+     * @param ExecutionResult $result Result
+     *
+     * @return Response
+     */
+    protected function executionResponse(ExecutionResult $result): Response {
+        $retry_headers = static::retryHeaders($result->retriable);
+
+        return match ($result->type) {
+            ResultType::FunctionResolved => Response::json(
+                200,
+                $result->data
+            ),
+            ResultType::FunctionRejected => Response::json(
+                $result->retriable === false ? 400 : 500,
+                $result->error,
+                $retry_headers
+            ),
+            ResultType::StepRan => Response::json(
+                206,
+                static::opsWithData($result->ops),
+                $retry_headers
+            ),
+            ResultType::StepsFound => Response::json(
+                206,
+                static::opsWithData($result->ops)
+            ),
+            ResultType::StepNotFound => Response::json(
+                500,
+                [
+                    'error'           => static::stepNotFoundMessage($result),
+                    'requestedStep'   => $result->step_id,
+                    'foundSteps'      => $result->found_steps,
+                    'totalFoundSteps' => $result->total_found,
+                ],
+                [Headers::NO_RETRY => 'false']
+            ),
+        };
+    }
+
+    /**
+     * Returns `X-Inngest-No-Retry` / `Retry-After` for a retriable value
+     *
+     * @param bool|string|null $retriable Retriable value; null for none
+     *
+     * @return array<string, string>
+     */
+    protected static function retryHeaders(bool|string|null $retriable): array {
+        $headers = [];
+
+        if ($retriable !== null) {
+            $headers[Headers::NO_RETRY] = $retriable === false ?
+                'true' :
+                'false';
+            if (is_string($retriable)) {
+                $headers[Headers::RETRY_AFTER] = $retriable;
+            }
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Makes every op carry `data` (null when unset), like JS
+     *
+     * @param list<OutgoingOp> $ops Ops
+     *
+     * @return list<OutgoingOp>
+     */
+    protected static function opsWithData(array $ops): array {
+        foreach ($ops as $op) {
+            if (!$op->has_data) {
+                $op->withData(null);
+            }
+        }
+
+        return $ops;
+    }
+
+    /**
+     * Builds the "step not found" message
+     *
+     * @param ExecutionResult $result Step-not-found result
+     *
+     * @return string
+     */
+    protected static function stepNotFoundMessage(
+        ExecutionResult $result
+    ): string {
+        $message = "Could not find step \"{$result->step_id}\" to run; " .
+                   'timed out.';
+
+        if ($result->found_steps !== []) {
+            $lines = [];
+            foreach ($result->found_steps as $step) {
+                $name    = $step['displayName'] ?? $step['id'];
+                $lines[] = "$name ({$step['id']})";
+            }
+            $message .= " Found new steps: \n" . implode("\n", $lines) . '.';
+        }
+
+        if ($result->total_found > count($result->found_steps)) {
+            $message .= ' (showing ' . count($result->found_steps) . ' of ' .
+                        $result->total_found . ')';
+        }
+
+        return $message;
     }
 
     /**

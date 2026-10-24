@@ -24,6 +24,7 @@ Generators:
 |---|---|---|
 | `functions/generate.mts` | `functions/js-configs.json` | `InngestFunctionTest` |
 | `serve/generate.mts` | `serve/js-responses.json` | `ServeHandlerParityTest` |
+| `execution/generate.mts` | `execution/js-responses.json` | `EngineParityTest` |
 
 Generated against inngest-js `packages/inngest` v4.26.0 (commit
 `4c4e4e43`).
