@@ -10,6 +10,6 @@ composer require dealnews/inngest-php-sdk
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.4 or higher
 - ext-json
 - ext-hash
