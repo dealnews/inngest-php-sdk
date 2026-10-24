@@ -1,0 +1,84 @@
+{
+  "sign": [
+    {
+      "body": "hello world",
+      "key": "signkey-test-abc123",
+      "ts": "1234567890",
+      "mac": "038b2065d99431f34b7d85b98e6b481c04c3ee249671c9fb38f764e0d8b68535"
+    },
+    {
+      "body": "",
+      "key": "signkey-test-abc123",
+      "ts": "1234567890",
+      "mac": "ea1cbc12e31e8be80b32f591df8784d248223c5acb45aac46ac1b38d18ad8f9e"
+    },
+    {
+      "body": "Hello 世界 🌍",
+      "key": "signkey-test-abc123",
+      "ts": "1234567890",
+      "mac": "34b237968a0ff60b88b611acea58f52be511e6778774849698718a523d1af620"
+    },
+    {
+      "body": "{\"event\":{\"name\":\"test\"}}",
+      "key": "signkey-test-12345",
+      "ts": "1700000000",
+      "mac": "528e2aaafcb67f68084980e8e542781abe1848b536eec5b9f091fa8931efebb0"
+    },
+    {
+      "body": "data",
+      "key": "signkey-prod-mykey",
+      "ts": "123",
+      "mac": "4328975e201c80628a9df500b202438c05999f4b2d0237883bf7bae18d33ac71"
+    },
+    {
+      "body": "data",
+      "key": "mykey",
+      "ts": "123",
+      "mac": "4328975e201c80628a9df500b202438c05999f4b2d0237883bf7bae18d33ac71"
+    }
+  ],
+  "hashSigningKey": [
+    {
+      "key": "signkey-test-12345",
+      "hash": "signkey-test-3ed64a0a9ba8b5b3eae5d396d66e354779334be3391f79b5ca358c6145b525b8"
+    },
+    {
+      "key": "signkey-prod-0123456789abcdef",
+      "hash": "signkey-prod-55c53f5d490297900cefa825d0c8e8e9532ee8a118abe7d8570762cd38be9818"
+    },
+    {
+      "key": "signkey-branch-abc",
+      "hash": "signkey-branch-1870348e36542f82a2bb6b134f9bda817cbc1f946dda37a0cce5b5221b9f0304"
+    },
+    {
+      "key": "0123456789abcdef",
+      "hash": "55c53f5d490297900cefa825d0c8e8e9532ee8a118abe7d8570762cd38be9818"
+    },
+    {
+      "key": "signkey-test-abc",
+      "hash": "signkey-test-1870348e36542f82a2bb6b134f9bda817cbc1f946dda37a0cce5b5221b9f0304"
+    },
+    {
+      "key": "signkey-test-xyz1",
+      "hash": "signkey-test-96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7"
+    },
+    {
+      "key": "signkey-test-1g2h",
+      "hash": "signkey-test-a12871fee210fb8619291eaea194581cbd2531e4b23759d225f6806923f63222"
+    },
+    {
+      "key": "signkey-test-g1",
+      "hash": "signkey-test-6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+    }
+  ],
+  "hashEventKey": [
+    {
+      "key": "test-event-key",
+      "hash": "5d0ef16ddc80ea26888cd520cffb7b3c118e5c0ddddc278673cfe69e203a093e"
+    },
+    {
+      "key": "Ünïcødé",
+      "hash": "bef14f670c8662d46408f1b4b6b7fa052ff7c149cae38de76459f305f847a2b8"
+    }
+  ]
+}

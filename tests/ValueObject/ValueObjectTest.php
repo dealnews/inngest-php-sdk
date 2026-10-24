@@ -6,6 +6,8 @@ namespace DealNews\Inngest\Tests\ValueObject;
 
 use DealNews\Inngest\Tests\mock\SampleChild;
 use DealNews\Inngest\Tests\mock\SampleParent;
+use DealNews\Inngest\Tests\mock\SamplePromoted;
+use DealNews\Inngest\Tests\mock\SampleRequired;
 use DealNews\Inngest\Tests\mock\SampleStatus;
 use DealNews\Inngest\Tests\TestCase;
 use DealNews\Inngest\ValueObject\ValueObject;
@@ -231,6 +233,33 @@ class ValueObjectTest extends TestCase {
         $vo = SampleParent::fromArray(['children' => [$child]]);
 
         $this->assertSame($child, $vo->children[0]);
+    }
+
+    /**
+     * Promoted constructor properties get their defaults when hydrating
+     *
+     * @return void
+     */
+    public function testFromArrayUsesOptionalConstructor(): void {
+        $empty = SamplePromoted::fromArray([]);
+        $set   = SamplePromoted::fromArray(['size' => 3]);
+
+        $this->assertSame('default', $empty->label);
+        $this->assertNull($empty->size);
+        $this->assertSame(['label' => 'default', 'size' => 3], $set->toArray());
+    }
+
+    /**
+     * A constructor with required parameters is skipped
+     *
+     * @return void
+     */
+    public function testFromArraySkipsRequiredConstructor(): void {
+        $this->assertSame('unset', SampleRequired::fromArray([])->name);
+        $this->assertSame(
+            'raw',
+            SampleRequired::fromArray(['name' => 'raw'])->name
+        );
     }
 
     /**

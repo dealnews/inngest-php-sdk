@@ -39,8 +39,9 @@ namespace DealNews\Inngest\ValueObject;
  * Edge cases:
  *
  * - Uninitialized typed properties are treated as "not set" and omitted.
- * - `fromArray()` skips the constructor, so subclasses must not rely on
- *   it for hydration. Don't use readonly properties: they can't be set
+ * - `fromArray()` calls the constructor with no arguments when it has no
+ *   required parameters (so promoted properties get their defaults), and
+ *   skips it otherwise. Don't use readonly properties: they can't be set
  *   from this base class.
  * - Unknown keys in `fromArray()` input are ignored.
  *
@@ -94,7 +95,11 @@ abstract class ValueObject implements \JsonSerializable {
      */
     public static function fromArray(array $data): static {
         $reflection = new \ReflectionClass(static::class);
-        $object     = $reflection->newInstanceWithoutConstructor();
+        $required   = $reflection->getConstructor()
+            ?->getNumberOfRequiredParameters() ?? 0;
+        $object = $required === 0 ?
+            $reflection->newInstance() :
+            $reflection->newInstanceWithoutConstructor();
         $properties = static::wireToPropertyMap();
 
         foreach ($data as $key => $value) {
