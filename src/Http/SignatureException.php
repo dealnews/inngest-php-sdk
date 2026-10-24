@@ -11,6 +11,8 @@ namespace DealNews\Inngest\Http;
  * - 5001: malformed `X-Inngest-Signature` header
  * - 5002: signature expired
  * - 5003: signature doesn't match
+ * - 5004: cloud mode, but no signing key is configured
+ * - 5005: no `X-Inngest-Signature` header
  *
  * @package DealNews\Inngest\Http
  */

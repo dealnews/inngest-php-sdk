@@ -1,0 +1,753 @@
+{
+  "introspection_dev": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-expected-server-kind": "dev",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "extra": {
+        "native_crypto": true
+      },
+      "has_event_key": false,
+      "has_signing_key": false,
+      "function_count": 3,
+      "mode": "dev",
+      "schema_version": "2024-05-24"
+    }
+  },
+  "introspection_cloud": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "traceparent": "00-abc-def-01",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-env": "my-env",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true",
+      "x-inngest-signature": "t=1792876840&s=cb5df7e18d7662a032b084061936b4c68e08776615606e842cf2aaf11f93c9c7"
+    },
+    "body": {
+      "extra": {
+        "native_crypto": true,
+        "is_streaming": false
+      },
+      "has_event_key": true,
+      "has_signing_key": true,
+      "function_count": 3,
+      "mode": "cloud",
+      "schema_version": "2024-05-24",
+      "authentication_succeeded": true,
+      "api_origin": "https://api.inngest.com/",
+      "app_id": "test-app",
+      "capabilities": {
+        "trust_probe": "v1",
+        "connect": "v1"
+      },
+      "env": "my-env",
+      "event_api_origin": "https://inn.gs/",
+      "event_key_hash": "5d5a212001221cb2529bf266c37e615a785400000198a0d5b73a8b819603c6a3",
+      "framework": "test",
+      "sdk_language": "js",
+      "sdk_version": "4.26.0",
+      "serve_origin": "https://example.com",
+      "serve_path": "/custom/path",
+      "signing_key_fallback_hash": "02d449a31fbb",
+      "signing_key_hash": "66687aadf862"
+    }
+  },
+  "introspection_cloud_no_keys": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true",
+      "x-inngest-signature": "t=1792876840&s=2142e536ffbae0d66b94db317f74b765eb7566d4241ce61b54f2ea8ff4e5b82d"
+    },
+    "body": {
+      "extra": {
+        "native_crypto": true,
+        "is_streaming": false
+      },
+      "has_event_key": false,
+      "has_signing_key": true,
+      "function_count": 3,
+      "mode": "cloud",
+      "schema_version": "2024-05-24",
+      "authentication_succeeded": true,
+      "api_origin": "https://api.inngest.com/",
+      "app_id": "test-app",
+      "capabilities": {
+        "trust_probe": "v1",
+        "connect": "v1"
+      },
+      "env": null,
+      "event_api_origin": "https://inn.gs/",
+      "event_key_hash": null,
+      "framework": "test",
+      "sdk_language": "js",
+      "sdk_version": "4.26.0",
+      "serve_origin": null,
+      "serve_path": null,
+      "signing_key_fallback_hash": null,
+      "signing_key_hash": "66687aadf862"
+    }
+  },
+  "in_band_dev": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true",
+      "x-inngest-sync-kind": "in_band"
+    },
+    "body": {
+      "app_id": "test-app",
+      "capabilities": {
+        "trust_probe": "v1",
+        "connect": "v1"
+      },
+      "env": null,
+      "framework": "test",
+      "functions": [
+        {
+          "id": "test-app-fn1",
+          "name": "fn1",
+          "triggers": [
+            {
+              "event": "demo/event.sent"
+            }
+          ],
+          "steps": {
+            "step": {
+              "id": "step",
+              "name": "step",
+              "runtime": {
+                "type": "http",
+                "url": "https://example.com/api/inngest?x=1&fnId=test-app-fn1&stepId=step"
+              }
+            }
+          }
+        },
+        {
+          "id": "test-app-fn1-failure",
+          "name": "fn1 (failure)",
+          "triggers": [
+            {
+              "event": "inngest/function.failed",
+              "expression": "event.data.function_id == 'test-app-fn1'"
+            }
+          ],
+          "steps": {
+            "step": {
+              "id": "step",
+              "name": "step",
+              "runtime": {
+                "type": "http",
+                "url": "https://example.com/api/inngest?x=1&fnId=test-app-fn1-failure&stepId=step"
+              },
+              "retries": {
+                "attempts": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "test-app-fn2",
+          "name": "Second",
+          "triggers": [
+            {
+              "cron": "0 * * * *"
+            }
+          ],
+          "steps": {
+            "step": {
+              "id": "step",
+              "name": "step",
+              "runtime": {
+                "type": "http",
+                "url": "https://example.com/api/inngest?x=1&fnId=test-app-fn2&stepId=step"
+              },
+              "retries": {
+                "attempts": 1
+              }
+            }
+          }
+        }
+      ],
+      "featureObservations": {
+        "aiMetadataExtraction": {
+          "readinessReason": "AI_METADATA_EXTRACTION_READINESS_REASON_OTEL_PROVIDER_MISSING",
+          "otelSetup": {
+            "path": "OTEL_SETUP_PATH_EXTEND_EXISTING_PROVIDER",
+            "failure": "OTEL_SETUP_FAILURE_NO_PROVIDER"
+          }
+        },
+        "extendedTraces": {
+          "readinessReason": "EXTENDED_TRACES_READINESS_REASON_NOT_ENABLED_BY_USER",
+          "config": {}
+        },
+        "sendEvents": {
+          "readinessReason": "SEND_EVENTS_READINESS_REASON_READY",
+          "config": {}
+        }
+      },
+      "inspection": {
+        "extra": {
+          "native_crypto": true
+        },
+        "has_event_key": false,
+        "has_signing_key": false,
+        "function_count": 3,
+        "mode": "dev",
+        "schema_version": "2024-05-24"
+      },
+      "sdk_author": "inngest",
+      "sdk_language": "",
+      "sdk_version": "",
+      "sdk": "js:v4.26.0",
+      "url": "https://example.com/api/inngest?x=1"
+    }
+  },
+  "in_band_cloud": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true",
+      "x-inngest-signature": "t=1792876840&s=228c67f0faa52bf6f690019171583cac6e84e56e41fc044e70250129adb28ab5",
+      "x-inngest-sync-kind": "in_band"
+    },
+    "body": {
+      "app_id": "test-app",
+      "appVersion": "2.0.0",
+      "capabilities": {
+        "trust_probe": "v1",
+        "connect": "v1"
+      },
+      "env": null,
+      "framework": "test",
+      "functions": [
+        {
+          "id": "test-app-fn1",
+          "name": "fn1",
+          "triggers": [
+            {
+              "event": "demo/event.sent"
+            }
+          ],
+          "steps": {
+            "step": {
+              "id": "step",
+              "name": "step",
+              "runtime": {
+                "type": "http",
+                "url": "https://example.com/api/inngest?fnId=test-app-fn1&stepId=step"
+              }
+            }
+          }
+        },
+        {
+          "id": "test-app-fn1-failure",
+          "name": "fn1 (failure)",
+          "triggers": [
+            {
+              "event": "inngest/function.failed",
+              "expression": "event.data.function_id == 'test-app-fn1'"
+            }
+          ],
+          "steps": {
+            "step": {
+              "id": "step",
+              "name": "step",
+              "runtime": {
+                "type": "http",
+                "url": "https://example.com/api/inngest?fnId=test-app-fn1-failure&stepId=step"
+              },
+              "retries": {
+                "attempts": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "test-app-fn2",
+          "name": "Second",
+          "triggers": [
+            {
+              "cron": "0 * * * *"
+            }
+          ],
+          "steps": {
+            "step": {
+              "id": "step",
+              "name": "step",
+              "runtime": {
+                "type": "http",
+                "url": "https://example.com/api/inngest?fnId=test-app-fn2&stepId=step"
+              },
+              "retries": {
+                "attempts": 1
+              }
+            }
+          }
+        }
+      ],
+      "featureObservations": {
+        "aiMetadataExtraction": {
+          "readinessReason": "AI_METADATA_EXTRACTION_READINESS_REASON_OTEL_PROVIDER_MISSING",
+          "otelSetup": {
+            "path": "OTEL_SETUP_PATH_EXTEND_EXISTING_PROVIDER",
+            "failure": "OTEL_SETUP_FAILURE_NO_PROVIDER"
+          }
+        },
+        "extendedTraces": {
+          "readinessReason": "EXTENDED_TRACES_READINESS_REASON_NOT_ENABLED_BY_USER",
+          "config": {}
+        },
+        "sendEvents": {
+          "readinessReason": "SEND_EVENTS_READINESS_REASON_READY",
+          "config": {
+            "eventKeyConfigured": true
+          }
+        }
+      },
+      "inspection": {
+        "extra": {
+          "native_crypto": true,
+          "is_streaming": false
+        },
+        "has_event_key": true,
+        "has_signing_key": true,
+        "function_count": 3,
+        "mode": "cloud",
+        "schema_version": "2024-05-24",
+        "authentication_succeeded": true,
+        "api_origin": "https://api.inngest.com/",
+        "app_id": "test-app",
+        "capabilities": {
+          "trust_probe": "v1",
+          "connect": "v1"
+        },
+        "env": null,
+        "event_api_origin": "https://inn.gs/",
+        "event_key_hash": "5d5a212001221cb2529bf266c37e615a785400000198a0d5b73a8b819603c6a3",
+        "framework": "test",
+        "sdk_language": "js",
+        "sdk_version": "4.26.0",
+        "serve_origin": null,
+        "serve_path": null,
+        "signing_key_fallback_hash": null,
+        "signing_key_hash": "66687aadf862"
+      },
+      "sdk_author": "inngest",
+      "sdk_language": "js",
+      "sdk_version": "4.26.0",
+      "sdk": "js:v4.26.0",
+      "url": "https://example.com/api/inngest"
+    }
+  },
+  "in_band_invalid_body": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "code": "invalid_request",
+      "message": "[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"extra\"\n    ],\n    \"path\": [],\n    \"message\": \"Unrecognized key(s) in object: 'extra'\"\n  }\n]"
+    }
+  },
+  "out_of_band_cloud": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-expected-server-kind": "cloud",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true",
+      "x-inngest-signature": "t=1792876840&s=fca62d082d3993d4f82117030d10bc4ab510f658550f456d1797bf0ff260db41",
+      "x-inngest-sync-kind": "out_of_band"
+    },
+    "body": {
+      "message": "Successfully registered",
+      "modified": true
+    },
+    "register": [
+      {
+        "url": "https://api.inngest.com/fn/register?deployId=dep-1",
+        "method": "POST",
+        "headers": {
+          "authorization": "Bearer signkey-test-66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+          "content-type": "application/json",
+          "server-timing": "handler",
+          "user-agent": "inngest-js:v4.26.0",
+          "x-inngest-expected-server-kind": "cloud",
+          "x-inngest-framework": "test",
+          "x-inngest-sdk": "inngest-js:v4.26.0",
+          "x-inngest-sdk-handled": "true",
+          "x-inngest-sync-kind": "out_of_band"
+        },
+        "body": {
+          "url": "https://localhost:3000/api/inngest?deployId=dep-1",
+          "deployType": "ping",
+          "framework": "test",
+          "appName": "test-app",
+          "functions": [
+            {
+              "id": "test-app-fn1",
+              "name": "fn1",
+              "triggers": [
+                {
+                  "event": "demo/event.sent"
+                }
+              ],
+              "steps": {
+                "step": {
+                  "id": "step",
+                  "name": "step",
+                  "runtime": {
+                    "type": "http",
+                    "url": "https://localhost:3000/api/inngest?deployId=dep-1&fnId=test-app-fn1&stepId=step"
+                  }
+                }
+              }
+            },
+            {
+              "id": "test-app-fn1-failure",
+              "name": "fn1 (failure)",
+              "triggers": [
+                {
+                  "event": "inngest/function.failed",
+                  "expression": "event.data.function_id == 'test-app-fn1'"
+                }
+              ],
+              "steps": {
+                "step": {
+                  "id": "step",
+                  "name": "step",
+                  "runtime": {
+                    "type": "http",
+                    "url": "https://localhost:3000/api/inngest?deployId=dep-1&fnId=test-app-fn1-failure&stepId=step"
+                  },
+                  "retries": {
+                    "attempts": 1
+                  }
+                }
+              }
+            },
+            {
+              "id": "test-app-fn2",
+              "name": "Second",
+              "triggers": [
+                {
+                  "cron": "0 * * * *"
+                }
+              ],
+              "steps": {
+                "step": {
+                  "id": "step",
+                  "name": "step",
+                  "runtime": {
+                    "type": "http",
+                    "url": "https://localhost:3000/api/inngest?deployId=dep-1&fnId=test-app-fn2&stepId=step"
+                  },
+                  "retries": {
+                    "attempts": 1
+                  }
+                }
+              }
+            }
+          ],
+          "sdk": "js:v4.26.0",
+          "v": "0.1",
+          "deployId": "dep-1",
+          "capabilities": {
+            "trust_probe": "v1",
+            "connect": "v1"
+          },
+          "appVersion": "2.0.0",
+          "featureObservations": {
+            "aiMetadataExtraction": {
+              "readinessReason": "AI_METADATA_EXTRACTION_READINESS_REASON_OTEL_PROVIDER_MISSING",
+              "otelSetup": {
+                "path": "OTEL_SETUP_PATH_EXTEND_EXISTING_PROVIDER",
+                "failure": "OTEL_SETUP_FAILURE_NO_PROVIDER"
+              }
+            },
+            "extendedTraces": {
+              "readinessReason": "EXTENDED_TRACES_READINESS_REASON_NOT_ENABLED_BY_USER",
+              "config": {}
+            },
+            "sendEvents": {
+              "readinessReason": "SEND_EVENTS_READINESS_REASON_EVENT_KEY_MISSING",
+              "config": {}
+            }
+          }
+        }
+      }
+    ]
+  },
+  "out_of_band_dev_origin_path": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true",
+      "x-inngest-sync-kind": "out_of_band"
+    },
+    "body": {
+      "message": "Successfully registered",
+      "modified": true
+    },
+    "register": [
+      {
+        "url": "http://localhost:8288/fn/register",
+        "method": "POST",
+        "headers": {
+          "authorization": "Bearer undefined",
+          "content-type": "application/json",
+          "server-timing": "handler",
+          "user-agent": "inngest-js:v4.26.0",
+          "x-inngest-framework": "test",
+          "x-inngest-sdk": "inngest-js:v4.26.0",
+          "x-inngest-sdk-handled": "true",
+          "x-inngest-sync-kind": "out_of_band"
+        },
+        "body": {
+          "url": "https://example.com/custom/path?deployId=undefined",
+          "deployType": "ping",
+          "framework": "test",
+          "appName": "test-app",
+          "functions": [
+            {
+              "id": "test-app-fn1",
+              "name": "fn1",
+              "triggers": [
+                {
+                  "event": "demo/event.sent"
+                }
+              ],
+              "steps": {
+                "step": {
+                  "id": "step",
+                  "name": "step",
+                  "runtime": {
+                    "type": "http",
+                    "url": "https://example.com/custom/path?deployId=undefined&fnId=test-app-fn1&stepId=step"
+                  }
+                }
+              }
+            },
+            {
+              "id": "test-app-fn1-failure",
+              "name": "fn1 (failure)",
+              "triggers": [
+                {
+                  "event": "inngest/function.failed",
+                  "expression": "event.data.function_id == 'test-app-fn1'"
+                }
+              ],
+              "steps": {
+                "step": {
+                  "id": "step",
+                  "name": "step",
+                  "runtime": {
+                    "type": "http",
+                    "url": "https://example.com/custom/path?deployId=undefined&fnId=test-app-fn1-failure&stepId=step"
+                  },
+                  "retries": {
+                    "attempts": 1
+                  }
+                }
+              }
+            },
+            {
+              "id": "test-app-fn2",
+              "name": "Second",
+              "triggers": [
+                {
+                  "cron": "0 * * * *"
+                }
+              ],
+              "steps": {
+                "step": {
+                  "id": "step",
+                  "name": "step",
+                  "runtime": {
+                    "type": "http",
+                    "url": "https://example.com/custom/path?deployId=undefined&fnId=test-app-fn2&stepId=step"
+                  },
+                  "retries": {
+                    "attempts": 1
+                  }
+                }
+              }
+            }
+          ],
+          "sdk": "js:v4.26.0",
+          "v": "0.1",
+          "capabilities": {
+            "trust_probe": "v1",
+            "connect": "v1"
+          },
+          "featureObservations": {
+            "aiMetadataExtraction": {
+              "readinessReason": "AI_METADATA_EXTRACTION_READINESS_REASON_OTEL_PROVIDER_MISSING",
+              "otelSetup": {
+                "path": "OTEL_SETUP_PATH_EXTEND_EXISTING_PROVIDER",
+                "failure": "OTEL_SETUP_FAILURE_NO_PROVIDER"
+              }
+            },
+            "extendedTraces": {
+              "readinessReason": "EXTENDED_TRACES_READINESS_REASON_NOT_ENABLED_BY_USER",
+              "config": {}
+            },
+            "sendEvents": {
+              "readinessReason": "SEND_EVENTS_READINESS_REASON_READY",
+              "config": {}
+            }
+          }
+        }
+      }
+    ]
+  },
+  "post_trust_probe": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": ""
+  },
+  "post_unknown_probe": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "Unknown probe \"nope\"",
+      "stack": "Error: Unknown probe \"nope\"\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1765:34)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async run (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/serve/generate.mts:95:25)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/serve/generate.mts:228:28)",
+      "__serialized": true
+    }
+  },
+  "post_missing_fn_id": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "type": "internal",
+      "name": "Error",
+      "message": "No function ID found in async request",
+      "stack": "Error: No function ID found in async request\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1794:19)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async run (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/serve/generate.mts:95:25)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/serve/generate.mts:234:28)",
+      "__serialized": true
+    }
+  },
+  "post_unknown_fn": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "type": "internal",
+      "name": "Error",
+      "message": "Function \"nope\" was not found in this app; is the app synced correctly?",
+      "stack": "Error: Function \"nope\" was not found in this app; is the app synced correctly?\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1803:17)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async run (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/serve/generate.mts:95:25)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/serve/generate.mts:240:25)",
+      "__serialized": true
+    }
+  },
+  "post_missing_body": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "message": "Unauthorized"
+    }
+  },
+  "method_not_allowed": {
+    "status": 405,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "message": "Method not allowed"
+    }
+  },
+  "cloud_no_signing_key": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "code": "internal_server_error"
+    }
+  },
+  "cloud_unsigned_get": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "message": "Unauthorized"
+    }
+  }
+}

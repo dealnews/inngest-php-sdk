@@ -74,6 +74,11 @@ class ClientTest extends TestCase {
         $this->assertSame($logger, $client->getLogger());
         $this->assertInstanceOf(ApiClient::class, $client->getApi());
         $this->assertInstanceOf(Headers::class, $client->getHeaders());
+        $this->assertInstanceOf(Version::class, $client->getVersion());
+
+        $version = new FixedVersion('9.9.9');
+        $client  = new Client('my-app', env: new Env([]), version: $version);
+        $this->assertSame($version, $client->getVersion());
     }
 
     /**

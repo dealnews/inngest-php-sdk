@@ -96,6 +96,13 @@ class Client {
     protected Headers $headers;
 
     /**
+     * SDK version source
+     *
+     * @var Version
+     */
+    protected Version $version;
+
+    /**
      * Inngest REST API client
      *
      * @var ApiClient
@@ -150,7 +157,8 @@ class Client {
             $this->logger
         );
         $this->http_client = $http_client ?? new \GuzzleHttp\Client();
-        $this->headers     = new Headers($version ?? new Version());
+        $this->version     = $version     ?? new Version();
+        $this->headers     = new Headers($this->version);
         $this->retry       = $retry ?? new Retry();
         $this->api         = new ApiClient(
             $this->config,
@@ -202,6 +210,15 @@ class Client {
      */
     public function getHeaders(): Headers {
         return $this->headers;
+    }
+
+    /**
+     * Returns the SDK version source
+     *
+     * @return Version
+     */
+    public function getVersion(): Version {
+        return $this->version;
     }
 
     /**
