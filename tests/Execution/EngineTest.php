@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Tests\Execution;
 
+use DealNews\Inngest\Api\ApiClient;
+use DealNews\Inngest\Client;
+use DealNews\Inngest\Config\ClientConfig;
+use DealNews\Inngest\Config\ClientOptions;
+use DealNews\Inngest\Config\Env;
 use DealNews\Inngest\Context;
 use DealNews\Inngest\Error\ErrorSerializer;
 use DealNews\Inngest\Error\NonRetriableError;
@@ -23,13 +28,29 @@ use DealNews\Inngest\Execution\ResultType;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Execution\StepIdResolver;
 use DealNews\Inngest\Execution\StepOp;
+use DealNews\Inngest\Execution\StepResult;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Http\Headers;
+use DealNews\Inngest\Middleware\FunctionInput;
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\RunArgs;
+use DealNews\Inngest\Middleware\RunCompleteArgs;
+use DealNews\Inngest\Middleware\RunErrorArgs;
+use DealNews\Inngest\Middleware\StepArgs;
+use DealNews\Inngest\Middleware\StepCompleteArgs;
+use DealNews\Inngest\Middleware\StepErrorArgs;
+use DealNews\Inngest\Middleware\StepInfo;
+use DealNews\Inngest\Middleware\StepInput;
+use DealNews\Inngest\Middleware\StepType;
+use DealNews\Inngest\Middleware\WrapStepArgs;
 use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
 use DealNews\Inngest\Support\Duration;
+use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Tests\mock\RecordingLogger;
 use DealNews\Inngest\Tests\TestCase;
 use DealNews\Inngest\ValueObject\ValueObject;
@@ -47,29 +68,50 @@ use PHPUnit\Framework\Attributes\UsesClass;
  */
 #[CoversClass(Engine::class)]
 #[UsesClass(AiTools::class)]
+#[UsesClass(ApiClient::class)]
+#[UsesClass(Client::class)]
+#[UsesClass(ClientConfig::class)]
+#[UsesClass(ClientOptions::class)]
 #[UsesClass(Context::class)]
 #[UsesClass(Duration::class)]
+#[UsesClass(Env::class)]
 #[UsesClass(ErrorSerializer::class)]
 #[UsesClass(Event::class)]
 #[UsesClass(ExecutionException::class)]
 #[UsesClass(ExecutionResult::class)]
 #[UsesClass(FoundStep::class)]
+#[UsesClass(FunctionInput::class)]
 #[UsesClass(FunctionOptions::class)]
+#[UsesClass(Headers::class)]
 #[UsesClass(InngestFunction::class)]
+#[UsesClass(Middleware::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(NonRetriableError::class)]
 #[UsesClass(OutgoingOp::class)]
 #[UsesClass(ParallelGroup::class)]
 #[UsesClass(RemoteError::class)]
+#[UsesClass(Retry::class)]
 #[UsesClass(RetryAfterError::class)]
+#[UsesClass(RunArgs::class)]
+#[UsesClass(RunCompleteArgs::class)]
+#[UsesClass(RunErrorArgs::class)]
 #[UsesClass(RunRequest::class)]
 #[UsesClass(SerializedError::class)]
+#[UsesClass(StepArgs::class)]
+#[UsesClass(StepCompleteArgs::class)]
 #[UsesClass(StepError::class)]
+#[UsesClass(StepErrorArgs::class)]
 #[UsesClass(StepIdResolver::class)]
+#[UsesClass(StepInfo::class)]
+#[UsesClass(StepInput::class)]
 #[UsesClass(StepOp::class)]
 #[UsesClass(StepOptions::class)]
+#[UsesClass(StepResult::class)]
 #[UsesClass(StepState::class)]
 #[UsesClass(StepTools::class)]
+#[UsesClass(StepType::class)]
 #[UsesClass(ValueObject::class)]
+#[UsesClass(WrapStepArgs::class)]
 class EngineTest extends TestCase {
 
     /**
@@ -88,6 +130,7 @@ class EngineTest extends TestCase {
      * @param string|null          $requested Hashed ID of a requested step
      * @param \Closure|null        $failure   on_failure handler
      * @param bool                 $run_failure Run the failure handler
+     * @param MiddlewareStack|null $middleware Middleware
      *
      * @return Engine
      */
@@ -96,7 +139,8 @@ class EngineTest extends TestCase {
         array $body = [],
         ?string $requested = null,
         ?\Closure $failure = null,
-        bool $run_failure = false
+        bool $run_failure = false,
+        ?MiddlewareStack $middleware = null
     ): Engine {
         $this->logger = new RecordingLogger();
         $function     = new InngestFunction(
@@ -122,7 +166,11 @@ class EngineTest extends TestCase {
             $run_failure,
             $request,
             $requested,
-            $this->logger
+            $this->logger,
+            null,
+            null,
+            null,
+            $middleware
         );
     }
 
@@ -975,6 +1023,223 @@ class EngineTest extends TestCase {
             microtime(true) * 1000,
             $engine->now(),
             5000
+        );
+    }
+
+    /**
+     * Middleware can change a sleep to any duration or date; anything
+     * else fails the function (JS `isSleepInput`)
+     *
+     * @return void
+     */
+    public function testSleepInputFromMiddleware(): void {
+        $handler = static function (Context $ctx): void {
+            $ctx->step->sleep('nap', '1h');
+        };
+
+        $result = $this->engine(
+            $handler,
+            [],
+            null,
+            null,
+            false,
+            $this->sleepMiddleware(
+                new \DateTimeImmutable('2030-01-02T03:04:05.678Z')
+            )
+        )->execute();
+        $this->assertSame(ResultType::StepsFound, $result->type);
+        $this->assertSame('2030-01-02T03:04:05.678Z', $result->ops[0]->name);
+
+        $result = $this->engine(
+            $handler,
+            [],
+            null,
+            null,
+            false,
+            $this->sleepMiddleware(new \stdClass())
+        )->execute();
+        $this->assertSame(ResultType::FunctionRejected, $result->type);
+        $this->assertSame(10004, $result->error?->code);
+    }
+
+    /**
+     * transformFunctionInput only changes the data of memoized steps
+     * that have data or an error
+     *
+     * @return void
+     */
+    public function testFunctionInputStepChanges(): void {
+        $client     = new Client('app', null, null, null, new Env([]));
+        $middleware = new class($client) extends Middleware {
+            /**
+             * Replaces every step with new data, and adds one
+             *
+             * @param FunctionInput $input Input
+             *
+             * @return FunctionInput
+             */
+            public function transformFunctionInput(
+                FunctionInput $input
+            ): FunctionInput {
+                $result = clone $input;
+                foreach (['A', 'B', 'C', 'D'] as $id) {
+                    $result->steps[sha1($id)] = new StepState(
+                        StepState::TYPE_DATA,
+                        "new $id"
+                    );
+                }
+                $result->steps[sha1('E')] = 'not a state';
+
+                return $result;
+            }
+        };
+
+        $result = $this->engine(
+            static fn (Context $ctx) => [
+                $ctx->step->run('A', static fn () => 'ran A'),
+                $ctx->step->run('B', static fn () => 'ran B'),
+                $ctx->step->run('E', static fn () => 'ran E'),
+            ],
+            [
+                'steps' => [
+                    sha1('A') => ['data' => 'old A'],
+                    sha1('B') => ['error' => ['message' => 'old B']],
+                    sha1('E') => ['data' => 'old E'],
+                    sha1('D') => ['input' => ['old D']],
+                ],
+                'ctx'   => [
+                    'run_id' => 'run-1',
+                    'stack'  => [
+                        'stack'   => [sha1('A'), sha1('B'), sha1('E')],
+                        'current' => 2,
+                    ],
+                ],
+            ],
+            null,
+            null,
+            false,
+            new MiddlewareStack([$middleware], new RecordingLogger())
+        )->execute();
+
+        $this->assertSame(ResultType::FunctionResolved, $result->type);
+        $this->assertSame(['new A', 'new B', 'old E'], $result->data);
+    }
+
+    /**
+     * wrapStep can turn a saved step error into a value, or throw for a
+     * saved result; the handler sees what wrapStep did (JS hangs on the
+     * first and crashes on the second)
+     *
+     * @return void
+     */
+    public function testWrapStepOnMemoizedSteps(): void {
+        $client     = new Client('app', null, null, null, new Env([]));
+        $middleware = new class($client) extends Middleware {
+            /**
+             * Recovers A's error; throws instead of B's data
+             *
+             * @param WrapStepArgs $args Arguments
+             *
+             * @throws \RuntimeException For step B
+             *
+             * @return mixed
+             */
+            public function wrapStep(WrapStepArgs $args): mixed {
+                $id = $args->step_info->options->id;
+                try {
+                    $result = $args->next();
+                } catch (\Throwable $e) {
+                    $result = "recovered $id: " . $e->getMessage();
+                }
+                if ($id === 'B') {
+                    throw new \RuntimeException('no B for you');
+                }
+
+                return $result;
+            }
+        };
+
+        $result = $this->engine(
+            static function (Context $ctx): array {
+                $a = $ctx->step->run('A', static fn () => 'ran A');
+                try {
+                    $b = $ctx->step->run('B', static fn () => 'ran B');
+                } catch (\RuntimeException $e) {
+                    $b = 'caught: ' . $e->getMessage();
+                }
+
+                return [$a, $b];
+            },
+            [
+                'steps' => [
+                    sha1('A') => ['error' => ['message' => 'A broke']],
+                    sha1('B') => ['data' => 'B'],
+                ],
+                'ctx'   => [
+                    'run_id' => 'run-1',
+                    'stack'  => [
+                        'stack'   => [sha1('A'), sha1('B')],
+                        'current' => 1,
+                    ],
+                ],
+            ],
+            null,
+            null,
+            false,
+            new MiddlewareStack([$middleware], new RecordingLogger())
+        )->execute();
+
+        $this->assertSame(ResultType::FunctionResolved, $result->type);
+        $this->assertSame(
+            ['recovered A: A broke', 'caught: no B for you'],
+            $result->data
+        );
+    }
+
+    /**
+     * Builds middleware that sets every sleep's input
+     *
+     * @param mixed $time New sleep input
+     *
+     * @return MiddlewareStack
+     */
+    protected function sleepMiddleware(mixed $time): MiddlewareStack {
+        $client = new Client('app', null, null, null, new Env([]));
+
+        return new MiddlewareStack(
+            [
+                new class($client, $time) extends Middleware {
+                    /**
+                     * Creates the middleware
+                     *
+                     * @param Client $client Client
+                     * @param mixed  $time   New sleep input
+                     */
+                    public function __construct(
+                        Client $client,
+                        protected mixed $time
+                    ) {
+                        parent::__construct($client);
+                    }
+
+                    /**
+                     * Sets the sleep's input
+                     *
+                     * @param StepInput $input Input
+                     *
+                     * @return StepInput
+                     */
+                    public function transformStepInput(
+                        StepInput $input
+                    ): StepInput {
+                        $result        = clone $input;
+                        $result->input = [$this->time];
+
+                        return $result;
+                    }
+                },
+            ],
+            new RecordingLogger()
         );
     }
 }

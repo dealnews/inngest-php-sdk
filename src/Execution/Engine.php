@@ -13,8 +13,21 @@ use DealNews\Inngest\Error\RemoteError;
 use DealNews\Inngest\Error\RetryAfterError;
 use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Middleware\FunctionInput;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\RunArgs;
+use DealNews\Inngest\Middleware\RunCompleteArgs;
+use DealNews\Inngest\Middleware\RunErrorArgs;
+use DealNews\Inngest\Middleware\StepArgs;
+use DealNews\Inngest\Middleware\StepCompleteArgs;
+use DealNews\Inngest\Middleware\StepErrorArgs;
+use DealNews\Inngest\Middleware\StepInfo;
+use DealNews\Inngest\Middleware\StepInput;
+use DealNews\Inngest\Middleware\StepType;
 use DealNews\Inngest\Step\ParallelMode;
+use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
+use DealNews\Inngest\Support\Duration;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -60,6 +73,10 @@ use Psr\Log\LoggerInterface;
  * - Parallel branches (`step->parallel()`, `step->race()`) each run in a
  *   child fiber. A branch that returns or throws settles its group, which
  *   resumes the fiber waiting on it (JS `Promise.all` / `Promise.race`).
+ * - Middleware `wrapFunctionHandler` and `wrapStep` hooks run inside the
+ *   handler's fibers, so their `next()` pauses along with the function.
+ *   A paused step is resumed with a StepResult, which the `wrapStep`
+ *   chain turns into the value (or error) the handler sees.
  *
  * @package DealNews\Inngest\Execution
  */
@@ -99,6 +116,35 @@ class Engine {
      * @var Context
      */
     protected Context $context;
+
+    /**
+     * Middleware for this request
+     *
+     * @var MiddlewareStack
+     */
+    protected MiddlewareStack $middleware;
+
+    /**
+     * Memoized step state, by hashed ID (after `transformFunctionInput`)
+     *
+     * @var array<string, StepState>
+     */
+    protected array $state;
+
+    /**
+     * Hashed IDs of memoized steps the handler hasn't reached yet (JS
+     * `remainingStepsToBeSeen`)
+     *
+     * @var array<string, true>
+     */
+    protected array $unseen = [];
+
+    /**
+     * Converts sleep durations changed by middleware
+     *
+     * @var Duration
+     */
+    protected Duration $duration;
 
     /**
      * Serializes errors for the wire
@@ -285,6 +331,8 @@ class Engine {
      *                                             or HTTP requests
      * @param Checkpointer|null    $checkpointer   Turns on async
      *                                             checkpointing
+     * @param MiddlewareStack|null $middleware     Middleware instances for
+     *                                             this request
      */
     public function __construct(
         protected InngestFunction $function,
@@ -294,8 +342,17 @@ class Engine {
         protected LoggerInterface $logger,
         ?ErrorSerializer $serializer = null,
         protected ?Client $client = null,
-        protected ?Checkpointer $checkpointer = null
+        protected ?Checkpointer $checkpointer = null,
+        ?MiddlewareStack $middleware = null
     ) {
+        $this->middleware      = $middleware ??
+            new MiddlewareStack([], $logger);
+        $this->state           = $request->steps;
+        $this->unseen          = array_fill_keys(
+            array_map('strval', array_keys($request->steps)),
+            true
+        );
+        $this->duration        = new Duration($logger);
         $this->serializer      = $serializer ?? new ErrorSerializer();
         $this->ids             = new StepIdResolver();
         $this->handler_fibers  = new \WeakMap();
@@ -312,6 +369,15 @@ class Engine {
      */
     public function getContext(): Context {
         return $this->context;
+    }
+
+    /**
+     * Returns the function being run
+     *
+     * @return InngestFunction
+     */
+    public function getFunction(): InngestFunction {
+        return $this->function;
     }
 
     /**
@@ -345,17 +411,25 @@ class Engine {
      * Handles a step tool call (JS `stepHandler`)
      *
      * Called from inside the handler's fiber. Registers the step, then
-     * suspends until the engine resumes it with a result (or throws its
-     * error). If the engine never resumes it, this call never returns.
+     * suspends until the engine resumes it with a result (or error). If
+     * the engine never resumes it, this call never returns.
+     *
+     * Middleware runs here too (JS `applyMiddlewareToStep`):
+     * `transformStepInput` may change the step's ID or input, and the
+     * result goes through `wrapStep`. A new step with code starts its
+     * `wrapStep` chain right away, so middleware can add steps before it;
+     * other steps start the chain once their result is known.
      *
      * @param StepOp        $op   What the tool wants
      * @param \Closure|null $fn   Code to run for the step (step.run)
      * @param list<mixed>   $args Arguments for that code
      *
-     * @throws NonRetriableError  When called inside a running step
-     * @throws ExecutionException When called outside the handler, or after
-     *                            the request is over
-     * @throws StepError          When the step failed for good
+     * @throws NonRetriableError         When called inside a running step
+     * @throws ExecutionException        When called outside the handler,
+     *                                   or after the request is over
+     * @throws StepError                 When the step failed for good
+     * @throws \InvalidArgumentException When middleware sets a sleep time
+     *                                   that isn't a duration (10004)
      *
      * @return mixed The step's result
      */
@@ -371,10 +445,11 @@ class Engine {
             $this->maybeWarnParallelIndexing($op->id);
         }
 
-        $hashed_id = StepIdResolver::hash($id);
-        $state     = $this->request->steps[$hashed_id] ?? null;
-        $opts      = $op->opts;
-        $fiber     = \Fiber::getCurrent();
+        $userland_id = $op->id;
+        $hashed_id   = StepIdResolver::hash($id);
+        $name        = $op->name;
+        $opts        = $op->opts;
+        $fiber       = \Fiber::getCurrent();
 
         // The step's own mode wins, then the one its fiber inherited.
         $mode = $op->parallel_mode ??
@@ -382,6 +457,47 @@ class Engine {
         if ($mode !== null) {
             $opts['parallelMode'] = $mode->value;
         }
+
+        $info = $this->stepInfo($op, $opts, $hashed_id);
+
+        if ($info->step_type === StepType::Sleep && $info->input !== null) {
+            $name = $this->sleepName($info->input[0] ?? null);
+        }
+        if (
+            $info->step_type->inputIsOpts() &&
+            is_array($info->input[0] ?? null)
+        ) {
+            $opts = $info->input[0];
+        }
+
+        // Middleware changed the ID: it's a different step now.
+        if ($info->options->id !== $userland_id) {
+            [$id, $new_index] = $this->ids->resolve(
+                $info->options->id,
+                $this->steps
+            );
+            $index       = $new_index ?? $index;
+            $userland_id = $id;
+            $hashed_id   = StepIdResolver::hash($id);
+
+            $info->hashed_id = $hashed_id;
+            $info->options   = new StepOptions(
+                $id,
+                $info->options->name,
+                $info->options->parallel_mode
+            );
+        }
+
+        $state          = $this->state[$hashed_id] ?? null;
+        $info->memoized = $state?->isFulfilled()   ?? false;
+        if ($state !== null) {
+            unset($this->unseen[$hashed_id]);
+            if ($this->unseen === []) {
+                $this->memoizationEnded();
+            }
+        }
+
+        $replayed = false;
 
         // Inngest can replace a step's input before it runs.
         if (
@@ -393,35 +509,63 @@ class Engine {
             if ($op->op === OpCode::StepPlanned) {
                 $args          = $state->input;
                 $opts['input'] = $state->input;
+                $replayed      = true;
             } elseif ($op->op === OpCode::AiGateway) {
                 $opts['body'] = static::replaceBody(
                     $opts['body']    ?? null,
                     $state->input[0] ?? null
                 );
+                $replayed     = true;
             }
+        }
+
+        // Code gets the input as middleware left it.
+        if (!$replayed && $info->input !== null) {
+            $args = $info->input;
         }
 
         $step = new FoundStep(
             id: $id,
             hashed_id: $hashed_id,
             op: $op->op,
-            name: $op->name,
+            name: $name,
             display_name: $op->display_name ?? $op->id,
             opts: $opts,
-            userland_id: $op->id,
+            userland_id: $userland_id,
             userland_index: $index,
             fn: $fn === null ? null : static fn () => $fn(...$args),
             fulfilled: $state?->isFulfilled() ?? false,
-            has_step_state: $state !== null
+            has_step_state: $state !== null,
+            info: $info
         );
         $step->fiber = $fiber;
         unset($fiber);
 
-        $this->steps[$hashed_id]     = $step;
-        $this->found[$hashed_id]     = $step;
-        $this->unhandled[$hashed_id] = $step;
+        $this->steps[$hashed_id] = $step;
 
-        return \Fiber::suspend($step);
+        if (!$step->fulfilled && $state === null && $fn !== null) {
+            // The step is reported from the middle of the chain, so
+            // middleware can add steps first (or throw).
+            $step->wrapped = true;
+            $result        = $this->middleware->wrapStep(
+                $this->context,
+                $this->function,
+                $info,
+                fn () => $this->report($step)->unwrap()
+            );
+        } else {
+            $resume = $this->report($step);
+            $result = $this->middleware->wrapStep(
+                $this->context,
+                $this->function,
+                $info,
+                static fn () => ($resume->wrap_only ?
+                    \Fiber::suspend($step) :
+                    $resume)->unwrap()
+            );
+        }
+
+        return $result;
     }
 
     /**
@@ -461,6 +605,7 @@ class Engine {
             $this->fibers[]               = $fiber;
             $this->handler_fibers[$fiber] = true;
             $this->branches[$fiber]       = [$group, $key];
+            $this->middleware->inheritGuard($parent, $fiber);
             if ($mode !== null) {
                 $this->fiber_modes[$fiber] = $mode;
             }
@@ -494,8 +639,27 @@ class Engine {
      */
     protected function run(): ExecutionResult {
         $handler = $this->handler();
+
+        $this->applyFunctionInput($this->middleware->transformFunctionInput(
+            new FunctionInput($this->context, $this->function, $this->state)
+        ));
+
+        if ($this->unseen === []) {
+            $this->memoizationEnded();
+        }
+        if ($this->request->steps === [] && $this->request->attempt === 0) {
+            $this->middleware->onRunStart(
+                new RunArgs($this->context, $this->function)
+            );
+        }
+
         $context = $this->context;
-        $main    = new \Fiber(static fn () => $handler($context));
+        $chain   = $this->middleware->wrapFunctionHandler(
+            $context,
+            $this->function,
+            static fn () => $handler($context)
+        );
+        $main    = new \Fiber(static fn () => $chain());
 
         $this->main                  = $main;
         $this->fibers[]              = $main;
@@ -574,8 +738,19 @@ class Engine {
             if ($error === null) {
                 $this->returned     = true;
                 $this->return_value = $value;
+                $this->middleware->onRunComplete(new RunCompleteArgs(
+                    $this->context,
+                    $this->function,
+                    $value
+                ));
             } else {
                 $this->thrown = $error;
+                $this->middleware->onRunError(new RunErrorArgs(
+                    $this->context,
+                    $this->function,
+                    $error,
+                    $this->retriability($error) === false
+                ));
             }
         } else {
             $branch = $this->branches[$fiber] ?? null;
@@ -622,21 +797,23 @@ class Engine {
      */
     protected function handle(FoundStep $step): void {
         $step->handled = true;
-        $state         = $this->request->steps[$step->hashed_id] ?? null;
+        $state         = $this->state[$step->hashed_id] ?? null;
         $fiber         = $step->fiber;
 
         if ($step->fulfilled && $state !== null && $fiber !== null) {
             if ($state->type === StepState::TYPE_DATA) {
-                $this->drive(
-                    $fiber,
-                    static fn () => $fiber->resume($state->data)
-                );
+                $result = StepResult::data($state->data);
             } else {
-                $error = new StepError($step->id, $state->error);
+                $error  = new StepError($step->id, $state->error);
+                $result = StepResult::error($error);
 
                 $this->recently_rejected = $error;
-                $this->drive($fiber, static fn () => $fiber->throw($error));
             }
+
+            // The wrapStep chain runs again for the saved result.
+            $step->info->memoized = true;
+            $step->wrapped        = true;
+            $this->drive($fiber, static fn () => $fiber->resume($result));
         }
     }
 
@@ -697,6 +874,7 @@ class Engine {
             $result = $this->intervalDue() ? $this->flushCheckpoints() : null;
 
             if ($result === null && $this->runtimeExceeded()) {
+                $this->memoizationEnded();
                 $result = $this->flushCheckpoints() ??
                     $this->newStepsResult(array_values($this->steps));
             } elseif ($result === null) {
@@ -791,7 +969,8 @@ class Engine {
         $this->resumed        = true;
 
         if ($fiber !== null) {
-            $this->drive($fiber, static fn () => $fiber->resume($data));
+            $result = StepResult::data($data);
+            $this->drive($fiber, static fn () => $fiber->resume($result));
         }
     }
 
@@ -967,6 +1146,7 @@ class Engine {
             }
 
             if ($ops !== []) {
+                $this->memoizationEnded();
                 $result = ExecutionResult::stepsFound($ops);
             }
         }
@@ -977,6 +1157,10 @@ class Engine {
     /**
      * Runs a step's code and builds its op (JS `executeStep`)
      *
+     * Middleware: `onStepStart`, then the step's `wrapStep` chain is
+     * started (if it wasn't already), then the code runs inside
+     * `wrapStepHandler`, then `onStepComplete` or `onStepError`.
+     *
      * @param FoundStep $step Step
      *
      * @return OutgoingOp
@@ -984,11 +1168,36 @@ class Engine {
     protected function executeStep(FoundStep $step): OutgoingOp {
         $op    = $step->toRunOp();
         $fn    = $step->fn;
+        $info  = $step->info;
+        $fiber = $step->fiber;
+
+        $this->memoizationEnded();
+        $this->middleware->onStepStart(
+            new StepArgs($this->context, $this->function, $info)
+        );
+
+        if (!$step->wrapped && $fiber !== null) {
+            $step->wrapped = true;
+            $wrap_only     = StepResult::wrapOnly();
+            $this->drive(
+                $fiber,
+                static fn () => $fiber->resume($wrap_only)
+            );
+        }
+        unset($fiber);
+
         $start = $this->nowMs();
+        $data  = null;
 
         $this->executing_step = $step;
         try {
-            $op->withData($fn === null ? null : $fn());
+            $data = $this->middleware->wrapStepHandler(
+                $this->context,
+                $this->function,
+                $info,
+                static fn () => $fn === null ? null : $fn()
+            );
+            $op->withData($data);
         } catch (\Throwable $e) {
             $op->thrown = $e;
             $op->op     = $this->retriability($e) === false ?
@@ -1003,6 +1212,23 @@ class Engine {
             'a' => $start          * 1000000,
             'b' => ($end - $start) * 1000000,
         ];
+
+        if ($op->thrown === null) {
+            $this->middleware->onStepComplete(new StepCompleteArgs(
+                $this->context,
+                $this->function,
+                $info,
+                $data
+            ));
+        } else {
+            $this->middleware->onStepError(new StepErrorArgs(
+                $this->context,
+                $this->function,
+                $info,
+                $op->thrown,
+                $op->op === OpCode::StepFailed
+            ));
+        }
 
         return $op;
     }
@@ -1086,6 +1312,8 @@ class Engine {
      * @return ExecutionResult
      */
     protected function stepNotFound(): ExecutionResult {
+        $this->memoizationEnded();
+
         $found = [];
         foreach ($this->steps as $step) {
             if (!$step->has_step_state) {
@@ -1252,6 +1480,144 @@ class Engine {
                     'A finally block threw while a paused function was ' .
                     'cleaned up',
                     ['exception' => $e, 'run_id' => $this->request->run_id]
+                );
+            }
+        }
+    }
+
+    /**
+     * Registers a found step for the next roll-up and pauses until the
+     * engine resumes it
+     *
+     * @param FoundStep $step Step
+     *
+     * @return StepResult
+     */
+    protected function report(FoundStep $step): StepResult {
+        $this->found[$step->hashed_id]     = $step;
+        $this->unhandled[$step->hashed_id] = $step;
+
+        return \Fiber::suspend($step);
+    }
+
+    /**
+     * Builds what middleware knows about a step and runs
+     * `transformStepInput` (JS `MiddlewareManager.applyToStep`)
+     *
+     * @param StepOp               $op        Op from the step tool
+     * @param array<string, mixed> $opts      Op options
+     * @param string               $hashed_id Hashed step ID
+     *
+     * @return StepInfo
+     */
+    protected function stepInfo(
+        StepOp $op,
+        array $opts,
+        string $hashed_id
+    ): StepInfo {
+        $type  = StepType::fromOp($op->op, $opts);
+        $state = $this->state[$hashed_id] ?? null;
+
+        $input = null;
+        if ($type->inputIsOpts()) {
+            $input = [$opts];
+        } elseif (
+            is_array($opts['input'] ?? null) &&
+            array_is_list($opts['input'])
+        ) {
+            $input = $opts['input'];
+        }
+
+        $info = new StepInfo(
+            hashed_id: $hashed_id,
+            step_type: $type,
+            options: new StepOptions($op->id, $op->display_name ?? $op->id),
+            memoized: $state?->isFulfilled() ?? false,
+            input: $input
+        );
+
+        if ($this->middleware->has('transformStepInput')) {
+            $changed = $this->middleware->transformStepInput(new StepInput(
+                $this->function,
+                $hashed_id,
+                $type,
+                $info->memoized,
+                $info->options,
+                $input ?? []
+            ));
+
+            $info->options = $changed->step_options;
+            $info->input   = $input === null && $changed->input === [] ?
+                null :
+                array_values($changed->input);
+        }
+
+        return $info;
+    }
+
+    /**
+     * Builds a sleep op's name from a duration middleware set
+     *
+     * @param mixed $time Duration or date
+     *
+     * @throws \InvalidArgumentException When it isn't one (10004)
+     *
+     * @return string
+     */
+    protected function sleepName(mixed $time): string {
+        if (
+            !is_int($time)                   &&
+            !is_float($time)                 &&
+            !is_string($time)                &&
+            !$time instanceof \DateInterval  &&
+            !$time instanceof \DateTimeInterface
+        ) {
+            throw new \InvalidArgumentException(
+                'Sleep time must be a string, number, DateInterval, or ' .
+                'DateTimeInterface',
+                10004
+            );
+        }
+
+        return $this->duration->toTimeString($time);
+    }
+
+    /**
+     * Runs `onMemoizationEnd` (once per request)
+     *
+     * @return void
+     */
+    protected function memoizationEnded(): void {
+        $this->middleware->onMemoizationEnd(
+            new RunArgs($this->context, $this->function)
+        );
+    }
+
+    /**
+     * Applies what `transformFunctionInput` returned
+     *
+     * The context is replaced. Memoized steps only take changed `data`
+     * (JS `applyFunctionInputMutations`).
+     *
+     * @param FunctionInput $input Middleware result
+     *
+     * @return void
+     */
+    protected function applyFunctionInput(FunctionInput $input): void {
+        $this->context = $input->ctx;
+
+        foreach ($input->steps as $hashed_id => $changed) {
+            $existing = $this->state[$hashed_id] ?? null;
+            if (
+                $existing       !== null                          &&
+                $existing->type !== StepState::TYPE_INPUT         &&
+                $changed instanceof StepState                     &&
+                $changed->type === StepState::TYPE_DATA           &&
+                $changed->data !== $existing->data
+            ) {
+                $this->state[$hashed_id] = new StepState(
+                    StepState::TYPE_DATA,
+                    $changed->data
                 );
             }
         }

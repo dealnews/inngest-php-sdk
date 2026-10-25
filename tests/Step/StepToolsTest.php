@@ -26,6 +26,9 @@ use DealNews\Inngest\Functions\FunctionReference;
 use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Http\Headers;
 use DealNews\Inngest\Http\Signature;
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\SendEventInput;
 use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\ParallelMode;
 use DealNews\Inngest\Step\SignalConflict;
@@ -71,8 +74,11 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(FunctionReference::class)]
 #[UsesClass(Headers::class)]
 #[UsesClass(InngestFunction::class)]
+#[UsesClass(Middleware::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(Retry::class)]
 #[UsesClass(RunRequest::class)]
+#[UsesClass(SendEventInput::class)]
 #[UsesClass(SendEventResult::class)]
 #[UsesClass(SendSignalResult::class)]
 #[UsesClass(Signature::class)]

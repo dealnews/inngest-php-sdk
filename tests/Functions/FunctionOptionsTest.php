@@ -8,6 +8,7 @@ use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\Options\Cancellation;
 use DealNews\Inngest\Functions\Options\Concurrency;
 use DealNews\Inngest\Functions\Trigger\EventTrigger;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Tests\TestCase;
 use DealNews\Inngest\ValueObject\ValueObject;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,6 +24,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Cancellation::class)]
 #[UsesClass(Concurrency::class)]
 #[UsesClass(EventTrigger::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(ValueObject::class)]
 class FunctionOptionsTest extends TestCase {
 
@@ -63,6 +65,7 @@ class FunctionOptionsTest extends TestCase {
         $this->assertSame([], $options->cancel_on);
         $this->assertNull($options->retries);
         $this->assertNull($options->on_failure);
+        $this->assertSame([], $options->middleware);
     }
 
     /**
@@ -134,6 +137,13 @@ class FunctionOptionsTest extends TestCase {
             'string trigger'      => [
                 fn () => new FunctionOptions(id: 'a', triggers: ['foo']),
                 9005,
+            ],
+            'middleware not a class' => [
+                fn () => new FunctionOptions(
+                    id: 'a',
+                    middleware: [\stdClass::class]
+                ),
+                10002,
             ],
             'keyed triggers'      => [
                 fn () => new FunctionOptions(

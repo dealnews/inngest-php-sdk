@@ -16,6 +16,10 @@ use DealNews\Inngest\Event\SendEventResult;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Http\Headers;
+use DealNews\Inngest\Middleware\LoggerMiddleware;
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\SendEventInput;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
 use GuzzleHttp\ClientInterface;
@@ -139,7 +143,8 @@ class Client {
      * @param Version|null         $version     SDK version source
      * @param Retry|null           $retry       Retry helper (for tests)
      *
-     * @throws \InvalidArgumentException When the app ID is empty
+     * @throws \InvalidArgumentException When the app ID is empty, or the
+     *                                   middleware list is invalid (10001)
      */
     public function __construct(
         string $app_id,
@@ -166,6 +171,8 @@ class Client {
             $this->http_client,
             $this->headers
         );
+
+        MiddlewareStack::register($this->getMiddleware(), $this, null);
     }
 
     /**
@@ -241,6 +248,16 @@ class Client {
     }
 
     /**
+     * Returns the client's middleware: the built-in logger middleware,
+     * then the configured ones
+     *
+     * @return list<class-string<Middleware>|\Closure>
+     */
+    public function getMiddleware(): array {
+        return [LoggerMiddleware::class, ...$this->config->middleware];
+    }
+
+    /**
      * Creates a function and registers it with this client
      *
      * Usage:
@@ -285,6 +302,8 @@ class Client {
             }
         }
 
+        MiddlewareStack::register($options->middleware, $this, $function);
+
         foreach ($function->configIds() as $id) {
             $this->functions[$id] = $function;
         }
@@ -323,11 +342,15 @@ class Client {
      * Sends one or more events to Inngest
      *
      * Accepts an Event, an event array (`['name' => ..., 'data' => ...]`),
-     * or a list of either.
+     * or a list of either. Events go through the client's middleware
+     * (`transformSendEvent`, `wrapSendEvent`), plus the function's when
+     * one is given.
      *
-     * @param Event|array<mixed> $events Event(s) to send
-     * @param string|null        $env    Inngest environment to send to;
-     *                                   defaults to the client's
+     * @param Event|array<mixed>   $events   Event(s) to send
+     * @param string|null          $env      Inngest environment to send
+     *                                       to; defaults to the client's
+     * @param InngestFunction|null $function Function sending the events
+     *                                       (used by `step->sendEvent()`)
      *
      * @throws ApiException              When Inngest rejects the events
      * @throws \RuntimeException         When no event key is set in cloud
@@ -338,11 +361,24 @@ class Client {
      */
     public function send(
         Event|array $events,
-        ?string $env = null
+        ?string $env = null,
+        ?InngestFunction $function = null
     ): SendEventResult {
-        $now_ms   = (int)floor(microtime(true) * 1000);
-        $payloads = $this->preparePayloads(
+        $now_ms     = (int)floor(microtime(true) * 1000);
+        $middleware = MiddlewareStack::create(
+            $this,
+            [
+                ...$this->getMiddleware(),
+                ...($function?->getOptions()->middleware ?? []),
+            ]
+        );
+
+        $input    = $middleware->transformSendEvent(new SendEventInput(
             static::normalizeEvents($events),
+            $function
+        ));
+        $payloads = $this->preparePayloads(
+            static::normalizeEvents($input->events),
             $now_ms
         );
 
@@ -367,7 +403,11 @@ class Client {
                 );
             }
 
-            $result = $this->postEvents($payloads, $env, $now_ms);
+            $result = $middleware->wrapSendEvent(
+                $payloads,
+                $function,
+                fn () => $this->postEvents($payloads, $env, $now_ms)
+            );
         }
 
         return $result;

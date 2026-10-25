@@ -22,9 +22,18 @@ use DealNews\Inngest\Execution\ResultType;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Execution\StepIdResolver;
 use DealNews\Inngest\Execution\StepOp;
+use DealNews\Inngest\Execution\StepResult;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Middleware\FunctionInput;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\RunArgs;
+use DealNews\Inngest\Middleware\RunCompleteArgs;
+use DealNews\Inngest\Middleware\StepArgs;
+use DealNews\Inngest\Middleware\StepCompleteArgs;
+use DealNews\Inngest\Middleware\StepInfo;
+use DealNews\Inngest\Middleware\StepType;
 use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
@@ -56,17 +65,26 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Event::class)]
 #[UsesClass(ExecutionResult::class)]
 #[UsesClass(FoundStep::class)]
+#[UsesClass(FunctionInput::class)]
 #[UsesClass(FunctionOptions::class)]
 #[UsesClass(InngestFunction::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(OutgoingOp::class)]
 #[UsesClass(ParallelGroup::class)]
+#[UsesClass(RunArgs::class)]
+#[UsesClass(RunCompleteArgs::class)]
 #[UsesClass(RunRequest::class)]
 #[UsesClass(SerializedError::class)]
+#[UsesClass(StepArgs::class)]
+#[UsesClass(StepCompleteArgs::class)]
 #[UsesClass(StepIdResolver::class)]
+#[UsesClass(StepInfo::class)]
 #[UsesClass(StepOp::class)]
 #[UsesClass(StepOptions::class)]
+#[UsesClass(StepResult::class)]
 #[UsesClass(StepState::class)]
 #[UsesClass(StepTools::class)]
+#[UsesClass(StepType::class)]
 #[UsesClass(ValueObject::class)]
 class EngineCheckpointTest extends TestCase {
 

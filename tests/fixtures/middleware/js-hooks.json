@@ -1,0 +1,5585 @@
+{
+  "hello_first": {
+    "request": {
+      "fnId": "hello",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": "hi",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "hello",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "hi"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "hi"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "hello_retry": {
+    "request": {
+      "fnId": "hello",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":1,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": "hi",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "hello",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "hi"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "hi"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "two_first": {
+    "request": {
+      "fnId": "two-steps",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "a",
+        "timing": {
+          "a": 1792961629119000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "two-steps",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "two_after_a": {
+    "request": {
+      "fnId": "two-steps",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": "b",
+        "timing": {
+          "a": 1792961629125000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "two-steps",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "two_done": {
+    "request": {
+      "fnId": "two-steps",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"},\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\":{\"data\":\"b\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\",\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\"],\"current\":1}}}"
+    },
+    "status": 200,
+    "body": [
+      "a",
+      "b"
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "two-steps",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "two_cp": {
+    "request": {
+      "fnId": "two-steps",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": [
+          "a",
+          "b"
+        ]
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "two-steps",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "two_not_found": {
+    "request": {
+      "fnId": "two-steps",
+      "stepId": "5a013c49508291c6816ac388f93a2c11973086ed",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 500,
+    "body": {
+      "error": "Could not find step \"5a013c49508291c6816ac388f93a2c11973086ed\" to run; timed out. Found new steps: \nB (ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec).",
+      "requestedStep": "5a013c49508291c6816ac388f93a2c11973086ed",
+      "foundSteps": [
+        {
+          "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "name": "B",
+          "displayName": "B"
+        }
+      ],
+      "totalFoundSteps": 1
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "two-steps",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 500
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "input_requested": {
+    "request": {
+      "fnId": "with-input",
+      "stepId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"input\":[5]}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":true,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {
+          "input": [
+            5
+          ]
+        },
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": 50,
+        "timing": {
+          "a": 1792961639160000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "with-input",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": [
+          1
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            1
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            1
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            1
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": 50
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            1
+          ]
+        },
+        "output": 50
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "sleeps_after_a": {
+    "request": {
+      "fnId": "sleeps",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "S",
+        "op": "Sleep",
+        "id": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+        "name": "1h",
+        "opts": {},
+        "userland": {
+          "id": "S"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "sleeps",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "sleeps_done": {
+    "request": {
+      "fnId": "sleeps",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"},\"02aa629c8b16cd17a44f3a0efec2feed43937642\":{\"data\":null}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\",\"02aa629c8b16cd17a44f3a0efec2feed43937642\"],\"current\":1}}}"
+    },
+    "status": 200,
+    "body": "done",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "sleeps",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "02aa629c8b16cd17a44f3a0efec2feed43937642"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true
+        },
+        "output": null
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "done"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "done"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "step_fails": {
+    "request": {
+      "fnId": "step-fails",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepError",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke",
+          "stack": "Error: A broke\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:323:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)\n    at async Rec.wrapStepHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:218:19)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792961639190000000,
+          "b": 0
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "step-fails",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepError",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        },
+        "isFinalAttempt": false
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest step error"
+      ]
+    ],
+    "sent": []
+  },
+  "step_fails_final": {
+    "request": {
+      "fnId": "step-fails",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":3,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepFailed",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke",
+          "stack": "Error: A broke\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:323:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)\n    at async Rec.wrapStepHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:218:19)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792961639214000000,
+          "b": 0
+        },
+        "data": {
+          "__serialized": true,
+          "name": "Error",
+          "message": "A broke",
+          "stack": ""
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "step-fails",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepError",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        },
+        "isFinalAttempt": true
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest step error"
+      ]
+    ],
+    "sent": []
+  },
+  "catches_error": {
+    "request": {
+      "fnId": "catches",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"error\":{\"name\":\"Error\",\"message\":\"A broke\",\"stack\":\"Error: A broke\\n    at somewhere\",\"__serialized\":true}}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": "caught A broke",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "catches",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:error",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "caught A broke"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "caught A broke"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "throws_first": {
+    "request": {
+      "fnId": "throws",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 500,
+    "body": {
+      "name": "Error",
+      "message": "boom",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:334:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)\n    at async Rec.wrapFunctionHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:120:19)",
+      "__serialized": true
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "throws",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "boom"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onRunError",
+        "error": {
+          "name": "Error",
+          "message": "boom"
+        },
+        "isFinalAttempt": false
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 500
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest function error"
+      ]
+    ],
+    "sent": []
+  },
+  "throws_final": {
+    "request": {
+      "fnId": "throws",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":3,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 400,
+    "body": {
+      "name": "Error",
+      "message": "boom",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:334:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)\n    at async Rec.wrapFunctionHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:120:19)",
+      "__serialized": true
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "throws",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "boom"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onRunError",
+        "error": {
+          "name": "Error",
+          "message": "boom"
+        },
+        "isFinalAttempt": true
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 400
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest function error"
+      ]
+    ],
+    "sent": []
+  },
+  "parallel_first": {
+    "request": {
+      "fnId": "parallel",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "A",
+        "op": "StepPlanned",
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "name": "A",
+        "opts": {},
+        "userland": {
+          "id": "A"
+        },
+        "data": null
+      },
+      {
+        "displayName": "B",
+        "op": "StepPlanned",
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "name": "B",
+        "opts": {},
+        "userland": {
+          "id": "B"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "parallel",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "parallel_done": {
+    "request": {
+      "fnId": "parallel",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"},\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\":{\"data\":\"b\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\",\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":1}}}"
+    },
+    "status": 200,
+    "body": [
+      "a",
+      "b"
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "parallel",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "fn_mw_first": {
+    "request": {
+      "fnId": "fn-mw",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "a",
+        "timing": {
+          "a": 1792961639247000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "fn-mw",
+        "runId": "run-1"
+      },
+      {
+        "tag": "f",
+        "hook": "wrapRequest:before",
+        "fn": "fn-mw",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "f",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "f",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "f",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "f",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "f",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStepHandler:after",
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "f",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "f",
+        "hook": "wrapRequest:after",
+        "status": 206
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "fn_mw_send": {
+    "request": {
+      "fnId": "fn-mw",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "37ed539c0cef13959abd980bebf30f4922f606e3",
+        "op": "StepRun",
+        "name": "sendEvent",
+        "opts": {
+          "type": "step.sendEvent"
+        },
+        "displayName": "send",
+        "userland": {
+          "id": "send"
+        },
+        "data": {
+          "ids": [
+            "sent-1"
+          ]
+        },
+        "timing": {
+          "a": 1792961639249000000,
+          "b": 2000000
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "fn-mw",
+        "runId": "run-1"
+      },
+      {
+        "tag": "f",
+        "hook": "wrapRequest:before",
+        "fn": "fn-mw",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "f",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "f",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "f",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "f",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "send",
+        "type": "sendEvent",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "f",
+        "hook": "transformStepInput",
+        "id": "send",
+        "type": "sendEvent",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "onStepStart",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "transformSendEvent",
+        "fn": "fn-mw",
+        "events": [
+          "x/y"
+        ]
+      },
+      {
+        "tag": "f",
+        "hook": "transformSendEvent",
+        "fn": "fn-mw",
+        "events": [
+          "x/y"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapSendEvent:before",
+        "events": [
+          "x/y"
+        ]
+      },
+      {
+        "tag": "f",
+        "hook": "wrapSendEvent:before",
+        "events": [
+          "x/y"
+        ]
+      },
+      {
+        "tag": "f",
+        "hook": "wrapSendEvent:after",
+        "output": {
+          "ids": [
+            "sent-1"
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapSendEvent:after",
+        "output": {
+          "ids": [
+            "sent-1"
+          ]
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapStepHandler:after",
+        "output": {
+          "ids": [
+            "sent-1"
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": {
+          "ids": [
+            "sent-1"
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        },
+        "output": {
+          "ids": [
+            "sent-1"
+          ]
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "send",
+          "name": "send",
+          "hashedId": "37ed539c0cef13959abd980bebf30f4922f606e3",
+          "type": "sendEvent",
+          "memoized": false
+        },
+        "output": {
+          "ids": [
+            "sent-1"
+          ]
+        }
+      },
+      {
+        "tag": "f",
+        "hook": "wrapRequest:after",
+        "status": 206
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": [
+      {
+        "name": "x/y",
+        "data": {
+          "a": 1,
+          "extra": 1
+        }
+      }
+    ]
+  },
+  "tsi_run_first": {
+    "request": {
+      "fnId": "tsi-run",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {
+          "input": [
+            1
+          ]
+        },
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": 20,
+        "timing": {
+          "a": 1792961639254000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tsi-run",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": [
+          1
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            2
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            2
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            2
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": 20
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false,
+          "input": [
+            2
+          ]
+        },
+        "output": 20
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "tsi_run_done": {
+    "request": {
+      "fnId": "tsi-run",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":20}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": 20,
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tsi-run",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": [
+          1
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true,
+          "input": [
+            2
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true,
+          "input": [
+            2
+          ]
+        },
+        "output": 20
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": 20
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": 20
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "tsi_id_after_a": {
+    "request": {
+      "fnId": "tsi-id",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "3c782d85a10d2b0600979de846390aae2b5b50ba",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "A:1",
+          "index": 1
+        },
+        "data": "b",
+        "timing": {
+          "a": 1792961639261000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tsi-id",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A:1",
+          "name": "B",
+          "hashedId": "3c782d85a10d2b0600979de846390aae2b5b50ba",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A:1",
+          "name": "B",
+          "hashedId": "3c782d85a10d2b0600979de846390aae2b5b50ba",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A:1",
+          "name": "B",
+          "hashedId": "3c782d85a10d2b0600979de846390aae2b5b50ba",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A:1",
+          "name": "B",
+          "hashedId": "3c782d85a10d2b0600979de846390aae2b5b50ba",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "tsi_kinds_first": {
+    "request": {
+      "fnId": "tsi-kinds",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "S",
+        "op": "Sleep",
+        "id": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+        "name": "1s",
+        "opts": {},
+        "userland": {
+          "id": "S"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tsi-kinds",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "tsi_kinds_after_sleep": {
+    "request": {
+      "fnId": "tsi-kinds",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"02aa629c8b16cd17a44f3a0efec2feed43937642\":{\"data\":null}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"02aa629c8b16cd17a44f3a0efec2feed43937642\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "W",
+        "op": "WaitForEvent",
+        "id": "e2415cb7f63df0c9de23362326ad3c37a9adfc96",
+        "name": "x/never",
+        "opts": {
+          "timeout": "1s"
+        },
+        "userland": {
+          "id": "W"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tsi-kinds",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "02aa629c8b16cd17a44f3a0efec2feed43937642"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true,
+          "input": [
+            "1s"
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true,
+          "input": [
+            "1s"
+          ]
+        },
+        "output": null
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "W",
+        "type": "waitForEvent",
+        "memoized": false,
+        "input": [
+          {
+            "timeout": "1m"
+          }
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "tsi_kinds_after_wait": {
+    "request": {
+      "fnId": "tsi-kinds",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"02aa629c8b16cd17a44f3a0efec2feed43937642\":{\"data\":null},\"e2415cb7f63df0c9de23362326ad3c37a9adfc96\":{\"data\":null}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"02aa629c8b16cd17a44f3a0efec2feed43937642\",\"e2415cb7f63df0c9de23362326ad3c37a9adfc96\"],\"current\":1}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "I",
+        "op": "InvokeFunction",
+        "id": "ca73ab65568cd125c2d27a22bbd9e863c10b675d",
+        "opts": {
+          "payload": {
+            "data": {
+              "value": 2
+            }
+          },
+          "function_id": "test-app-invoke-target"
+        },
+        "userland": {
+          "id": "I"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tsi-kinds",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "e2415cb7f63df0c9de23362326ad3c37a9adfc96"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true,
+          "input": [
+            "1s"
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true,
+          "input": [
+            "1s"
+          ]
+        },
+        "output": null
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "W",
+        "type": "waitForEvent",
+        "memoized": true,
+        "input": [
+          {
+            "timeout": "1m"
+          }
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "W",
+          "name": "W",
+          "hashedId": "e2415cb7f63df0c9de23362326ad3c37a9adfc96",
+          "type": "waitForEvent",
+          "memoized": true,
+          "input": [
+            {
+              "timeout": "1s"
+            }
+          ]
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "W",
+          "name": "W",
+          "hashedId": "e2415cb7f63df0c9de23362326ad3c37a9adfc96",
+          "type": "waitForEvent",
+          "memoized": true,
+          "input": [
+            {
+              "timeout": "1s"
+            }
+          ]
+        },
+        "output": null
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "I",
+        "type": "invoke",
+        "memoized": false,
+        "input": [
+          {
+            "payload": {
+              "data": {
+                "value": 1
+              }
+            },
+            "function_id": "test-app-invoke-target"
+          }
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "prepend_first": {
+    "request": {
+      "fnId": "prepend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "65aafbc683a4d415cb643bbec8536166fa0dd202",
+        "op": "StepRun",
+        "name": "pre",
+        "opts": {},
+        "displayName": "pre",
+        "userland": {
+          "id": "pre"
+        },
+        "data": "pre",
+        "timing": {
+          "a": 1792961639274000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "prepend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "main",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "main",
+          "name": "main",
+          "hashedId": "b28b7af69320201d1cf206ebf28373980add1451",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "pre",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "pre",
+          "name": "pre",
+          "hashedId": "65aafbc683a4d415cb643bbec8536166fa0dd202",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "pre",
+          "name": "pre",
+          "hashedId": "65aafbc683a4d415cb643bbec8536166fa0dd202",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "pre"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "pre",
+          "name": "pre",
+          "hashedId": "65aafbc683a4d415cb643bbec8536166fa0dd202",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "pre"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "prepend_after_pre": {
+    "request": {
+      "fnId": "prepend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"65aafbc683a4d415cb643bbec8536166fa0dd202\":{\"data\":\"pre\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"65aafbc683a4d415cb643bbec8536166fa0dd202\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "b28b7af69320201d1cf206ebf28373980add1451",
+        "op": "StepRun",
+        "name": "main",
+        "opts": {},
+        "displayName": "main",
+        "userland": {
+          "id": "main"
+        },
+        "data": "main",
+        "timing": {
+          "a": 1792961639276000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "prepend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "65aafbc683a4d415cb643bbec8536166fa0dd202"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "main",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "main",
+          "name": "main",
+          "hashedId": "b28b7af69320201d1cf206ebf28373980add1451",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "pre",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "main",
+          "name": "main",
+          "hashedId": "b28b7af69320201d1cf206ebf28373980add1451",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "main",
+          "name": "main",
+          "hashedId": "b28b7af69320201d1cf206ebf28373980add1451",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "main"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "main",
+          "name": "main",
+          "hashedId": "b28b7af69320201d1cf206ebf28373980add1451",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "main"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "prepend_done": {
+    "request": {
+      "fnId": "prepend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"65aafbc683a4d415cb643bbec8536166fa0dd202\":{\"data\":\"pre\"},\"b28b7af69320201d1cf206ebf28373980add1451\":{\"data\":\"main\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"65aafbc683a4d415cb643bbec8536166fa0dd202\",\"b28b7af69320201d1cf206ebf28373980add1451\"],\"current\":1}}}"
+    },
+    "status": 200,
+    "body": "main",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "prepend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "65aafbc683a4d415cb643bbec8536166fa0dd202",
+          "b28b7af69320201d1cf206ebf28373980add1451"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "main",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "main",
+          "name": "main",
+          "hashedId": "b28b7af69320201d1cf206ebf28373980add1451",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "pre",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "main",
+          "name": "main",
+          "hashedId": "b28b7af69320201d1cf206ebf28373980add1451",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "main"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "main"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "main"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "tfi_first": {
+    "request": {
+      "fnId": "tfi",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "a",
+        "timing": {
+          "a": 1792961639281000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tfi",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "tfi_done": {
+    "request": {
+      "fnId": "tfi",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": {
+      "a": "A-changed",
+      "n": 99,
+      "db": "db"
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "tfi",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "A-changed"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": {
+          "a": "A-changed",
+          "n": 99,
+          "db": "db"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": {
+          "a": "A-changed",
+          "n": 99,
+          "db": "db"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "wfh_out_done": {
+    "request": {
+      "fnId": "wfh-out",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": {
+      "wrapped": "out"
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "wfh-out",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": {
+          "wrapped": "out"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": {
+          "wrapped": "out"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "wfh_err": {
+    "request": {
+      "fnId": "wfh-err",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 400,
+    "body": {
+      "name": "NonRetriableError",
+      "message": "converted: raw",
+      "stack": "NonRetriableError: converted: raw\n    at Rec.wrapFunctionHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:129:17)",
+      "__serialized": true
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "wfh-err",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "raw"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onRunError",
+        "error": {
+          "name": "NonRetriableError",
+          "message": "converted: raw"
+        },
+        "isFinalAttempt": true
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 400
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest function error"
+      ]
+    ],
+    "sent": []
+  },
+  "serde_first": {
+    "request": {
+      "fnId": "serde",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": {
+          "enc": "v"
+        },
+        "timing": {
+          "a": 1792961639293000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "serde",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": {
+          "enc": "v"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": {
+          "enc": "v"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "serde_done": {
+    "request": {
+      "fnId": "serde",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":{\"enc\":\"v\"}}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": "v",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "serde",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "v"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "v"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "v"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "serde_cp": {
+    "request": {
+      "fnId": "serde",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": "v"
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "serde",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": {
+          "enc": "v"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": {
+          "enc": "v"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "v"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "v"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "v"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "ws_change_error_first": {
+    "request": {
+      "fnId": "ws-change-error",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":3,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepFailed",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke",
+          "stack": "Error: A broke\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:374:15)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)\n    at async Rec.wrapStepHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:218:19)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792961639300000000,
+          "b": 1000000
+        },
+        "data": {
+          "__serialized": true,
+          "name": "Error",
+          "message": "A broke",
+          "stack": ""
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-change-error",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepError",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        },
+        "isFinalAttempt": true
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest step error"
+      ]
+    ],
+    "sent": []
+  },
+  "ws_change_error_done": {
+    "request": {
+      "fnId": "ws-change-error",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"error\":{\"name\":\"Error\",\"message\":\"A broke\",\"stack\":\"Error: A broke\\n    at somewhere\",\"__serialized\":true}}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 200,
+    "body": "caught replaced: A broke",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-change-error",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:error",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "caught replaced: A broke"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "caught replaced: A broke"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "ws_change_error_cp": {
+    "request": {
+      "fnId": "ws-change-error",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":3,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\",\"max_attempts\":4}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepFailed",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke",
+          "stack": "Error: A broke\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:374:15)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)\n    at async Rec.wrapStepHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:218:19)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792961639308000000,
+          "b": 0
+        },
+        "data": {
+          "__serialized": true,
+          "name": "Error",
+          "message": "A broke",
+          "stack": ""
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-change-error",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepError",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "error": {
+          "name": "Error",
+          "message": "A broke"
+        },
+        "isFinalAttempt": true
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest step error"
+      ]
+    ],
+    "sent": []
+  },
+  "ws_throws_first": {
+    "request": {
+      "fnId": "ws-throws",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 500,
+    "body": {
+      "name": "Error",
+      "message": "hook broke",
+      "stack": "Error: hook broke\n    at Rec.wrapStep (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:186:15)\n    at runWrapStep (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/middleware/manager.ts:387:23)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at runWithAsyncCtx (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/als.ts:194:14)\n    at chain (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/middleware/manager.ts:410:18)\n    at stepHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2801:41)\n    at async Rec.wrapFunctionHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:120:19)",
+      "__serialized": true
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-throws",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:error",
+        "error": {
+          "name": "Error",
+          "message": "hook broke"
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onRunError",
+        "error": {
+          "name": "Error",
+          "message": "hook broke"
+        },
+        "isFinalAttempt": false
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 500
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest function error"
+      ]
+    ],
+    "sent": []
+  },
+  "ws_bookend_first": {
+    "request": {
+      "fnId": "ws-bookend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "S",
+        "op": "Sleep",
+        "id": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+        "name": "1h",
+        "opts": {},
+        "userland": {
+          "id": "S"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-bookend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "ws_bookend_after_before": {
+    "request": {
+      "fnId": "ws-bookend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d\":{\"data\":\"before\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "S",
+        "op": "Sleep",
+        "id": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+        "name": "1h",
+        "opts": {},
+        "userland": {
+          "id": "S"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-bookend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "ws_bookend_after_sleep": {
+    "request": {
+      "fnId": "ws-bookend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d\":{\"data\":\"before\"},\"02aa629c8b16cd17a44f3a0efec2feed43937642\":{\"data\":null}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d\",\"02aa629c8b16cd17a44f3a0efec2feed43937642\"],\"current\":1}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "405906c9d5be6ae5393ca65fb0e7c38e0d585ecb",
+        "op": "StepRun",
+        "name": "after",
+        "opts": {},
+        "displayName": "after",
+        "userland": {
+          "id": "after"
+        },
+        "data": "after",
+        "timing": {
+          "a": 1792961639320000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-bookend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d",
+          "02aa629c8b16cd17a44f3a0efec2feed43937642"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "before",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "after",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "after",
+          "name": "after",
+          "hashedId": "405906c9d5be6ae5393ca65fb0e7c38e0d585ecb",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "after",
+          "name": "after",
+          "hashedId": "405906c9d5be6ae5393ca65fb0e7c38e0d585ecb",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "after"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "after",
+          "name": "after",
+          "hashedId": "405906c9d5be6ae5393ca65fb0e7c38e0d585ecb",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "after"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "ws_bookend_done": {
+    "request": {
+      "fnId": "ws-bookend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d\":{\"data\":\"before\"},\"02aa629c8b16cd17a44f3a0efec2feed43937642\":{\"data\":null},\"405906c9d5be6ae5393ca65fb0e7c38e0d585ecb\":{\"data\":\"after\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d\",\"02aa629c8b16cd17a44f3a0efec2feed43937642\",\"405906c9d5be6ae5393ca65fb0e7c38e0d585ecb\"],\"current\":2}}}"
+    },
+    "status": 200,
+    "body": "done",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-bookend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "51de2b835bd35a67eb32dbcd3d77d4b96e5aa39d",
+          "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "405906c9d5be6ae5393ca65fb0e7c38e0d585ecb"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "before",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "after",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "S",
+          "name": "S",
+          "hashedId": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+          "type": "sleep",
+          "memoized": true
+        },
+        "output": null
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "done"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "done"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "ws_bookend_cp": {
+    "request": {
+      "fnId": "ws-bookend",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "displayName": "S",
+        "op": "Sleep",
+        "id": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+        "name": "1h",
+        "opts": {},
+        "userland": {
+          "id": "S"
+        },
+        "data": null
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "ws-bookend",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "S",
+        "type": "sleep",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [],
+    "sent": []
+  },
+  "wfh_throws": {
+    "request": {
+      "fnId": "wfh-throws",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"max_attempts\":4}}"
+    },
+    "status": 500,
+    "body": {
+      "name": "Error",
+      "message": "hook broke",
+      "stack": "Error: hook broke\n    at Rec.wrapFunctionHandler (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/middleware/generate.mts:117:15)\n    at chain (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/middleware/manager.ts:278:14)\n    at LoggerMiddleware.wrapFunctionHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/Inngest.ts:1351:16)\n    at chain (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/middleware/manager.ts:278:14)",
+      "__serialized": true
+    },
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "wfh-throws",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunError",
+        "error": {
+          "name": "Error",
+          "message": "hook broke"
+        },
+        "isFinalAttempt": false
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 500
+      }
+    ],
+    "logs": [
+      [
+        "error",
+        "Inngest function error"
+      ]
+    ],
+    "sent": []
+  },
+  "logs_first": {
+    "request": {
+      "fnId": "logs",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "a",
+        "timing": {
+          "a": 1792961639332000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "logs",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [
+      [
+        "info",
+        "top"
+      ],
+      [
+        "info",
+        "in A"
+      ]
+    ],
+    "sent": []
+  },
+  "logs_after_a": {
+    "request": {
+      "fnId": "logs",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0}}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepRun",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "data": "b",
+        "timing": {
+          "a": 1792961639334000000,
+          "b": 0
+        }
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "logs",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [
+      [
+        "info",
+        "after A"
+      ]
+    ],
+    "sent": []
+  },
+  "logs_done": {
+    "request": {
+      "fnId": "logs",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"a\"},\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\":{\"data\":\"b\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\",\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\"],\"current\":1}}}"
+    },
+    "status": 200,
+    "body": "ok",
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "logs",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": [
+          "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec"
+        ]
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": true,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": true
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": true
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "ok"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "ok"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 200
+      }
+    ],
+    "logs": [
+      [
+        "info",
+        "end"
+      ]
+    ],
+    "sent": []
+  },
+  "logs_cp": {
+    "request": {
+      "fnId": "logs",
+      "stepId": "step",
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": "ok"
+      }
+    ],
+    "hooks": [
+      {
+        "tag": "c",
+        "hook": "wrapRequest:before",
+        "fn": "logs",
+        "runId": "run-1"
+      },
+      {
+        "tag": "c",
+        "hook": "transformFunctionInput",
+        "steps": []
+      },
+      {
+        "tag": "c",
+        "hook": "onMemoizationEnd"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunStart"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:before"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "A",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "A",
+          "name": "A",
+          "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "a"
+      },
+      {
+        "tag": "c",
+        "hook": "transformStepInput",
+        "id": "B",
+        "type": "run",
+        "memoized": false,
+        "input": []
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "onStepStart",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:before",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        }
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStepHandler:after",
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "onStepComplete",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapStep:after",
+        "step": {
+          "id": "B",
+          "name": "B",
+          "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+          "type": "run",
+          "memoized": false
+        },
+        "output": "b"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapFunctionHandler:after",
+        "output": "ok"
+      },
+      {
+        "tag": "c",
+        "hook": "onRunComplete",
+        "output": "ok"
+      },
+      {
+        "tag": "c",
+        "hook": "wrapRequest:after",
+        "status": 206
+      }
+    ],
+    "logs": [
+      [
+        "info",
+        "top"
+      ],
+      [
+        "info",
+        "in A"
+      ],
+      [
+        "info",
+        "after A"
+      ],
+      [
+        "info",
+        "end"
+      ]
+    ],
+    "sent": []
+  }
+}

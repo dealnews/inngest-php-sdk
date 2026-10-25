@@ -9,6 +9,7 @@ use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
 use DealNews\Inngest\Config\Mode;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Support\Url;
 use DealNews\Inngest\Tests\mock\RecordingLogger;
 use DealNews\Inngest\Tests\TestCase;
@@ -27,6 +28,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Checkpointing::class)]
 #[UsesClass(ClientOptions::class)]
 #[UsesClass(Env::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(Url::class)]
 #[UsesClass(ValueObject::class)]
 class ClientConfigTest extends TestCase {
@@ -309,6 +311,26 @@ class ClientConfigTest extends TestCase {
             $this->resolve([], new ClientOptions(checkpointing: $options))
                 ->checkpointing
         );
+    }
+
+    /**
+     * Middleware comes from the options, checked
+     *
+     * @return void
+     */
+    public function testMiddleware(): void {
+        $factory = static fn () => null;
+
+        $this->assertSame([], $this->resolve([])->middleware);
+        $this->assertSame(
+            [$factory],
+            $this->resolve([], new ClientOptions(middleware: [$factory]))
+                ->middleware
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionCode(10001);
+        $this->resolve([], new ClientOptions(middleware: ['nope']));
     }
 
     /**

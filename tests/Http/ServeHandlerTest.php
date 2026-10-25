@@ -25,6 +25,7 @@ use DealNews\Inngest\Execution\OutgoingOp;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Execution\StepIdResolver;
 use DealNews\Inngest\Execution\StepOp;
+use DealNews\Inngest\Execution\StepResult;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\Config\FunctionConfig;
 use DealNews\Inngest\Functions\Config\StepConfig;
@@ -51,6 +52,19 @@ use DealNews\Inngest\Http\SignatureResult;
 use DealNews\Inngest\Http\Sync\InBandRegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterResult;
+use DealNews\Inngest\Middleware\FunctionInput;
+use DealNews\Inngest\Middleware\LoggerMiddleware;
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\ProxyLogger;
+use DealNews\Inngest\Middleware\RunArgs;
+use DealNews\Inngest\Middleware\RunCompleteArgs;
+use DealNews\Inngest\Middleware\StepArgs;
+use DealNews\Inngest\Middleware\StepCompleteArgs;
+use DealNews\Inngest\Middleware\StepInfo;
+use DealNews\Inngest\Middleware\StepType;
+use DealNews\Inngest\Middleware\WrapFunctionHandlerArgs;
+use DealNews\Inngest\Middleware\WrapRequestArgs;
 use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
@@ -59,6 +73,7 @@ use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
 use DealNews\Inngest\Tests\mock\ExpiredOkSignature;
 use DealNews\Inngest\Tests\mock\MockHttp;
+use DealNews\Inngest\Tests\mock\RecordingMiddleware;
 use DealNews\Inngest\Tests\mock\ServeHarness;
 use DealNews\Inngest\Tests\TestCase;
 use DealNews\Inngest\ValueObject\ValueObject;
@@ -80,58 +95,72 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(ServeHandler::class)]
 #[UsesClass(AiTools::class)]
 #[UsesClass(ApiClient::class)]
-#[UsesClass(Context::class)]
-#[UsesClass(CheckpointConfig::class)]
-#[UsesClass(Checkpointer::class)]
-#[UsesClass(Engine::class)]
-#[UsesClass(Event::class)]
-#[UsesClass(ExecutionException::class)]
-#[UsesClass(ExecutionResult::class)]
-#[UsesClass(FoundStep::class)]
-#[UsesClass(OutgoingOp::class)]
-#[UsesClass(RemoteError::class)]
-#[UsesClass(RunRequest::class)]
-#[UsesClass(StepError::class)]
-#[UsesClass(StepIdResolver::class)]
-#[UsesClass(StepOp::class)]
-#[UsesClass(StepOptions::class)]
-#[UsesClass(StepState::class)]
-#[UsesClass(StepTools::class)]
 #[UsesClass(AuthenticatedIntrospection::class)]
 #[UsesClass(Capabilities::class)]
+#[UsesClass(CheckpointConfig::class)]
+#[UsesClass(Checkpointer::class)]
 #[UsesClass(Client::class)]
 #[UsesClass(ClientConfig::class)]
 #[UsesClass(ClientOptions::class)]
+#[UsesClass(Context::class)]
 #[UsesClass(CronTrigger::class)]
 #[UsesClass(Duration::class)]
+#[UsesClass(Engine::class)]
 #[UsesClass(Env::class)]
 #[UsesClass(ErrorSerializer::class)]
+#[UsesClass(Event::class)]
 #[UsesClass(EventTrigger::class)]
+#[UsesClass(ExecutionException::class)]
+#[UsesClass(ExecutionResult::class)]
+#[UsesClass(FoundStep::class)]
 #[UsesClass(FunctionConfig::class)]
+#[UsesClass(FunctionInput::class)]
 #[UsesClass(FunctionOptions::class)]
 #[UsesClass(Headers::class)]
 #[UsesClass(InBandRegisterRequest::class)]
 #[UsesClass(InngestFunction::class)]
-#[UsesClass(Introspector::class)]
 #[UsesClass(IntrospectionExtra::class)]
+#[UsesClass(Introspector::class)]
+#[UsesClass(LoggerMiddleware::class)]
+#[UsesClass(Middleware::class)]
+#[UsesClass(MiddlewareStack::class)]
+#[UsesClass(OutgoingOp::class)]
+#[UsesClass(ProxyLogger::class)]
 #[UsesClass(RegisterRequest::class)]
 #[UsesClass(RegisterResult::class)]
 #[UsesClass(Registrar::class)]
+#[UsesClass(RemoteError::class)]
 #[UsesClass(Request::class)]
 #[UsesClass(Response::class)]
 #[UsesClass(Retry::class)]
+#[UsesClass(RunArgs::class)]
+#[UsesClass(RunCompleteArgs::class)]
+#[UsesClass(RunRequest::class)]
 #[UsesClass(SerializedError::class)]
 #[UsesClass(ServeException::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(SignatureException::class)]
 #[UsesClass(SignatureResult::class)]
+#[UsesClass(StepArgs::class)]
+#[UsesClass(StepCompleteArgs::class)]
 #[UsesClass(StepConfig::class)]
+#[UsesClass(StepError::class)]
+#[UsesClass(StepIdResolver::class)]
+#[UsesClass(StepInfo::class)]
+#[UsesClass(StepOp::class)]
+#[UsesClass(StepOptions::class)]
+#[UsesClass(StepResult::class)]
 #[UsesClass(StepRetries::class)]
 #[UsesClass(StepRuntime::class)]
+#[UsesClass(StepState::class)]
+#[UsesClass(StepTools::class)]
+#[UsesClass(StepType::class)]
 #[UsesClass(UnauthenticatedIntrospection::class)]
 #[UsesClass(Url::class)]
 #[UsesClass(ValueObject::class)]
 #[UsesClass(Version::class)]
+#[UsesClass(WrapFunctionHandlerArgs::class)]
+#[UsesClass(WrapRequestArgs::class)]
 class ServeHandlerTest extends TestCase {
 
     /**
@@ -1351,6 +1380,98 @@ class ServeHandlerTest extends TestCase {
         $this->assertSame(
             'Could not find step "zzz" to run; timed out.',
             $body['error']
+        );
+    }
+
+    /**
+     * An error thrown by wrapRequest middleware becomes a bare 500 (no
+     * SDK headers, no signature), like JS
+     *
+     * @return void
+     */
+    public function testWrapRequestError(): void {
+        $throws  = static fn (Client $client) => new class($client) extends
+            Middleware {
+            /**
+             * Always throws
+             *
+             * @param WrapRequestArgs $args Arguments
+             *
+             * @throws \RuntimeException Always
+             *
+             * @return Response
+             */
+            public function wrapRequest(WrapRequestArgs $args): Response {
+                throw new \RuntimeException('no entry');
+            }
+        };
+        $harness = new ServeHarness(
+            new ClientOptions(is_dev: true, middleware: [$throws])
+        );
+
+        $response = $harness->request(
+            'POST',
+            ServeHarness::URL . '?fnId=test-app-fn1&stepId=step',
+            [],
+            '{"event":{},"ctx":{"run_id":"run-1"}}'
+        );
+
+        $this->assertSame(500, $response->status);
+        $this->assertSame(
+            ['content-type' => 'application/json'],
+            $response->headers
+        );
+        $body = json_decode($response->body, true);
+        $this->assertSame('internal', $body['type']);
+        $this->assertSame('RuntimeException', $body['name']);
+        $this->assertSame('no entry', $body['message']);
+    }
+
+    /**
+     * wrapRequest sees the request, the function, and the run ID; GET and
+     * PUT don't go through it
+     *
+     * @return void
+     */
+    public function testWrapRequestArgs(): void {
+        $log     = new \ArrayObject();
+        $harness = new ServeHarness(new ClientOptions(
+            is_dev: true,
+            middleware: [RecordingMiddleware::factory($log, 'c')]
+        ));
+
+        $harness->request('GET');
+        $harness->request(
+            'POST',
+            ServeHarness::URL . '?fnId=nope&stepId=step',
+            [],
+            'not json'
+        );
+        $harness->request(
+            'POST',
+            ServeHarness::URL . '?fnId=test-app-fn1&stepId=step',
+            [],
+            '{"event":{},"ctx":{"run_id":"run-1"}}'
+        );
+        $harness->request('POST', ServeHarness::URL . '?stepId=step', [], '{}');
+
+        $requests = array_values(array_filter(
+            $log->getArrayCopy(),
+            static fn (array $e) => $e['hook'] === 'wrapRequest:before'
+        ));
+        $this->assertSame(
+            [
+                ['fn' => null, 'runId' => ''],
+                ['fn' => 'fn1', 'runId' => 'run-1'],
+                ['fn' => null, 'runId' => ''],
+            ],
+            array_map(
+                static fn (array $e) => [
+                    'fn'    => $e['fn'],
+                    'runId' => $e['runId'],
+                ],
+                $requests
+            )
         );
     }
 }

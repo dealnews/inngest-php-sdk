@@ -36,6 +36,8 @@ use DealNews\Inngest\Http\SignatureResult;
 use DealNews\Inngest\Http\Sync\InBandRegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterResult;
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Support\Duration;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
@@ -82,6 +84,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(InBandRegisterRequest::class)]
 #[UsesClass(InngestFunction::class)]
 #[UsesClass(IntrospectionExtra::class)]
+#[UsesClass(Middleware::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(RegisterRequest::class)]
 #[UsesClass(RegisterResult::class)]
 #[UsesClass(Request::class)]

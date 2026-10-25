@@ -18,11 +18,18 @@ use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Http\Headers;
 use DealNews\Inngest\Http\Signature;
+use DealNews\Inngest\Middleware\LoggerMiddleware;
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\SendEventInput;
+use DealNews\Inngest\Middleware\WrapSendEventArgs;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
 use DealNews\Inngest\Tests\mock\FixedVersion;
 use DealNews\Inngest\Tests\mock\MockHttp;
 use DealNews\Inngest\Tests\mock\RecordingLogger;
+use DealNews\Inngest\Tests\mock\RecordingMiddleware;
+use DealNews\Inngest\Tests\mock\RegisterMiddleware;
 use DealNews\Inngest\ValueObject\ValueObject;
 use DealNews\Inngest\Version;
 use GuzzleHttp\Exception\ConnectException;
@@ -45,16 +52,20 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Env::class)]
 #[UsesClass(Event::class)]
 #[UsesClass(EventMeta::class)]
+#[UsesClass(FunctionOptions::class)]
+#[UsesClass(Headers::class)]
+#[UsesClass(InngestFunction::class)]
+#[UsesClass(Middleware::class)]
+#[UsesClass(MiddlewareStack::class)]
+#[UsesClass(Retry::class)]
+#[UsesClass(SendEventInput::class)]
 #[UsesClass(SendEventResult::class)]
 #[UsesClass(SendSignalResult::class)]
-#[UsesClass(FunctionOptions::class)]
-#[UsesClass(InngestFunction::class)]
-#[UsesClass(Headers::class)]
-#[UsesClass(Retry::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(Url::class)]
 #[UsesClass(ValueObject::class)]
 #[UsesClass(Version::class)]
+#[UsesClass(WrapSendEventArgs::class)]
 class ClientTest extends TestCase {
 
     /**
@@ -719,6 +730,125 @@ class ClientTest extends TestCase {
             'env-x',
             $http->requests[0]->getHeaderLine('x-inngest-env')
         );
+    }
+
+    /**
+     * The built-in logger middleware comes first; onRegister runs for
+     * client middleware (no function) and function middleware
+     *
+     * @return void
+     */
+    public function testMiddlewareRegistration(): void {
+        RegisterMiddleware::$registered = [];
+
+        $client = $this->client(
+            $this->okHttp([]),
+            new ClientOptions(middleware: [RegisterMiddleware::class])
+        );
+
+        $this->assertSame(
+            [LoggerMiddleware::class, RegisterMiddleware::class],
+            $client->getMiddleware()
+        );
+        $this->assertSame([[$client, null]], RegisterMiddleware::$registered);
+
+        $function = $client->createFunction(
+            new FunctionOptions(
+                id: 'fn',
+                middleware: [RegisterMiddleware::class]
+            ),
+            static fn () => null
+        );
+
+        $this->assertSame(
+            [[$client, null], [$client, $function]],
+            RegisterMiddleware::$registered
+        );
+    }
+
+    /**
+     * Sends go through transformSendEvent and wrapSendEvent; function
+     * middleware joins in only when a function sends
+     *
+     * @return void
+     */
+    public function testSendMiddleware(): void {
+        $log    = new \ArrayObject();
+        $http   = new MockHttp([
+            MockHttp::json(200, ['ids' => ['id-1'], 'status' => 200]),
+            MockHttp::json(200, ['ids' => ['id-2'], 'status' => 200]),
+        ]);
+        $client = $this->client($http, new ClientOptions(
+            event_key: self::EVENT_KEY,
+            middleware: [RecordingMiddleware::factory($log, 'c')]
+        ));
+
+        $function = $client->createFunction(
+            new FunctionOptions(
+                id: 'fn',
+                middleware: [RecordingMiddleware::factory($log, 'f')]
+            ),
+            static fn () => null
+        );
+
+        $client->send(new Event('a/plain'));
+        $result = $client->send(new Event('a/step'), null, $function);
+
+        $this->assertSame(['id-2'], $result->ids);
+        $this->assertSame(
+            [
+                ['c', 'transformSendEvent', null],
+                ['c', 'wrapSendEvent:before', null],
+                ['c', 'wrapSendEvent:after', null],
+                ['c', 'transformSendEvent', 'fn'],
+                ['f', 'transformSendEvent', 'fn'],
+                ['c', 'wrapSendEvent:before', null],
+                ['f', 'wrapSendEvent:before', null],
+                ['f', 'wrapSendEvent:after', null],
+                ['c', 'wrapSendEvent:after', null],
+            ],
+            array_map(
+                static fn (array $e) => [
+                    $e['tag'],
+                    $e['hook'],
+                    $e['fn'] ?? null,
+                ],
+                $log->getArrayCopy()
+            )
+        );
+        $this->assertSame([], $http->jsonBody(0)[0]['data']);
+        $this->assertSame(['extra' => 1], $http->jsonBody(1)[0]['data']);
+    }
+
+    /**
+     * Middleware that drops every event leaves nothing to send
+     *
+     * @return void
+     */
+    public function testSendMiddlewareDropsEvents(): void {
+        $http   = new MockHttp();
+        $client = $this->client($http, new ClientOptions(
+            event_key: self::EVENT_KEY,
+            middleware: [
+                static fn (Client $c) => new class($c) extends Middleware {
+                    /**
+                     * Drops every event
+                     *
+                     * @param SendEventInput $input Input
+                     *
+                     * @return SendEventInput
+                     */
+                    public function transformSendEvent(
+                        SendEventInput $input
+                    ): SendEventInput {
+                        return new SendEventInput([], $input->function);
+                    }
+                },
+            ]
+        ));
+
+        $this->assertSame([], $client->send(new Event('a'))->ids);
+        $this->assertSame([], $http->requests);
     }
 
     /**

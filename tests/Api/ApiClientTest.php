@@ -13,6 +13,7 @@ use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
 use DealNews\Inngest\Http\Headers;
 use DealNews\Inngest\Http\Signature;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Support\Url;
 use DealNews\Inngest\Tests\mock\FixedVersion;
 use DealNews\Inngest\Tests\mock\MockHttp;
@@ -38,6 +39,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(ClientOptions::class)]
 #[UsesClass(Env::class)]
 #[UsesClass(Headers::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(SendSignalResult::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(Url::class)]

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Execution;
 
+use DealNews\Inngest\Middleware\StepInfo;
+
 /**
  * A step the function reached during this request
  *
- * Port of JS `FoundStep` (InngestStepTools.ts), minus middleware and
- * checkpointing details.
+ * Port of JS `FoundStep` (InngestStepTools.ts), minus checkpointing
+ * details.
  *
  * @package DealNews\Inngest\Execution
  */
@@ -30,6 +32,13 @@ class FoundStep {
     public ?\Fiber $fiber = null;
 
     /**
+     * Whether the step's `wrapStep` middleware chain has started
+     *
+     * @var bool
+     */
+    public bool $wrapped = false;
+
+    /**
      * Creates the step
      *
      * @param string               $id             Final ID (with index)
@@ -45,6 +54,8 @@ class FoundStep {
      *                                             (set once a checkpointed
      *                                             step is resumed)
      * @param bool                 $has_step_state Inngest has state for it
+     * @param StepInfo             $info           What middleware knows
+     *                                             about the step
      */
     public function __construct(
         public readonly string $id,
@@ -57,7 +68,8 @@ class FoundStep {
         public readonly ?int $userland_index,
         public readonly ?\Closure $fn,
         public bool $fulfilled,
-        public bool $has_step_state
+        public bool $has_step_state,
+        public readonly StepInfo $info
     ) {
     }
 

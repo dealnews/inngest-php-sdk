@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Config;
 
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Support\Url;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -55,6 +57,9 @@ class ClientConfig {
      * @param bool        $enable_unauthed_sync Accept unsigned syncs
      * @param bool        $allow_in_band_sync   Allow in-band syncs
      * @param bool|Checkpointing $checkpointing Client-level checkpointing
+     * @param list<class-string<Middleware>|\Closure> $middleware Client
+     *        middleware (class names or factories), without the built-in
+     *        logger middleware
      */
     public function __construct(
         public readonly string $app_id,
@@ -70,7 +75,8 @@ class ClientConfig {
         public readonly ?string $serve_path = null,
         public readonly bool $enable_unauthed_sync = true,
         public readonly bool $allow_in_band_sync = true,
-        public readonly bool|Checkpointing $checkpointing = true
+        public readonly bool|Checkpointing $checkpointing = true,
+        public readonly array $middleware = []
     ) {
     }
 
@@ -82,7 +88,8 @@ class ClientConfig {
      * @param Env|null             $env     Environment variable reader
      * @param LoggerInterface|null $logger  Receives deprecation warnings
      *
-     * @throws \InvalidArgumentException When the app ID is empty
+     * @throws \InvalidArgumentException When the app ID is empty, or the
+     *                                   middleware list is invalid (10001)
      *
      * @return self
      */
@@ -163,7 +170,11 @@ class ClientConfig {
                 $env->getBool(Env::ALLOW_IN_BAND_SYNC),
                 true
             ),
-            checkpointing: $options->checkpointing ?? true
+            checkpointing: $options->checkpointing ?? true,
+            middleware: MiddlewareStack::validate(
+                $options->middleware ?? [],
+                10001
+            )
         );
     }
 

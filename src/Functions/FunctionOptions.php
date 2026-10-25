@@ -15,6 +15,7 @@ use DealNews\Inngest\Functions\Options\Singleton;
 use DealNews\Inngest\Functions\Options\Throttle;
 use DealNews\Inngest\Functions\Options\Timeouts;
 use DealNews\Inngest\Functions\Trigger\Trigger;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 
 /**
  * Options for creating an Inngest function
@@ -93,6 +94,9 @@ class FunctionOptions {
      *                                                        function fails
      * @param bool|Checkpointing|null           $checkpointing Async
      *        checkpointing; null uses the client's setting (on by default)
+     * @param list<string|\Closure>           $middleware   Middleware for
+     *        this function only (after the client's): Middleware class
+     *        names, or Closures that take the Client and return one
      *
      * @throws \InvalidArgumentException When an option is invalid
      */
@@ -113,7 +117,8 @@ class FunctionOptions {
         public array $cancel_on = [],
         public ?int $retries = null,
         ?callable $on_failure = null,
-        public bool|Checkpointing|null $checkpointing = null
+        public bool|Checkpointing|null $checkpointing = null,
+        public array $middleware = []
     ) {
         if ($on_failure !== null) {
             $this->on_failure = \Closure::fromCallable($on_failure);
@@ -161,6 +166,11 @@ class FunctionOptions {
 
         static::assertList($this->triggers, Trigger::class, 9005);
         static::assertList($this->cancel_on, Cancellation::class, 9006);
+
+        $this->middleware = MiddlewareStack::validate(
+            $this->middleware,
+            10002
+        );
     }
 
     /**

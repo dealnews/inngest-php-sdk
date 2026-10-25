@@ -34,6 +34,7 @@ use DealNews\Inngest\Execution\ParallelGroup;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Execution\StepIdResolver;
 use DealNews\Inngest\Execution\StepOp;
+use DealNews\Inngest\Execution\StepResult;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\Config\FunctionConfig;
 use DealNews\Inngest\Functions\Config\StepConfig;
@@ -51,6 +52,21 @@ use DealNews\Inngest\Http\Response;
 use DealNews\Inngest\Http\ServeHandler;
 use DealNews\Inngest\Http\Signature;
 use DealNews\Inngest\Http\SignatureResult;
+use DealNews\Inngest\Middleware\FunctionInput;
+use DealNews\Inngest\Middleware\LoggerMiddleware;
+use DealNews\Inngest\Middleware\Middleware;
+use DealNews\Inngest\Middleware\MiddlewareStack;
+use DealNews\Inngest\Middleware\ProxyLogger;
+use DealNews\Inngest\Middleware\RunArgs;
+use DealNews\Inngest\Middleware\RunCompleteArgs;
+use DealNews\Inngest\Middleware\RunErrorArgs;
+use DealNews\Inngest\Middleware\SendEventInput;
+use DealNews\Inngest\Middleware\StepArgs;
+use DealNews\Inngest\Middleware\StepCompleteArgs;
+use DealNews\Inngest\Middleware\StepErrorArgs;
+use DealNews\Inngest\Middleware\StepInfo;
+use DealNews\Inngest\Middleware\StepType;
+use DealNews\Inngest\Middleware\WrapFunctionHandlerArgs;
 use DealNews\Inngest\Step\AiFormat;
 use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\ParallelMode;
@@ -107,38 +123,54 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(ExecutionResult::class)]
 #[UsesClass(FoundStep::class)]
 #[UsesClass(FunctionConfig::class)]
+#[UsesClass(FunctionInput::class)]
 #[UsesClass(FunctionOptions::class)]
 #[UsesClass(FunctionReference::class)]
 #[UsesClass(Headers::class)]
 #[UsesClass(InngestFunction::class)]
 #[UsesClass(Introspector::class)]
+#[UsesClass(LoggerMiddleware::class)]
+#[UsesClass(Middleware::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(NonRetriableError::class)]
 #[UsesClass(OutgoingOp::class)]
 #[UsesClass(ParallelGroup::class)]
+#[UsesClass(ProxyLogger::class)]
 #[UsesClass(Registrar::class)]
 #[UsesClass(RemoteError::class)]
 #[UsesClass(Request::class)]
 #[UsesClass(Response::class)]
 #[UsesClass(Retry::class)]
 #[UsesClass(RetryAfterError::class)]
+#[UsesClass(RunArgs::class)]
+#[UsesClass(RunCompleteArgs::class)]
+#[UsesClass(RunErrorArgs::class)]
+#[UsesClass(SendEventInput::class)]
 #[UsesClass(SendEventResult::class)]
 #[UsesClass(SendSignalResult::class)]
 #[UsesClass(SerializedError::class)]
-#[UsesClass(StaleDispatchError::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(SignatureResult::class)]
+#[UsesClass(StaleDispatchError::class)]
+#[UsesClass(StepArgs::class)]
+#[UsesClass(StepCompleteArgs::class)]
 #[UsesClass(StepConfig::class)]
 #[UsesClass(StepError::class)]
+#[UsesClass(StepErrorArgs::class)]
 #[UsesClass(StepIdResolver::class)]
+#[UsesClass(StepInfo::class)]
 #[UsesClass(StepOp::class)]
 #[UsesClass(StepOptions::class)]
+#[UsesClass(StepResult::class)]
 #[UsesClass(StepRetries::class)]
 #[UsesClass(StepRuntime::class)]
 #[UsesClass(StepState::class)]
 #[UsesClass(StepTools::class)]
+#[UsesClass(StepType::class)]
 #[UsesClass(Url::class)]
 #[UsesClass(ValueObject::class)]
 #[UsesClass(Version::class)]
+#[UsesClass(WrapFunctionHandlerArgs::class)]
 class EngineParityTest extends TestCase {
 
     /**

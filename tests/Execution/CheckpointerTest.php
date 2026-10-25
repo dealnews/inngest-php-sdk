@@ -17,6 +17,7 @@ use DealNews\Inngest\Execution\OpCode;
 use DealNews\Inngest\Execution\OutgoingOp;
 use DealNews\Inngest\Http\Headers;
 use DealNews\Inngest\Http\Signature;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
 use DealNews\Inngest\Tests\mock\FixedVersion;
@@ -42,6 +43,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Env::class)]
 #[UsesClass(ExecutionException::class)]
 #[UsesClass(Headers::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(OutgoingOp::class)]
 #[UsesClass(Retry::class)]
 #[UsesClass(Signature::class)]

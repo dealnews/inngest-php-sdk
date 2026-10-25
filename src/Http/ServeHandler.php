@@ -17,6 +17,7 @@ use DealNews\Inngest\Execution\OutgoingOp;
 use DealNews\Inngest\Execution\ResultType;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Support\Duration;
 use DealNews\Inngest\Support\Url;
 use GuzzleHttp\Psr7\Uri;
@@ -139,13 +140,85 @@ class ServeHandler {
     public function handle(Request $request): Response {
         $signature = $this->validateSignature($request);
 
+        if ($request->method === 'POST') {
+            $response = $this->handleWithMiddleware($request, $signature);
+        } else {
+            $response = $this->prepareResponse(
+                $this->handleOrFail($request, $signature),
+                $request,
+                $signature
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * Handles a `POST` through the `wrapRequest` middleware chain
+     *
+     * Middleware instances are created here, once per request (client
+     * middleware, then the function's), and shared with the engine. An
+     * error thrown by `wrapRequest` becomes a bare `500` (JS does the
+     * same: no SDK headers, no signature).
+     *
+     * @param Request         $request   Incoming request
+     * @param SignatureResult $signature Signature check result
+     *
+     * @return Response
+     */
+    protected function handleWithMiddleware(
+        Request $request,
+        SignatureResult $signature
+    ): Response {
         try {
-            $response = $this->handleAction($request, $signature);
+            $fn_id    = $request->query(self::QUERY_FN_ID);
+            $function = $fn_id === null || $fn_id === '' ?
+                null :
+                $this->client->getFunction($fn_id);
+
+            $middleware = MiddlewareStack::create($this->client, [
+                ...$this->client->getMiddleware(),
+                ...($function?->getOptions()->middleware ?? []),
+            ]);
+
+            $response = $middleware->wrapRequest(
+                $request,
+                $function,
+                static::runId($request),
+                fn () => $this->prepareResponse(
+                    $this->handleOrFail($request, $signature, $middleware),
+                    $request,
+                    $signature
+                )
+            );
         } catch (\Throwable $e) {
             $response = $this->internalError($e);
         }
 
-        return $this->prepareResponse($response, $request, $signature);
+        return $response;
+    }
+
+    /**
+     * Handles a request, turning unexpected errors into a `500`
+     *
+     * @param Request              $request    Incoming request
+     * @param SignatureResult      $signature  Signature check result
+     * @param MiddlewareStack|null $middleware Middleware for execution
+     *
+     * @return Response
+     */
+    protected function handleOrFail(
+        Request $request,
+        SignatureResult $signature,
+        ?MiddlewareStack $middleware = null
+    ): Response {
+        try {
+            $response = $this->handleAction($request, $signature, $middleware);
+        } catch (\Throwable $e) {
+            $response = $this->internalError($e);
+        }
+
+        return $response;
     }
 
     /**
@@ -201,8 +274,9 @@ class ServeHandler {
     /**
      * Decides what to do with a request (JS `handleAction`)
      *
-     * @param Request         $request   Incoming request
-     * @param SignatureResult $signature Signature check result
+     * @param Request              $request    Incoming request
+     * @param SignatureResult      $signature  Signature check result
+     * @param MiddlewareStack|null $middleware Middleware for execution
      *
      * @throws \Throwable Anything unexpected; handle() turns it into a 500
      *
@@ -210,7 +284,8 @@ class ServeHandler {
      */
     protected function handleAction(
         Request $request,
-        SignatureResult $signature
+        SignatureResult $signature,
+        ?MiddlewareStack $middleware = null
     ): Response {
         $config = $this->client->getConfig();
 
@@ -232,7 +307,7 @@ class ServeHandler {
             $response = $this->signatureFailed($request, $signature);
         } else {
             $response = match ($request->method) {
-                'POST'  => $this->handlePost($request, $signature),
+                'POST'  => $this->handlePost($request, $signature, $middleware),
                 'GET'   => $this->handleGet($request, $signature),
                 'PUT'   => $this->handlePut($request, $signature),
                 default => $this->methodNotAllowed($request),
@@ -245,8 +320,9 @@ class ServeHandler {
     /**
      * Handles `POST`: trust probes and function execution
      *
-     * @param Request         $request   Incoming request
-     * @param SignatureResult $signature Signature check result
+     * @param Request              $request    Incoming request
+     * @param SignatureResult      $signature  Signature check result
+     * @param MiddlewareStack|null $middleware Middleware for execution
      *
      * @throws ServeException When the function ID is missing or unknown
      *
@@ -254,7 +330,8 @@ class ServeHandler {
      */
     protected function handlePost(
         Request $request,
-        SignatureResult $signature
+        SignatureResult $signature,
+        ?MiddlewareStack $middleware = null
     ): Response {
         $probe = $request->query(self::QUERY_PROBE);
 
@@ -286,7 +363,12 @@ class ServeHandler {
                 );
             }
 
-            $response = $this->runFunction($request, $function, $fn_id);
+            $response = $this->runFunction(
+                $request,
+                $function,
+                $fn_id,
+                $middleware
+            );
         }
 
         return $response;
@@ -320,10 +402,12 @@ class ServeHandler {
     /**
      * Runs a function and turns the result into a response
      *
-     * @param Request         $request  Incoming request
-     * @param InngestFunction $function Function to run
-     * @param string          $fn_id    Requested function ID (the failure
-     *                                  handler's ID runs `on_failure`)
+     * @param Request              $request    Incoming request
+     * @param InngestFunction      $function   Function to run
+     * @param string               $fn_id      Requested function ID (the
+     *                                         failure handler's ID runs
+     *                                         `on_failure`)
+     * @param MiddlewareStack|null $middleware Middleware for this request
      *
      * @throws ExecutionException When the request body can't be parsed or
      *                            run data can't be fetched
@@ -333,7 +417,8 @@ class ServeHandler {
     protected function runFunction(
         Request $request,
         InngestFunction $function,
-        string $fn_id
+        string $fn_id,
+        ?MiddlewareStack $middleware = null
     ): Response {
         $started_ms = (int)floor(microtime(true) * 1000);
 
@@ -366,7 +451,8 @@ class ServeHandler {
             $this->logger,
             $this->serializer,
             $this->client,
-            $checkpointer
+            $checkpointer,
+            $middleware
         );
 
         return $this->executionResponse($engine->execute());
@@ -706,6 +792,22 @@ class ServeHandler {
         ]);
 
         return static::unauthorized();
+    }
+
+    /**
+     * Returns the run ID from an execution body (`ctx.run_id`)
+     *
+     * @param Request $request Incoming request
+     *
+     * @return string Empty when there isn't one
+     */
+    protected static function runId(Request $request): string {
+        $body   = json_decode((string)$request->body, true);
+        $run_id = is_array($body) && is_array($body['ctx'] ?? null) ?
+            ($body['ctx']['run_id'] ?? null) :
+            null;
+
+        return is_string($run_id) ? $run_id : '';
     }
 
     /**

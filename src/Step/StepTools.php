@@ -298,16 +298,18 @@ class StepTools {
         string|StepOptions $id,
         Event|array $events
     ): SendEventResult {
-        $options = StepOptions::from($id);
-        $client  = $this->requireClient('sendEvent');
+        $options  = StepOptions::from($id);
+        $client   = $this->requireClient('sendEvent');
+        $function = $this->engine->getFunction();
 
+        // The function's middleware applies to these events too.
         $result = $this->engine->step(
             $options->toOp(
                 OpCode::StepPlanned,
                 'sendEvent',
                 ['type' => 'step.sendEvent']
             ),
-            static fn () => $client->send($events)
+            static fn () => $client->send($events, null, $function)
         );
 
         return $result instanceof SendEventResult ?

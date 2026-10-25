@@ -7,6 +7,9 @@ namespace DealNews\Inngest\Tests\Execution;
 use DealNews\Inngest\Execution\FoundStep;
 use DealNews\Inngest\Execution\OpCode;
 use DealNews\Inngest\Execution\OutgoingOp;
+use DealNews\Inngest\Middleware\StepInfo;
+use DealNews\Inngest\Middleware\StepType;
+use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Tests\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -18,6 +21,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
  */
 #[CoversClass(FoundStep::class)]
 #[UsesClass(OutgoingOp::class)]
+#[UsesClass(StepInfo::class)]
+#[UsesClass(StepOptions::class)]
 class FoundStepTest extends TestCase {
 
     /**
@@ -37,10 +42,17 @@ class FoundStepTest extends TestCase {
             userland_index: 1,
             fn: null,
             fulfilled: false,
-            has_step_state: false
+            has_step_state: false,
+            info: new StepInfo(
+                'hash',
+                StepType::Run,
+                new StepOptions('A', 'Pretty'),
+                false
+            )
         );
 
         $this->assertFalse($step->handled);
+        $this->assertFalse($step->wrapped);
         $this->assertNull($step->fiber);
 
         $planned = $step->toOp();

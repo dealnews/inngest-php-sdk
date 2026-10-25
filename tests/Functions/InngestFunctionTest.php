@@ -24,6 +24,7 @@ use DealNews\Inngest\Functions\Options\Throttle;
 use DealNews\Inngest\Functions\Options\Timeouts;
 use DealNews\Inngest\Functions\Trigger\CronTrigger;
 use DealNews\Inngest\Functions\Trigger\EventTrigger;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Support\Duration;
 use DealNews\Inngest\Support\Url;
 use DealNews\Inngest\Tests\TestCase;
@@ -52,6 +53,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(EventTrigger::class)]
 #[UsesClass(FunctionConfig::class)]
 #[UsesClass(FunctionOptions::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(Priority::class)]
 #[UsesClass(RateLimit::class)]
 #[UsesClass(Singleton::class)]

@@ -14,6 +14,7 @@ use DealNews\Inngest\Execution\StepOp;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Step\AiFormat;
 use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepOptions;
@@ -38,6 +39,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Event::class)]
 #[UsesClass(FunctionOptions::class)]
 #[UsesClass(InngestFunction::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(RunRequest::class)]
 #[UsesClass(StepOp::class)]
 #[UsesClass(StepOptions::class)]

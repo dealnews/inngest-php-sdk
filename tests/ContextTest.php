@@ -13,6 +13,7 @@ use DealNews\Inngest\Execution\StepIdResolver;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Middleware\MiddlewareStack;
 use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepTools;
 use DealNews\Inngest\Support\Duration;
@@ -34,6 +35,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Event::class)]
 #[UsesClass(FunctionOptions::class)]
 #[UsesClass(InngestFunction::class)]
+#[UsesClass(MiddlewareStack::class)]
 #[UsesClass(RunRequest::class)]
 #[UsesClass(StepIdResolver::class)]
 #[UsesClass(StepState::class)]
@@ -78,5 +80,60 @@ class ContextTest extends TestCase {
         $this->assertSame($tools, $context->step);
         $this->assertSame($logger, $context->logger);
         $this->assertSame($error, $context->error);
+    }
+
+    /**
+     * with() returns a changed copy; extras are merged
+     *
+     * @return void
+     */
+    public function testWith(): void {
+        $engine  = new Engine(
+            new InngestFunction('app', new FunctionOptions(id: 'fn'), 'time'),
+            false,
+            RunRequest::parse('{"event":{}}', null),
+            null,
+            new RecordingLogger()
+        );
+        $event   = new Event('a');
+        $tools   = new StepTools($engine);
+        $error   = new \RuntimeException('x');
+        $context = new Context(
+            $event,
+            [$event],
+            'run',
+            1,
+            3,
+            $tools,
+            new RecordingLogger(),
+            $error,
+            ['a' => 1, 'b' => 2]
+        );
+
+        $same = $context->with();
+        $this->assertNotSame($context, $same);
+        $this->assertEquals($context, $same);
+
+        $other_event  = new Event('b');
+        $other_tools  = new StepTools($engine);
+        $other_logger = new RecordingLogger();
+        $changed      = $context->with(
+            event: $other_event,
+            events: [$other_event],
+            step: $other_tools,
+            logger: $other_logger,
+            extras: ['b' => 3, 'c' => 4]
+        );
+
+        $this->assertSame($other_event, $changed->event);
+        $this->assertSame([$other_event], $changed->events);
+        $this->assertSame($other_tools, $changed->step);
+        $this->assertSame($other_logger, $changed->logger);
+        $this->assertSame(['a' => 1, 'b' => 3, 'c' => 4], $changed->extras);
+        $this->assertSame('run', $changed->run_id);
+        $this->assertSame(1, $changed->attempt);
+        $this->assertSame(3, $changed->max_attempts);
+        $this->assertSame($error, $changed->error);
+        $this->assertSame(['a' => 1, 'b' => 2], $context->extras);
     }
 }
