@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Execution;
 
+use DealNews\Inngest\Step\ParallelMode;
+
 /**
  * What a step tool asks the engine to do (before ID hashing)
  *
@@ -21,13 +23,16 @@ class StepOp {
      * @param string|null          $name         Name (tool-specific)
      * @param string|null          $display_name Name shown in the UI
      * @param array<string, mixed> $opts         Options
+     * @param ParallelMode|null    $parallel_mode Parallel mode set on the
+     *                                            step itself
      */
     public function __construct(
         public readonly string $id,
         public readonly OpCode $op,
         public readonly ?string $name = null,
         public readonly ?string $display_name = null,
-        public readonly array $opts = []
+        public readonly array $opts = [],
+        public readonly ?ParallelMode $parallel_mode = null
     ) {
     }
 }

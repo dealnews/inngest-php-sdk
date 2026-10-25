@@ -94,6 +94,34 @@ class RecordingEngine extends Engine {
     }
 
     /**
+     * Recorded parallel() calls: the branches and whether it was a race
+     *
+     * @var list<array{branches: array<int|string, \Closure>, race: bool}>
+     */
+    public array $groups = [];
+
+    /**
+     * Records the call and runs the branches one after another
+     *
+     * A race returns the first branch's result.
+     *
+     * @param array<int|string, \Closure> $branches Branches
+     * @param bool                        $race     Race
+     *
+     * @return mixed
+     */
+    public function parallel(array $branches, bool $race): mixed {
+        $this->groups[] = ['branches' => $branches, 'race' => $race];
+
+        $results = array_map(
+            static fn (\Closure $branch) => $branch(),
+            $branches
+        );
+
+        return $race ? reset($results) : $results;
+    }
+
+    /**
      * Returns `$executing`
      *
      * @return bool

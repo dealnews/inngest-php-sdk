@@ -27,6 +27,7 @@ use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Http\Headers;
 use DealNews\Inngest\Http\Signature;
 use DealNews\Inngest\Step\AiTools;
+use DealNews\Inngest\Step\ParallelMode;
 use DealNews\Inngest\Step\SignalConflict;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
@@ -908,6 +909,92 @@ class StepToolsTest extends TestCase {
             ['input' => ['x'], 'type' => 'step.ai.wrap'],
             $this->engine->lastOp()->opts
         );
+    }
+
+    /**
+     * `parallel` passes every branch, with its key, as an "all" group
+     *
+     * @return void
+     */
+    public function testParallel(): void {
+        $tools = $this->tools();
+
+        $result = $tools->parallel(
+            user: static fn () => 'u',
+            orders: [new \ArrayObject([1, 2]), 'count'],
+        );
+
+        $this->assertSame(['user' => 'u', 'orders' => 2], $result);
+        $group = $this->engine->groups[0];
+        $this->assertFalse($group['race']);
+        $this->assertSame(['user', 'orders'], array_keys($group['branches']));
+        $this->assertContainsOnlyInstancesOf(
+            \Closure::class,
+            $group['branches']
+        );
+
+        $this->assertSame([], $tools->parallel());
+        $this->assertSame(
+            [1, 2],
+            $tools->parallel(static fn () => 1, static fn () => 2)
+        );
+    }
+
+    /**
+     * `race` passes its branches as a race group
+     *
+     * @return void
+     */
+    public function testRace(): void {
+        $tools = $this->tools();
+
+        $this->assertSame(
+            'a',
+            $tools->race(static fn () => 'a', static fn () => 'b')
+        );
+        $this->assertTrue($this->engine->groups[0]['race']);
+        $this->assertCount(2, $this->engine->groups[0]['branches']);
+    }
+
+    /**
+     * `race` needs a branch (JS `Promise.race([])` never settles)
+     *
+     * @return void
+     */
+    public function testRaceEmpty(): void {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionCode(7305);
+
+        $this->tools()->race();
+    }
+
+    /**
+     * A step's own parallel mode reaches its op, for every kind of tool
+     *
+     * @return void
+     */
+    public function testParallelModeOption(): void {
+        $tools   = $this->tools([
+            MockHttp::json(200, ['ids' => [], 'status' => 200]),
+            MockHttp::json(200, ['data' => ['run_id' => 'r']]),
+        ]);
+        $options = new StepOptions('id', parallel_mode: ParallelMode::Race);
+
+        $tools->run($options, static fn () => 1);
+        $tools->sleep($options, '1h');
+        $tools->sleepUntil($options, '2030-01-01T00:00:00Z');
+        $tools->waitForEvent($options, 'e', '1h');
+        $tools->invoke($options, new FunctionReference('fn'));
+        $tools->sendEvent($options, new Event('e'));
+        $tools->sendSignal($options, 's');
+        $tools->waitForSignal($options, 's', '1h', SignalConflict::Fail);
+        $tools->ai->wrap($options, static fn () => 1);
+        $tools->ai->infer($options, 'https://x.test/', 'f', []);
+
+        $this->assertCount(10, $this->engine->calls);
+        foreach ($this->engine->calls as $call) {
+            $this->assertSame(ParallelMode::Race, $call['op']->parallel_mode);
+        }
     }
 
     /**

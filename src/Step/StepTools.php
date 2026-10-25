@@ -131,11 +131,9 @@ class StepTools {
     ): void {
         $options = StepOptions::from($id);
 
-        $this->engine->step(new StepOp(
-            id: $options->id,
-            op: OpCode::Sleep,
-            name: $this->duration->toTimeString($duration),
-            display_name: $options->name ?? $options->id
+        $this->engine->step($options->toOp(
+            OpCode::Sleep,
+            $this->duration->toTimeString($duration)
         ));
     }
 
@@ -157,11 +155,9 @@ class StepTools {
     ): void {
         $options = StepOptions::from($id);
 
-        $this->engine->step(new StepOp(
-            id: $options->id,
-            op: OpCode::Sleep,
-            name: Duration::toIsoString($this->parseDate($time)),
-            display_name: $options->name ?? $options->id
+        $this->engine->step($options->toOp(
+            OpCode::Sleep,
+            Duration::toIsoString($this->parseDate($time))
         ));
     }
 
@@ -210,13 +206,9 @@ class StepTools {
             $opts['if'] = $if;
         }
 
-        $result = $this->engine->step(new StepOp(
-            id: $options->id,
-            op: OpCode::WaitForEvent,
-            name: $event,
-            display_name: $options->name ?? $options->id,
-            opts: $opts
-        ));
+        $result = $this->engine->step(
+            $options->toOp(OpCode::WaitForEvent, $event, $opts)
+        );
 
         return is_array($result) ? $result : null;
     }
@@ -283,12 +275,9 @@ class StepTools {
             $opts['timeout'] = $this->duration->toTimeString($timeout);
         }
 
-        return $this->engine->step(new StepOp(
-            id: $options->id,
-            op: OpCode::InvokeFunction,
-            display_name: $options->name ?? $options->id,
-            opts: $opts
-        ));
+        return $this->engine->step(
+            $options->toOp(OpCode::InvokeFunction, null, $opts)
+        );
     }
 
     /**
@@ -313,12 +302,10 @@ class StepTools {
         $client  = $this->requireClient('sendEvent');
 
         $result = $this->engine->step(
-            new StepOp(
-                id: $options->id,
-                op: OpCode::StepPlanned,
-                name: 'sendEvent',
-                display_name: $options->name ?? $options->id,
-                opts: ['type' => 'step.sendEvent']
+            $options->toOp(
+                OpCode::StepPlanned,
+                'sendEvent',
+                ['type' => 'step.sendEvent']
             ),
             static fn () => $client->send($events)
         );
@@ -348,12 +335,10 @@ class StepTools {
         $client  = $this->requireClient('sendSignal');
 
         $result = $this->engine->step(
-            new StepOp(
-                id: $options->id,
-                op: OpCode::StepPlanned,
-                name: 'sendSignal',
-                display_name: $options->name ?? $options->id,
-                opts: ['type' => 'step.sendSignal', 'signal' => $signal]
+            $options->toOp(
+                OpCode::StepPlanned,
+                'sendSignal',
+                ['type' => 'step.sendSignal', 'signal' => $signal]
             ),
             static fn () => $client->sendSignal($signal, $data)
         );
@@ -386,12 +371,10 @@ class StepTools {
     ): ?array {
         $options = StepOptions::from($id);
 
-        $result = $this->engine->step(new StepOp(
-            id: $options->id,
-            op: OpCode::WaitForSignal,
-            name: $signal,
-            display_name: $options->name ?? $options->id,
-            opts: [
+        $result = $this->engine->step($options->toOp(
+            OpCode::WaitForSignal,
+            $signal,
+            [
                 'signal'   => $signal,
                 'timeout'  => $this->duration->toTimeString($timeout),
                 'conflict' => $on_conflict->value,
@@ -471,6 +454,70 @@ class StepTools {
     }
 
     /**
+     * Runs branches side by side and returns all their results
+     *
+     * PHP's version of `await Promise.all([...])`. Each branch is a
+     * callable that uses step tools; branches start in argument order, so
+     * the steps they reach first are reported to Inngest together and run
+     * in parallel. Results keep the branch keys (use named arguments for
+     * string keys).
+     *
+     * Usage:
+     *
+     * ```php
+     * ['user' => $user, 'orders' => $orders] = $ctx->step->parallel(
+     *     user: fn () => $ctx->step->run('get-user', $get_user),
+     *     orders: fn () => $ctx->step->run('get-orders', $get_orders),
+     * );
+     * ```
+     *
+     * @param callable ...$branches Branches
+     *
+     * @throws \Throwable The first error a branch throws (often a
+     *                    StepError); the other branches are abandoned
+     *
+     * @return array<int|string, mixed> Branch results, in argument order
+     */
+    public function parallel(callable ...$branches): array {
+        return $this->engine->parallel(static::closures($branches), false);
+    }
+
+    /**
+     * Runs branches side by side and returns the first result
+     *
+     * PHP's version of JS `group.parallel({ mode: "race" }, () =>
+     * Promise.race([...]))`: every step inside is marked
+     * `parallelMode: "race"`, so Inngest knows only the winner matters.
+     *
+     * Usage:
+     *
+     * ```php
+     * $winner = $ctx->step->race(
+     *     fn () => $ctx->step->run('fast', $fast),
+     *     fn () => $ctx->step->run('slow', $slow),
+     * );
+     * ```
+     *
+     * @param callable ...$branches Branches
+     *
+     * @throws \InvalidArgumentException When there are no branches (7305)
+     * @throws \Throwable                When the first branch to finish
+     *                                   threw
+     *
+     * @return mixed The first branch result
+     */
+    public function race(callable ...$branches): mixed {
+        if ($branches === []) {
+            throw new \InvalidArgumentException(
+                'race() needs at least one branch',
+                7305
+            );
+        }
+
+        return $this->engine->parallel(static::closures($branches), true);
+    }
+
+    /**
      * Builds the op for `run()` and `ai->wrap()`
      *
      * @param StepOptions $options Step ID and name
@@ -492,12 +539,20 @@ class StepTools {
             $opts['type'] = $type;
         }
 
-        return new StepOp(
-            id: $options->id,
-            op: OpCode::StepPlanned,
-            name: $options->id,
-            display_name: $options->name ?? $options->id,
-            opts: $opts
+        return $options->toOp(OpCode::StepPlanned, $options->id, $opts);
+    }
+
+    /**
+     * Turns branch callables into closures, keeping their keys
+     *
+     * @param array<int|string, callable> $branches Branches
+     *
+     * @return array<int|string, \Closure>
+     */
+    protected static function closures(array $branches): array {
+        return array_map(
+            static fn (callable $branch) => \Closure::fromCallable($branch),
+            $branches
         );
     }
 

@@ -18,6 +18,7 @@ use DealNews\Inngest\Execution\ExecutionResult;
 use DealNews\Inngest\Execution\FoundStep;
 use DealNews\Inngest\Execution\OpCode;
 use DealNews\Inngest\Execution\OutgoingOp;
+use DealNews\Inngest\Execution\ParallelGroup;
 use DealNews\Inngest\Execution\ResultType;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Execution\StepIdResolver;
@@ -57,6 +58,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(InngestFunction::class)]
 #[UsesClass(NonRetriableError::class)]
 #[UsesClass(OutgoingOp::class)]
+#[UsesClass(ParallelGroup::class)]
 #[UsesClass(RemoteError::class)]
 #[UsesClass(RetryAfterError::class)]
 #[UsesClass(RunRequest::class)]
@@ -519,6 +521,172 @@ class EngineTest extends TestCase {
                 null,
             ],
         ];
+    }
+
+    /**
+     * parallel() keeps branch keys; memoized branches resolve in completion
+     * order and branches without steps finish right away
+     *
+     * @return void
+     */
+    public function testParallelKeys(): void {
+        $engine = $this->engine(
+            static fn (Context $ctx) => $ctx->step->parallel(
+                user: static fn () => $ctx->step->run('u', static fn () => 1),
+                orders: static fn () => $ctx->step->run('o', static fn () => 2),
+                plain: static fn () => 'plain',
+            ),
+            [
+                'steps' => [
+                    sha1('u') => ['data' => 'U'],
+                    sha1('o') => ['data' => 'O'],
+                ],
+                'ctx' => [
+                    'run_id' => 'run-1',
+                    'stack'  => [
+                        'stack'   => [sha1('o'), sha1('u')],
+                        'current' => 1,
+                    ],
+                ],
+            ]
+        );
+
+        $result = $engine->execute();
+
+        $this->assertSame(ResultType::FunctionResolved, $result->type);
+        $this->assertSame(
+            ['user' => 'U', 'orders' => 'O', 'plain' => 'plain'],
+            $result->data
+        );
+    }
+
+    /**
+     * parallel() inside a running step fails the step for good, like other
+     * nested step tools
+     *
+     * @return void
+     */
+    public function testParallelInsideStep(): void {
+        $engine = $this->engine(static function (Context $ctx): void {
+            $ctx->step->run(
+                'outer',
+                static fn () => $ctx->step->parallel(static fn () => 1)
+            );
+        });
+
+        $result = $engine->execute();
+
+        $this->assertSame(OpCode::StepFailed, $result->ops[0]->op);
+        $this->assertSame(
+            ['Nested step tooling detected in "parallel"'],
+            $this->logged('warning')
+        );
+    }
+
+    /**
+     * parallel() outside the handler is rejected
+     *
+     * @return void
+     */
+    public function testParallelOutsideHandler(): void {
+        $engine = $this->engine(static fn () => null);
+
+        $this->expectException(ExecutionException::class);
+        $this->expectExceptionCode(7101);
+        $engine->parallel([static fn () => 1], false);
+    }
+
+    /**
+     * Branches left paused at a step are unwound before execute() returns
+     *
+     * @return void
+     */
+    public function testPausedBranchesUnwound(): void {
+        $log    = new \ArrayObject();
+        $engine = $this->engine(static function (Context $ctx) use ($log) {
+            $branch = static fn (string $id) => static function () use (
+                $ctx,
+                $id,
+                $log
+            ): void {
+                try {
+                    $ctx->step->run($id, static fn () => $id);
+                } finally {
+                    $log[] = $id;
+                }
+            };
+
+            $ctx->step->parallel($branch('a'), $branch('b'));
+        });
+
+        $result = $engine->execute();
+
+        $this->assertSame(ResultType::StepsFound, $result->type);
+        $this->assertCount(2, $result->ops);
+        $this->assertEqualsCanonicalizing(['a', 'b'], $log->getArrayCopy());
+    }
+
+    /**
+     * Steps anywhere inside race() are marked as racing, including nested
+     * parallel() branches
+     *
+     * @return void
+     */
+    public function testRaceModeInherited(): void {
+        $engine = $this->engine(
+            static fn (Context $ctx) => $ctx->step->race(
+                static fn () => $ctx->step->parallel(
+                    static fn () => $ctx->step->run('a', static fn () => 1),
+                    static fn () => $ctx->step->run('b', static fn () => 2),
+                ),
+                static fn () => $ctx->step->run('c', static fn () => 3),
+            ),
+            ['ctx' => ['run_id' => 'r', 'disable_immediate_execution' => true]]
+        );
+
+        $result = $engine->execute();
+
+        $this->assertCount(3, $result->ops);
+        foreach ($result->ops as $op) {
+            $this->assertSame(['parallelMode' => 'race'], $op->opts);
+        }
+    }
+
+    /**
+     * A losing branch that fails later is ignored, like a settled promise
+     *
+     * @return void
+     */
+    public function testLateLoserErrorIgnored(): void {
+        $error  = [
+            'name'         => 'Error',
+            'message'      => 'B broke',
+            '__serialized' => true,
+        ];
+        $engine = $this->engine(
+            static fn (Context $ctx) => $ctx->step->race(
+                static fn () => $ctx->step->run('A', static fn () => 'A'),
+                static fn () => $ctx->step->run('B', static fn () => 'B'),
+            ),
+            [
+                'steps' => [
+                    sha1('A') => ['data' => 'A'],
+                    sha1('B') => ['error' => $error],
+                ],
+                'ctx' => [
+                    'run_id' => 'r',
+                    'stack'  => [
+                        'stack'   => [sha1('A'), sha1('B')],
+                        'current' => 1,
+                    ],
+                ],
+            ]
+        );
+
+        $result = $engine->execute();
+
+        $this->assertSame(ResultType::FunctionResolved, $result->type);
+        $this->assertSame('A', $result->data);
     }
 
     /**

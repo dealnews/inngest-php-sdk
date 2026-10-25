@@ -25,6 +25,7 @@ use DealNews\Inngest\Execution\ExecutionException;
 use DealNews\Inngest\Execution\ExecutionResult;
 use DealNews\Inngest\Execution\FoundStep;
 use DealNews\Inngest\Execution\OutgoingOp;
+use DealNews\Inngest\Execution\ParallelGroup;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Execution\StepIdResolver;
 use DealNews\Inngest\Execution\StepOp;
@@ -47,6 +48,7 @@ use DealNews\Inngest\Http\Signature;
 use DealNews\Inngest\Http\SignatureResult;
 use DealNews\Inngest\Step\AiFormat;
 use DealNews\Inngest\Step\AiTools;
+use DealNews\Inngest\Step\ParallelMode;
 use DealNews\Inngest\Step\SignalConflict;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
@@ -102,6 +104,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Introspector::class)]
 #[UsesClass(NonRetriableError::class)]
 #[UsesClass(OutgoingOp::class)]
+#[UsesClass(ParallelGroup::class)]
 #[UsesClass(Registrar::class)]
 #[UsesClass(RemoteError::class)]
 #[UsesClass(Request::class)]
@@ -256,6 +259,7 @@ class EngineParityTest extends TestCase {
             }
         );
         static::addToolFunctions($client, $add);
+        static::addParallelFunctions($add);
     }
 
     /**
@@ -385,6 +389,187 @@ class EngineParityTest extends TestCase {
             static fn (string $p) => strtoupper($p),
             'hi'
         ));
+    }
+
+    /**
+     * Adds the parallel functions (JS `Promise.all`, `group.parallel` race)
+     *
+     * @param \Closure $add Adds a function by ID and handler
+     *
+     * @return void
+     */
+    protected static function addParallelFunctions(\Closure $add): void {
+        $add('all', static function (Context $ctx): array {
+            $ab = $ctx->step->parallel(
+                static fn () => $ctx->step->run('A', static fn () => 'A'),
+                static fn () => $ctx->step->run('B', static fn () => 'B'),
+            );
+            $c = $ctx->step->run('C', static fn () => 'C');
+
+            return ['ab' => $ab, 'c' => $c];
+        });
+        $add('race', static function (Context $ctx): string {
+            $winner = $ctx->step->race(
+                static fn () => $ctx->step->run('A', static fn () => 'A'),
+                static fn () => $ctx->step->run('B', static fn () => 'B'),
+            );
+            if ($winner === 'A') {
+                $ctx->step->run('A wins', static fn () => 'A wins');
+            } elseif ($winner === 'B') {
+                $ctx->step->run('B wins', static fn () => 'B wins');
+            }
+
+            return $winner;
+        });
+        $add('deep-race', static function (Context $ctx): void {
+            $winner = $ctx->step->race(
+                static fn () => $ctx->step->run('A', static fn () => 'A'),
+                static function () use ($ctx) {
+                    $ctx->step->run('B', static fn () => 'B');
+
+                    return $ctx->step->run('B2', static fn () => 'B2');
+                },
+            );
+            if ($winner === 'A') {
+                $ctx->step->run('A wins', static fn () => 'A wins');
+            } elseif ($winner === 'B2') {
+                $ctx->step->run('B wins', static fn () => 'B wins');
+            }
+        });
+        $add('parallel-work', static fn (Context $ctx) => $ctx->step->parallel(
+            static function () use ($ctx): int {
+                $score  = $ctx->step->run('First score', static fn () => 1);
+                $score += $ctx->step->run('Second score', static fn () => 2);
+                $score += $ctx->step->run('Third score', static fn () => 3);
+
+                return $score;
+            },
+            static fn () => implode(', ', $ctx->step->parallel(
+                static fn () => $ctx->step->run(
+                    'Get apple',
+                    static fn () => 'Apple'
+                ),
+                static fn () => $ctx->step->run(
+                    'Get banana',
+                    static fn () => 'Banana'
+                ),
+                static fn () => $ctx->step->run(
+                    'Get orange',
+                    static fn () => 'Orange'
+                ),
+            )),
+        ));
+        $add('parallel-reduce', static function (Context $ctx): int {
+            $scores   = ['blue' => 50, 'red' => 25, 'green' => 75];
+            $branches = [];
+            foreach ($scores as $team => $score) {
+                $branches[] = static fn () => $ctx->step->run(
+                    "Get $team team score",
+                    static fn () => $score
+                );
+            }
+
+            return array_sum($ctx->step->parallel(...$branches));
+        });
+        $add('indexing', static fn (Context $ctx) => $ctx->step->parallel(
+            static fn () => $ctx->step->run('A', static fn () => 'A'),
+            static fn () => $ctx->step->run('A', static fn () => 'B'),
+            static fn () => $ctx->step->run('A', static fn () => 'C'),
+        ));
+        $add('indexing-separated', static function (Context $ctx): string {
+            $ctx->step->parallel(
+                static fn () => $ctx->step->run('A', static fn () => 'A'),
+                static fn () => $ctx->step->run('A', static fn () => 'B'),
+            );
+
+            return $ctx->step->run('A', static fn () => 'C');
+        });
+        $add('silent-error', static fn (Context $ctx) => $ctx->step->parallel(
+            static fn () => $ctx->step->run('A', static fn () => 'A'),
+            static function () use ($ctx) {
+                try {
+                    return $ctx->step->run('B', static function (): void {
+                        throw new \Error('B failed message');
+                    });
+                } catch (StepError) {
+                    return $ctx->step->run(
+                        'B failed',
+                        static fn () => 'B failed'
+                    );
+                }
+            },
+        ));
+        $add('explicit-mode', static fn (Context $ctx) => $ctx->step->parallel(
+            static fn () => $ctx->step->run(
+                new StepOptions('a', parallel_mode: ParallelMode::Race),
+                static fn () => 'a'
+            ),
+            static fn () => $ctx->step->run(
+                new StepOptions('b', parallel_mode: ParallelMode::Race),
+                static fn () => 'b'
+            ),
+        ));
+        $add('race-mixed', static fn (Context $ctx) => $ctx->step->race(
+            static fn () => $ctx->step->run('work', static fn () => 'done'),
+            static fn () => $ctx->step->sleep('timeout', '10s'),
+            static fn () => $ctx->step->waitForEvent(
+                'external',
+                event: 'external/event',
+                timeout: '1h'
+            ),
+        ));
+        $add('outside-group', static function (Context $ctx): void {
+            $ctx->step->parallel(
+                static fn () => $ctx->step->run(
+                    'outside',
+                    static fn () => 'outside'
+                ),
+                static fn () => $ctx->step->race(
+                    static fn () => $ctx->step->run(
+                        'inside-a',
+                        static fn () => 'a'
+                    ),
+                    static fn () => $ctx->step->run(
+                        'inside-b',
+                        static fn () => 'b'
+                    ),
+                ),
+            );
+        });
+        $add('many-steps', static function (Context $ctx): void {
+            $branches = [];
+            for ($i = 0; $i < 30; $i++) {
+                $id         = "step-$i";
+                $branches[] = static fn () => $ctx->step->run(
+                    $id,
+                    static fn () => $id
+                );
+            }
+            $ctx->step->parallel(...$branches);
+        });
+        $add('branch-throws', static fn (Context $ctx) => $ctx->step->parallel(
+            static function (): void {
+                throw new \Error('branch broke');
+            },
+            static fn () => $ctx->step->run('A', static fn () => 'A'),
+        ));
+        $add(
+            'no-step-branches',
+            static fn (Context $ctx) => $ctx->step->parallel(
+                static fn () => 1,
+                static fn () => 2,
+            )
+        );
+        $add('race-error', static function (Context $ctx): mixed {
+            try {
+                return $ctx->step->race(
+                    static fn () => $ctx->step->run('A', static fn () => 'A'),
+                    static fn () => $ctx->step->run('B', static fn () => 'B'),
+                );
+            } catch (StepError $e) {
+                return 'caught: ' . $e->getMessage();
+            }
+        });
     }
 
     /**

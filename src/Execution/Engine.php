@@ -12,6 +12,7 @@ use DealNews\Inngest\Error\RemoteError;
 use DealNews\Inngest\Error\RetryAfterError;
 use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Step\ParallelMode;
 use DealNews\Inngest\Step\StepTools;
 use Psr\Log\LoggerInterface;
 
@@ -52,6 +53,9 @@ use Psr\Log\LoggerInterface;
  *   because async code might still find it).
  * - Step tools called inside a running step throw a NonRetriableError
  *   (JS only warns, then waits forever).
+ * - Parallel branches (`step->parallel()`, `step->race()`) each run in a
+ *   child fiber. A branch that returns or throws settles its group, which
+ *   resumes the fiber waiting on it (JS `Promise.all` / `Promise.race`).
  *
  * @package DealNews\Inngest\Execution
  */
@@ -181,6 +185,30 @@ class Engine {
     protected ?\Fiber $main = null;
 
     /**
+     * Parallel mode inherited by steps in each fiber (set by `race()`)
+     *
+     * @var \WeakMap<\Fiber<mixed, mixed, mixed, mixed>, ParallelMode>
+     */
+    protected \WeakMap $fiber_modes;
+
+    /**
+     * Group and branch key of each parallel branch fiber
+     *
+     * @var \WeakMap<
+     *     \Fiber<mixed, mixed, mixed, mixed>,
+     *     array{ParallelGroup, int|string}
+     * >
+     */
+    protected \WeakMap $branches;
+
+    /**
+     * Every parallel group created, so they can be released
+     *
+     * @var list<ParallelGroup>
+     */
+    protected array $groups = [];
+
+    /**
      * Whether the handler returned
      *
      * @var bool
@@ -235,6 +263,8 @@ class Engine {
         $this->serializer      = $serializer ?? new ErrorSerializer();
         $this->ids             = new StepIdResolver();
         $this->handler_fibers  = new \WeakMap();
+        $this->fiber_modes     = new \WeakMap();
+        $this->branches        = new \WeakMap();
         $this->remaining_order = $request->stack;
         $this->context         = $this->createContext();
     }
@@ -295,7 +325,7 @@ class Engine {
         ?\Closure $fn = null,
         array $args = []
     ): mixed {
-        $this->assertCanStep($op);
+        $this->assertCanStep($op->display_name ?? $op->id, $op->id);
 
         [$id, $index] = $this->ids->resolve($op->id, $this->steps);
         if ($index !== null) {
@@ -305,6 +335,14 @@ class Engine {
         $hashed_id = StepIdResolver::hash($id);
         $state     = $this->request->steps[$hashed_id] ?? null;
         $opts      = $op->opts;
+        $fiber     = \Fiber::getCurrent();
+
+        // The step's own mode wins, then the one its fiber inherited.
+        $mode = $op->parallel_mode ??
+            ($fiber === null ? null : $this->fiber_modes[$fiber] ?? null);
+        if ($mode !== null) {
+            $opts['parallelMode'] = $mode->value;
+        }
 
         // Inngest can replace a step's input before it runs.
         if (
@@ -337,13 +375,77 @@ class Engine {
             fulfilled: $state?->isFulfilled() ?? false,
             has_step_state: $state !== null
         );
-        $step->fiber = \Fiber::getCurrent();
+        $step->fiber = $fiber;
+        unset($fiber);
 
         $this->steps[$hashed_id]     = $step;
         $this->found[$hashed_id]     = $step;
         $this->unhandled[$hashed_id] = $step;
 
         return \Fiber::suspend($step);
+    }
+
+    /**
+     * Runs branches side by side (JS `Promise.all` / `Promise.race`)
+     *
+     * Called from inside a handler fiber. Each branch starts in its own
+     * fiber, in argument order, and runs until it returns, throws, or
+     * reaches a step. If the group hasn't settled by then, the calling
+     * fiber suspends until the engine settles it.
+     *
+     * @param array<int|string, \Closure> $branches Branches, by key
+     * @param bool                        $race     Settle on the first
+     *                                              branch to finish, and
+     *                                              mark steps as racing
+     *
+     * @throws NonRetriableError  When called inside a running step
+     * @throws ExecutionException When called outside the handler, or after
+     *                            the request is over
+     * @throws \Throwable         The first error a branch throws
+     *
+     * @return mixed Results by branch key, or the winning branch's result
+     */
+    public function parallel(array $branches, bool $race): mixed {
+        $this->assertCanStep($race ? 'race' : 'parallel', 'parallel');
+
+        $parent = \Fiber::getCurrent();
+        $mode   = $race ?
+            ParallelMode::Race :
+            ($parent === null ? null : $this->fiber_modes[$parent] ?? null);
+        $group  = new ParallelGroup(array_keys($branches), $race);
+
+        $this->groups[] = $group;
+
+        foreach ($branches as $key => $branch) {
+            $fiber = new \Fiber(static fn () => $branch());
+
+            $this->fibers[]               = $fiber;
+            $this->handler_fibers[$fiber] = true;
+            $this->branches[$fiber]       = [$group, $key];
+            if ($mode !== null) {
+                $this->fiber_modes[$fiber] = $mode;
+            }
+
+            try {
+                $fiber->start();
+                if ($fiber->isTerminated()) {
+                    $group->settle($key, $fiber->getReturn(), null);
+                }
+            } catch (\Throwable $e) {
+                $group->settle($key, null, $e);
+            }
+        }
+        // Paused fibers must not keep references to themselves or their
+        // branches, or releaseFibers() can't destroy them in order.
+        unset($fiber, $branch);
+
+        if (!$group->settled) {
+            $group->parent = $parent;
+            unset($parent);
+            \Fiber::suspend();
+        }
+
+        return $group->result();
     }
 
     /**
@@ -392,14 +494,62 @@ class Engine {
      * @return void
      */
     protected function drive(\Fiber $fiber, \Closure $action): void {
+        $finished = false;
+        $value    = null;
+        $error    = null;
+
         try {
             $action();
-            if ($fiber->isTerminated() && $fiber === $this->main) {
-                $this->returned     = true;
-                $this->return_value = $fiber->getReturn();
+            if ($fiber->isTerminated()) {
+                $finished = true;
+                $value    = $fiber->getReturn();
             }
         } catch (\Throwable $e) {
-            $this->thrown = $e;
+            $finished = true;
+            $error    = $e;
+        }
+
+        if ($finished) {
+            $this->finished($fiber, $value, $error);
+        }
+    }
+
+    /**
+     * Records a fiber that returned or threw
+     *
+     * The handler's fiber ends the run. A branch fiber settles its group;
+     * if that decides the group, the fiber waiting on it is resumed.
+     *
+     * @param \Fiber<mixed, mixed, mixed, mixed> $fiber Fiber
+     * @param mixed                              $value What it returned
+     * @param \Throwable|null                    $error What it threw
+     *
+     * @return void
+     */
+    protected function finished(
+        \Fiber $fiber,
+        mixed $value,
+        ?\Throwable $error
+    ): void {
+        if ($fiber === $this->main) {
+            if ($error === null) {
+                $this->returned     = true;
+                $this->return_value = $value;
+            } else {
+                $this->thrown = $error;
+            }
+        } else {
+            $branch = $this->branches[$fiber] ?? null;
+            if ($branch !== null) {
+                $group  = $branch[0];
+                $parent = $group->parent;
+                if (
+                    $group->settle($branch[1], $value, $error) &&
+                    $parent !== null
+                ) {
+                    $this->drive($parent, static fn () => $parent->resume());
+                }
+            }
         }
     }
 
@@ -753,7 +903,8 @@ class Engine {
     /**
      * Checks that a step tool may be used right now
      *
-     * @param StepOp $op The tool's op
+     * @param string $name Name of the step (or tool) for messages
+     * @param string $id   Step ID (or tool) for messages
      *
      * @throws NonRetriableError  When called inside a running step
      * @throws ExecutionException When called outside the handler or after
@@ -761,9 +912,8 @@ class Engine {
      *
      * @return void
      */
-    protected function assertCanStep(StepOp $op): void {
+    protected function assertCanStep(string $name, string $id): void {
         if ($this->executing_step !== null) {
-            $name = $op->display_name ?? $op->id;
             $this->logger->warning(
                 "Nested step tooling detected in \"$name\"",
                 [
@@ -781,7 +931,7 @@ class Engine {
 
         if ($this->done) {
             throw new ExecutionException(
-                "Step \"{$op->id}\" was reached after the request ended " .
+                "Step \"$id\" was reached after the request ended " .
                 '(a finally block runs when a paused function is cleaned up)',
                 7103
             );
@@ -830,6 +980,13 @@ class Engine {
     protected function releaseFibers(): void {
         $this->done = true;
         $this->main = null;
+
+        foreach ($this->groups as $group) {
+            $group->parent = null;
+        }
+        $this->groups      = [];
+        $this->branches    = new \WeakMap();
+        $this->fiber_modes = new \WeakMap();
 
         foreach ($this->steps as $step) {
             $step->fiber = null;

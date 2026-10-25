@@ -6,7 +6,6 @@ namespace DealNews\Inngest\Step;
 
 use DealNews\Inngest\Execution\Engine;
 use DealNews\Inngest\Execution\OpCode;
-use DealNews\Inngest\Execution\StepOp;
 
 /**
  * AI step tools, handed to a function as `$ctx->step->ai`
@@ -79,12 +78,9 @@ class AiTools {
             $format;
         $opts['body'] = $body === [] ? new \stdClass() : $body;
 
-        return $this->engine->step(new StepOp(
-            id: $options->id,
-            op: OpCode::AiGateway,
-            display_name: $options->name ?? $options->id,
-            opts: $opts
-        ));
+        return $this->engine->step(
+            $options->toOp(OpCode::AiGateway, null, $opts)
+        );
     }
 
     /**

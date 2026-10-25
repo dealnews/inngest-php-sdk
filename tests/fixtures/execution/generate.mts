@@ -247,6 +247,135 @@ const fns = [
   client.createFunction({ id: "wraps", ...trigger }, async ({ step }) => {
     return await step.ai.wrap("AW", (p: string) => p.toUpperCase(), "hi");
   }),
+  client.createFunction({ id: "all", ...trigger }, async ({ step }) => {
+    const ab = await Promise.all([
+      step.run("A", () => "A"),
+      step.run("B", () => "B"),
+    ]);
+    const c = await step.run("C", () => "C");
+    return { ab, c };
+  }),
+  client.createFunction({ id: "race", ...trigger }, async ({ step, group }) => {
+    const winner = await group.parallel({ mode: "race" }, () =>
+      Promise.race([step.run("A", () => "A"), step.run("B", () => "B")]),
+    );
+    if (winner === "A") {
+      await step.run("A wins", () => "A wins");
+    } else if (winner === "B") {
+      await step.run("B wins", () => "B wins");
+    }
+    return winner;
+  }),
+  client.createFunction({ id: "deep-race", ...trigger }, async ({ step, group }) => {
+    const winner = await group.parallel({ mode: "race" }, () =>
+      Promise.race([
+        step.run("A", () => "A"),
+        step.run("B", () => "B").then(() => step.run("B2", () => "B2")),
+      ]),
+    );
+    if (winner === "A") {
+      await step.run("A wins", () => "A wins");
+    } else if (winner === "B2") {
+      await step.run("B wins", () => "B wins");
+    }
+  }),
+  client.createFunction({ id: "parallel-work", ...trigger }, async ({ step }) => {
+    const getScore = async () => {
+      let score = await step.run("First score", () => 1);
+      score += await step.run("Second score", () => 2);
+      score += await step.run("Third score", () => 3);
+      return score;
+    };
+    const getFruits = async () =>
+      Promise.all([
+        step.run("Get apple", () => "Apple"),
+        step.run("Get banana", () => "Banana"),
+        step.run("Get orange", () => "Orange"),
+      ]);
+    return Promise.all([
+      getScore(),
+      getFruits().then((fruits) => fruits.join(", ")),
+    ]);
+  }),
+  client.createFunction({ id: "parallel-reduce", ...trigger }, async ({ step }) => {
+    const scores: Record<string, number> = { blue: 50, red: 25, green: 75 };
+    return await Object.keys(scores).reduce(async (score, team) => {
+      const teamScore = await step.run(`Get ${team} team score`, () => scores[team]);
+      return (await score) + teamScore;
+    }, Promise.resolve(0));
+  }),
+  client.createFunction({ id: "indexing", ...trigger }, async ({ step }) => {
+    return await Promise.all([
+      step.run("A", () => "A"),
+      step.run("A", () => "B"),
+      step.run("A", () => "C"),
+    ]);
+  }),
+  client.createFunction({ id: "indexing-separated", ...trigger }, async ({ step }) => {
+    await Promise.all([step.run("A", () => "A"), step.run("A", () => "B")]);
+    await new Promise((r) => setTimeout(r, 10));
+    return await step.run("A", () => "C");
+  }),
+  client.createFunction({ id: "silent-error", ...trigger }, async ({ step }) => {
+    return Promise.all([
+      step.run("A", () => "A"),
+      step.run("B", () => {
+        throw new Error("B failed message");
+      }).catch(() => step.run("B failed", () => "B failed")),
+    ]);
+  }),
+  client.createFunction({ id: "explicit-mode", ...trigger }, async ({ step }) => {
+    return await Promise.all([
+      step.run({ id: "a", parallelMode: "race" }, () => "a"),
+      step.run({ id: "b", parallelMode: "race" }, () => "b"),
+    ]);
+  }),
+  client.createFunction({ id: "race-mixed", ...trigger }, async ({ step, group }) => {
+    return await group.parallel(async () =>
+      Promise.race([
+        step.run("work", () => "done"),
+        step.sleep("timeout", "10s"),
+        step.waitForEvent("external", { event: "external/event", timeout: "1h" }),
+      ]),
+    );
+  }),
+  client.createFunction({ id: "outside-group", ...trigger }, async ({ step, group }) => {
+    const outside = step.run("outside", () => "outside");
+    await group.parallel(async () =>
+      Promise.race([
+        step.run("inside-a", () => "a"),
+        step.run("inside-b", () => "b"),
+      ]),
+    );
+    await outside;
+  }),
+  client.createFunction({ id: "many-steps", ...trigger }, async ({ step }) => {
+    await Promise.all(
+      Array.from({ length: 30 }, (_, i) => `step-${i}`).map((id) =>
+        step.run(id, () => id),
+      ),
+    );
+  }),
+  client.createFunction({ id: "branch-throws", ...trigger }, async ({ step }) => {
+    return await Promise.all([
+      (async () => {
+        throw new Error("branch broke");
+      })(),
+      step.run("A", () => "A"),
+    ]);
+  }),
+  client.createFunction({ id: "no-step-branches", ...trigger }, async () => {
+    return await Promise.all([(async () => 1)(), (async () => 2)()]);
+  }),
+  client.createFunction({ id: "race-error", ...trigger }, async ({ step, group }) => {
+    try {
+      return await group.parallel(async () =>
+        Promise.race([step.run("A", () => "A"), step.run("B", () => "B")]),
+      );
+    } catch (err) {
+      return `caught: ${(err as Error).message}`;
+    }
+  }),
 ];
 
 const commHandler = new InngestCommHandler({
@@ -273,6 +402,13 @@ const ctx = (extra: Record<string, unknown> = {}) => ({
   stack: { stack: [], current: 0 },
   ...extra,
 });
+const states = (...pairs: [string, unknown][]) => ({
+  steps: Object.fromEntries(pairs.map(([id, v]) => [hash(id), v])),
+});
+const order = (...ids: string[]) => ({
+  stack: { stack: ids.map(hash), current: Math.max(ids.length - 1, 0) },
+});
+const noImmediate = { disable_immediate_execution: true };
 const body = (extra: Record<string, unknown> = {}, ctxExtra: Record<string, unknown> = {}) => ({
   event,
   events: [event],
@@ -533,6 +669,186 @@ const cases: Record<string, Case> = {
   wrap_input_replay: {
     fnId: "wraps",
     body: body({ steps: { [hash("AW")]: { input: ["yo"] } } }),
+  },
+  all_first: { fnId: "all", body: body() },
+  all_run_b: { fnId: "all", stepId: hash("B"), body: body({}, noImmediate) },
+  all_only_b: {
+    fnId: "all",
+    body: body(states(["B", { data: "B" }]), { ...order("B"), ...noImmediate }),
+  },
+  all_only_b_immediate: {
+    fnId: "all",
+    body: body(states(["B", { data: "B" }]), order("B")),
+  },
+  all_run_a: {
+    fnId: "all",
+    stepId: hash("A"),
+    body: body(states(["B", { data: "B" }]), { ...order("B"), ...noImmediate }),
+  },
+  all_b_a: {
+    fnId: "all",
+    body: body(states(["B", { data: "B" }], ["A", { data: "A" }]), {
+      ...order("B", "A"),
+      ...noImmediate,
+    }),
+  },
+  all_b_a_immediate: {
+    fnId: "all",
+    body: body(states(["B", { data: "B" }], ["A", { data: "A" }]), order("B", "A")),
+  },
+  all_done: {
+    fnId: "all",
+    body: body(
+      states(["B", { data: "B" }], ["A", { data: "A" }], ["C", { data: "C" }]),
+      order("B", "A", "C"),
+    ),
+  },
+  all_b_error: {
+    fnId: "all",
+    body: body(states(["A", { data: "A" }], ["B", { error: stepError("B broke") }]), order("A", "B")),
+  },
+  all_b_error_first: {
+    fnId: "all",
+    body: body(states(["B", { error: stepError("B broke") }]), order("B")),
+  },
+  race_first: { fnId: "race", body: body() },
+  race_run_b: { fnId: "race", stepId: hash("B"), body: body({}, noImmediate) },
+  race_after_b: {
+    fnId: "race",
+    body: body(states(["B", { data: "B" }]), { ...order("B"), ...noImmediate }),
+  },
+  race_after_b_immediate: {
+    fnId: "race",
+    body: body(states(["B", { data: "B" }]), order("B")),
+  },
+  race_after_b_wins: {
+    fnId: "race",
+    body: body(states(["B", { data: "B" }], ["B wins", { data: "B wins" }]), {
+      ...order("B", "B wins"),
+      ...noImmediate,
+    }),
+  },
+  race_done: {
+    fnId: "race",
+    body: body(
+      states(["A", { data: "A" }], ["B", { data: "B" }], ["B wins", { data: "B wins" }]),
+      { ...order("B", "B wins", "A"), ...noImmediate },
+    ),
+  },
+  race_after_a: {
+    fnId: "race",
+    body: body(states(["A", { data: "A" }]), { ...order("A"), ...noImmediate }),
+  },
+  race_both_a_first: {
+    fnId: "race",
+    body: body(states(["A", { data: "A" }], ["B", { data: "B" }]), {
+      ...order("A", "B"),
+      ...noImmediate,
+    }),
+  },
+  deep_first: { fnId: "deep-race", body: body() },
+  deep_b: {
+    fnId: "deep-race",
+    body: body(states(["B", { data: "B" }]), { ...order("B"), ...noImmediate }),
+  },
+  deep_b_b2: {
+    fnId: "deep-race",
+    body: body(states(["B", { data: "B" }], ["B2", { data: "B2" }]), {
+      ...order("B", "B2"),
+      ...noImmediate,
+    }),
+  },
+  deep_a: {
+    fnId: "deep-race",
+    body: body(states(["A", { data: "A" }]), { ...order("A"), ...noImmediate }),
+  },
+  work_first: { fnId: "parallel-work", body: body() },
+  work_partial: {
+    fnId: "parallel-work",
+    body: body(states(["Get apple", { data: "Apple" }], ["First score", { data: 1 }]), {
+      ...order("Get apple", "First score"),
+      ...noImmediate,
+    }),
+  },
+  work_done: {
+    fnId: "parallel-work",
+    body: body(
+      states(
+        ["First score", { data: 1 }],
+        ["Get apple", { data: "Apple" }],
+        ["Get banana", { data: "Banana" }],
+        ["Get orange", { data: "Orange" }],
+        ["Second score", { data: 2 }],
+        ["Third score", { data: 3 }],
+      ),
+      order("First score", "Get apple", "Get orange", "Get banana", "Second score", "Third score"),
+    ),
+  },
+  reduce_first: { fnId: "parallel-reduce", body: body() },
+  reduce_done: {
+    fnId: "parallel-reduce",
+    body: body(
+      states(
+        ["Get blue team score", { data: 50 }],
+        ["Get red team score", { data: 25 }],
+        ["Get green team score", { data: 75 }],
+      ),
+      order("Get red team score", "Get green team score", "Get blue team score"),
+    ),
+  },
+  indexing_first: { fnId: "indexing", body: body() },
+  indexing_run_second: {
+    fnId: "indexing",
+    stepId: hash("A:1"),
+    body: body({}, noImmediate),
+  },
+  indexing_done: {
+    fnId: "indexing",
+    body: body(
+      states(["A", { data: "A" }], ["A:1", { data: "B" }], ["A:2", { data: "C" }]),
+      order("A:2", "A", "A:1"),
+    ),
+  },
+  indexing_separated: {
+    fnId: "indexing-separated",
+    body: body(states(["A", { data: "A" }], ["A:1", { data: "B" }]), {
+      ...order("A", "A:1"),
+      ...noImmediate,
+    }),
+  },
+  silent_first: { fnId: "silent-error", body: body() },
+  silent_b_failed: {
+    fnId: "silent-error",
+    body: body(states(["A", { data: "A" }], ["B", { error: stepError("B failed message") }]), order("A", "B")),
+  },
+  silent_done: {
+    fnId: "silent-error",
+    body: body(
+      states(
+        ["A", { data: "A" }],
+        ["B", { error: stepError("B failed message") }],
+        ["B failed", { data: "B failed" }],
+      ),
+      order("A", "B", "B failed"),
+    ),
+  },
+  explicit_mode: { fnId: "explicit-mode", body: body({}, noImmediate) },
+  explicit_mode_immediate: {
+    fnId: "explicit-mode",
+    body: body(states(["a", { data: "a" }]), order("a")),
+  },
+  race_mixed: { fnId: "race-mixed", body: body({}, noImmediate) },
+  outside_group: { fnId: "outside-group", body: body({}, noImmediate) },
+  many_steps_not_found: {
+    fnId: "many-steps",
+    stepId: hash("missing-step"),
+    body: body(states(["step-0", { data: "step-0-replayed" }]), order("step-0")),
+  },
+  branch_throws: { fnId: "branch-throws", body: body() },
+  no_step_branches: { fnId: "no-step-branches", body: body() },
+  race_error: {
+    fnId: "race-error",
+    body: body(states(["A", { error: stepError("A broke") }]), order("A")),
   },
   missing_ctx: { fnId: "no-steps", body: { event, events: [event], steps: {}, version: 2 } },
 };
