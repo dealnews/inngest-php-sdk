@@ -198,6 +198,52 @@ class ApiClient {
     }
 
     /**
+     * Sends steps that ran to Inngest (`POST /v1/checkpoint/{run}/async`)
+     *
+     * Port of JS `InngestApi.checkpointStepsAsync`.
+     *
+     * @param string               $run_id  Run ID
+     * @param array<string, mixed> $payload Checkpoint body
+     *
+     * @throws StaleDispatchError When Inngest answers 409 (6006)
+     * @throws ApiException       When the request fails (6001) or Inngest
+     *                            answers with another error (6005)
+     *
+     * @return void
+     */
+    public function checkpointAsync(string $run_id, array $payload): void {
+        $response = $this->request(
+            'POST',
+            '/v1/checkpoint/' . rawurlencode($run_id) . '/async',
+            (string)json_encode(
+                $payload,
+                JSON_UNESCAPED_SLASHES |
+                JSON_UNESCAPED_UNICODE |
+                JSON_THROW_ON_ERROR
+            )
+        );
+
+        $status = $response->getStatusCode();
+        if ($status === 409) {
+            throw new StaleDispatchError(
+                "Stale dispatch: checkpoint returned 409 (run $run_id)",
+                6006,
+                $status
+            );
+        }
+
+        if ($status < 200 || $status >= 300) {
+            throw new ApiException(
+                "Failed to checkpoint async: $status " .
+                $response->getReasonPhrase() . ' - ' .
+                (string)$response->getBody(),
+                6005,
+                $status
+            );
+        }
+    }
+
+    /**
      * GETs a path and decodes its JSON body
      *
      * @param string $path             API path

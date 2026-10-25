@@ -54,6 +54,7 @@ class ClientConfig {
      * @param string|null $serve_path           Serve endpoint path
      * @param bool        $enable_unauthed_sync Accept unsigned syncs
      * @param bool        $allow_in_band_sync   Allow in-band syncs
+     * @param bool|Checkpointing $checkpointing Client-level checkpointing
      */
     public function __construct(
         public readonly string $app_id,
@@ -68,7 +69,8 @@ class ClientConfig {
         public readonly ?string $serve_origin = null,
         public readonly ?string $serve_path = null,
         public readonly bool $enable_unauthed_sync = true,
-        public readonly bool $allow_in_band_sync = true
+        public readonly bool $allow_in_band_sync = true,
+        public readonly bool|Checkpointing $checkpointing = true
     ) {
     }
 
@@ -160,7 +162,8 @@ class ClientConfig {
                 $options->allow_in_band_sync,
                 $env->getBool(Env::ALLOW_IN_BAND_SYNC),
                 true
-            )
+            ),
+            checkpointing: $options->checkpointing ?? true
         );
     }
 

@@ -61,7 +61,7 @@
     "body": {
       "name": "Error",
       "message": "boom",
-      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:90:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:104:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
       "__serialized": true
     },
     "apiCalls": []
@@ -86,7 +86,7 @@
     "body": {
       "name": "Error",
       "message": "boom",
-      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:90:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:104:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
       "__serialized": true
     },
     "apiCalls": []
@@ -111,7 +111,7 @@
     "body": {
       "name": "Error",
       "message": "boom",
-      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:90:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:104:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
       "__serialized": true
     },
     "apiCalls": []
@@ -136,7 +136,7 @@
     "body": {
       "name": "NonRetriableError",
       "message": "nope",
-      "stack": "NonRetriableError: nope\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:93:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "stack": "NonRetriableError: nope\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:107:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
       "__serialized": true
     },
     "apiCalls": []
@@ -162,7 +162,7 @@
     "body": {
       "name": "RetryAfterError",
       "message": "later",
-      "stack": "RetryAfterError: later\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:96:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "stack": "RetryAfterError: later\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:110:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
       "__serialized": true
     },
     "apiCalls": []
@@ -195,7 +195,7 @@
         },
         "data": "A",
         "timing": {
-          "a": 1792956706236000000,
+          "a": 1792957636123000000,
           "b": 0
         }
       }
@@ -230,7 +230,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956706239000000,
+          "a": 1792957636127000000,
           "b": 0
         }
       }
@@ -284,7 +284,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956706251000000,
+          "a": 1792957636137000000,
           "b": 0
         }
       }
@@ -319,7 +319,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956706253000000,
+          "a": 1792957636139000000,
           "b": 0
         }
       }
@@ -385,7 +385,7 @@
         },
         "data": "A",
         "timing": {
-          "a": 1792956706258000000,
+          "a": 1792957636144000000,
           "b": 0
         }
       }
@@ -420,7 +420,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956706260000000,
+          "a": 1792957636146000000,
           "b": 0
         }
       }
@@ -463,7 +463,7 @@
           }
         },
         "timing": {
-          "a": 1792956706262000000,
+          "a": 1792957636148000000,
           "b": 0
         }
       }
@@ -498,7 +498,7 @@
         },
         "data": null,
         "timing": {
-          "a": 1792956706263000000,
+          "a": 1792957636150000000,
           "b": 0
         }
       }
@@ -565,11 +565,11 @@
         "error": {
           "name": "Error",
           "message": "step failed",
-          "stack": "Error: step failed\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:109:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "stack": "Error: step failed\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:123:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
           "__serialized": true
         },
         "timing": {
-          "a": 1792956706268000000,
+          "a": 1792957636153000000,
           "b": 0
         },
         "data": null
@@ -607,11 +607,11 @@
         "error": {
           "name": "Error",
           "message": "step failed",
-          "stack": "Error: step failed\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:109:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "stack": "Error: step failed\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:123:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
           "__serialized": true
         },
         "timing": {
-          "a": 1792956706271000000,
+          "a": 1792957636156000000,
           "b": 0
         },
         "data": {
@@ -654,11 +654,11 @@
         "error": {
           "name": "NonRetriableError",
           "message": "bad step",
-          "stack": "NonRetriableError: bad step\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:114:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "stack": "NonRetriableError: bad step\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:128:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
           "__serialized": true
         },
         "timing": {
-          "a": 1792956706272000000,
+          "a": 1792957636157000000,
           "b": 1000000
         },
         "data": {
@@ -702,12 +702,12 @@
         "error": {
           "name": "RetryAfterError",
           "message": "slow down",
-          "stack": "RetryAfterError: slow down\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:119:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "stack": "RetryAfterError: slow down\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:133:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
           "__serialized": true
         },
         "timing": {
-          "a": 1792956706275000000,
-          "b": 0
+          "a": 1792957636160000000,
+          "b": 1000000
         },
         "data": null
       }
@@ -778,7 +778,7 @@
     "body": {
       "name": "Error",
       "message": "different",
-      "stack": "Error: different\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:134:13)",
+      "stack": "Error: different\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:148:13)",
       "__serialized": true
     },
     "apiCalls": []
@@ -816,7 +816,7 @@
         },
         "data": 3,
         "timing": {
-          "a": 1792956706283000000,
+          "a": 1792957636170000000,
           "b": 0
         }
       }
@@ -856,7 +856,7 @@
         },
         "data": 11,
         "timing": {
-          "a": 1792956706284000000,
+          "a": 1792957636171000000,
           "b": 0
         }
       }
@@ -911,7 +911,7 @@
         },
         "data": 2,
         "timing": {
-          "a": 1792956706286000000,
+          "a": 1792957636173000000,
           "b": 0
         }
       }
@@ -969,7 +969,7 @@
         },
         "data": "A",
         "timing": {
-          "a": 1792956706287000000,
+          "a": 1792957636176000000,
           "b": 0
         }
       }
@@ -1108,7 +1108,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956716325000000,
+          "a": 1792957646204000000,
           "b": 0
         }
       }
@@ -1163,7 +1163,7 @@
       "type": "internal",
       "name": "Error",
       "message": "Failed to parse data from executor Function execution can't continue. To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html",
-      "stack": "Error: Failed to parse data from executor Function execution can't continue. To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html\n    at parseFnData (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/functions.ts:184:11)\n    at InngestCommHandler.runStep (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:2248:29)\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1850:42)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:861:25)",
+      "stack": "Error: Failed to parse data from executor Function execution can't continue. To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html\n    at parseFnData (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/functions.ts:184:11)\n    at InngestCommHandler.runStep (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:2248:29)\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1850:42)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:981:25)",
       "__serialized": true
     },
     "apiCalls": []
@@ -1211,7 +1211,7 @@
       "type": "internal",
       "name": "Error",
       "message": "Failed to parse data from executor Function execution can't continue. [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"string\",\n    \"path\": [\n      \"event\"\n    ],\n    \"message\": \"Expected object, received string\"\n  }\n] To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html",
-      "stack": "Error: Failed to parse data from executor Function execution can't continue. [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"string\",\n    \"path\": [\n      \"event\"\n    ],\n    \"message\": \"Expected object, received string\"\n  }\n] To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html\n    at parseFnData (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/functions.ts:184:11)\n    at InngestCommHandler.runStep (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:2248:29)\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1850:42)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:861:25)",
+      "stack": "Error: Failed to parse data from executor Function execution can't continue. [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"string\",\n    \"path\": [\n      \"event\"\n    ],\n    \"message\": \"Expected object, received string\"\n  }\n] To fix: Make sure that your API is set up to parse incoming request bodies as JSON, like body-parser for Express. See: https://expressjs.com/en/resources/middleware/body-parser.html\n    at parseFnData (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/functions.ts:184:11)\n    at InngestCommHandler.runStep (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:2248:29)\n    at InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1850:42)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:981:25)",
       "__serialized": true
     },
     "apiCalls": []
@@ -1699,8 +1699,8 @@
           ]
         },
         "timing": {
-          "a": 1792956716379000000,
-          "b": 6000000
+          "a": 1792957646261000000,
+          "b": 5000000
         }
       }
     ],
@@ -1798,8 +1798,8 @@
           ]
         },
         "timing": {
-          "a": 1792956716392000000,
-          "b": 3000000
+          "a": 1792957646275000000,
+          "b": 0
         }
       }
     ],
@@ -1844,8 +1844,8 @@
           ]
         },
         "timing": {
-          "a": 1792956716397000000,
-          "b": 0
+          "a": 1792957646277000000,
+          "b": 1000000
         }
       }
     ],
@@ -1886,7 +1886,7 @@
           "runId": "run-2"
         },
         "timing": {
-          "a": 1792956716398000000,
+          "a": 1792957646279000000,
           "b": 1000000
         }
       }
@@ -1926,7 +1926,7 @@
         },
         "data": {},
         "timing": {
-          "a": 1792956716399000000,
+          "a": 1792957646280000000,
           "b": 1000000
         }
       }
@@ -2278,7 +2278,7 @@
         },
         "data": "HI",
         "timing": {
-          "a": 1792956716412000000,
+          "a": 1792957646293000000,
           "b": 0
         }
       }
@@ -2354,7 +2354,7 @@
         },
         "data": "YO",
         "timing": {
-          "a": 1792956716414000000,
+          "a": 1792957646295000000,
           "b": 0
         }
       }
@@ -2431,7 +2431,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956716415000000,
+          "a": 1792957646297000000,
           "b": 0
         }
       }
@@ -2497,7 +2497,7 @@
         },
         "data": "A",
         "timing": {
-          "a": 1792956716418000000,
+          "a": 1792957646299000000,
           "b": 0
         }
       }
@@ -2532,7 +2532,7 @@
         },
         "data": "A",
         "timing": {
-          "a": 1792956716420000000,
+          "a": 1792957646300000000,
           "b": 0
         }
       }
@@ -2598,7 +2598,7 @@
         },
         "data": "C",
         "timing": {
-          "a": 1792956716421000000,
+          "a": 1792957646304000000,
           "b": 0
         }
       }
@@ -2756,7 +2756,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956716429000000,
+          "a": 1792957646312000000,
           "b": 0
         }
       }
@@ -3453,7 +3453,7 @@
         },
         "data": "B",
         "timing": {
-          "a": 1792956716451000000,
+          "a": 1792957646332000000,
           "b": 0
         }
       }
@@ -3585,7 +3585,7 @@
         },
         "data": "B failed",
         "timing": {
-          "a": 1792956716469000000,
+          "a": 1792957646349000000,
           "b": 0
         }
       }
@@ -3981,7 +3981,7 @@
     "body": {
       "name": "Error",
       "message": "branch broke",
-      "stack": "Error: branch broke\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:362:15)\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:363:8)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "stack": "Error: branch broke\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:376:15)\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:377:8)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
       "__serialized": true
     },
     "apiCalls": []
@@ -4037,6 +4037,2069 @@
           "id": "B"
         },
         "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_no_steps": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {
+        "x-request-id": "req-1",
+        "x-inngest-generation-id": "3"
+      },
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": {
+          "ok": true,
+          "n": 1,
+          "count": 1
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_no_steps_bare": {
+    "request": {
+      "fnId": "no-steps",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": {
+          "ok": true,
+          "n": 1,
+          "count": 1
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_a_b_c": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "step",
+      "headers": {
+        "x-request-id": "req-1",
+        "x-inngest-generation-id": "3"
+      },
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": {
+          "a": "A",
+          "b": {
+            "got": "A"
+          },
+          "c": null
+        }
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_id": "req-1",
+        "generation_id": 3,
+        "request_started_at": 1792957656400,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957656401000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656401
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_id": "req-1",
+        "generation_id": 3,
+        "request_started_at": 1792957656400,
+        "steps": [
+          {
+            "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "B",
+            "displayName": "B",
+            "userland": {
+              "id": "B"
+            },
+            "opts": {},
+            "rawArgs": [
+              "B",
+              null
+            ],
+            "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+                "memoized": false,
+                "options": {
+                  "id": "B",
+                  "name": "B"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": {
+              "got": "A"
+            },
+            "timing": {
+              "a": 1792957656402000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656402
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_id": "req-1",
+        "generation_id": 3,
+        "request_started_at": 1792957656400,
+        "steps": [
+          {
+            "id": "32096c2e0eff33d844ee6d675407ace18289357d",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "C",
+            "displayName": "C",
+            "userland": {
+              "id": "C"
+            },
+            "opts": {},
+            "rawArgs": [
+              "C",
+              null
+            ],
+            "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+                "memoized": false,
+                "options": {
+                  "id": "C",
+                  "name": "C"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": null,
+            "timing": {
+              "a": 1792957656403000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656403
+      }
+    ]
+  },
+  "cp_a_b_c_from_b": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "step",
+      "headers": {
+        "x-request-id": "req-1",
+        "x-inngest-generation-id": "3"
+      },
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\":{\"data\":\"A\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"6dcd4ce23d88e2ee9568ba546c007c63d9131c1b\"],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": {
+          "a": "A",
+          "b": {
+            "got": "A"
+          },
+          "c": null
+        }
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_id": "req-1",
+        "generation_id": 3,
+        "request_started_at": 1792957656404,
+        "steps": [
+          {
+            "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "B",
+            "displayName": "B",
+            "userland": {
+              "id": "B"
+            },
+            "opts": {},
+            "rawArgs": [
+              "B",
+              null
+            ],
+            "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+                "memoized": false,
+                "options": {
+                  "id": "B",
+                  "name": "B"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": {
+              "got": "A"
+            },
+            "timing": {
+              "a": 1792957656406000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656406
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_id": "req-1",
+        "generation_id": 3,
+        "request_started_at": 1792957656404,
+        "steps": [
+          {
+            "id": "32096c2e0eff33d844ee6d675407ace18289357d",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "C",
+            "displayName": "C",
+            "userland": {
+              "id": "C"
+            },
+            "opts": {},
+            "rawArgs": [
+              "C",
+              null
+            ],
+            "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+                "memoized": false,
+                "options": {
+                  "id": "C",
+                  "name": "C"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": null,
+            "timing": {
+              "a": 1792957656406000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656406
+      }
+    ]
+  },
+  "cp_throws": {
+    "request": {
+      "fnId": "throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "boom",
+      "stack": "Error: boom\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:104:11)\n    at innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1913:19)",
+      "__serialized": true
+    },
+    "apiCalls": []
+  },
+  "cp_step_throws": {
+    "request": {
+      "fnId": "step-throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepError",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "Error",
+          "message": "step failed",
+          "stack": "Error: step failed\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:123:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792957656411000000,
+          "b": 0
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_step_non_retriable": {
+    "request": {
+      "fnId": "step-non-retriable",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "true",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepFailed",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "error": {
+          "name": "NonRetriableError",
+          "message": "bad step",
+          "stack": "NonRetriableError: bad step\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:128:13)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792957656412000000,
+          "b": 0
+        },
+        "data": {
+          "__serialized": true,
+          "name": "NonRetriableError",
+          "message": "bad step",
+          "stack": ""
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_sleep": {
+    "request": {
+      "fnId": "sleeps",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "displayName": "S",
+        "op": "Sleep",
+        "id": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+        "name": "1h",
+        "opts": {},
+        "userland": {
+          "id": "S"
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_parallel": {
+    "request": {
+      "fnId": "all",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "displayName": "A",
+        "op": "StepPlanned",
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "name": "A",
+        "opts": {},
+        "userland": {
+          "id": "A"
+        },
+        "data": null
+      },
+      {
+        "displayName": "B",
+        "op": "StepPlanned",
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "name": "B",
+        "opts": {},
+        "userland": {
+          "id": "B"
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_parallel_b_done": {
+    "request": {
+      "fnId": "all",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\":{\"data\":\"B\"}},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[\"ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec\"],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": {
+          "ab": [
+            "A",
+            "B"
+          ],
+          "c": "C"
+        }
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957656417,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957656417000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656417
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957656417,
+        "steps": [
+          {
+            "id": "32096c2e0eff33d844ee6d675407ace18289357d",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "C",
+            "displayName": "C",
+            "userland": {
+              "id": "C"
+            },
+            "opts": {},
+            "rawArgs": [
+              "C",
+              null
+            ],
+            "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+                "memoized": false,
+                "options": {
+                  "id": "C",
+                  "name": "C"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "C",
+            "timing": {
+              "a": 1792957656419000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656419
+      }
+    ]
+  },
+  "cp_retry_attempt": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":1,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\",\"max_attempts\":4}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "A",
+        "timing": {
+          "a": 1792957656420000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_fail": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "mode": "sync",
+        "op": "StepRun",
+        "name": "A",
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "opts": {},
+        "rawArgs": [
+          "A",
+          null
+        ],
+        "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "promise": {},
+        "fulfilled": true,
+        "hasStepState": true,
+        "handled": true,
+        "middleware": {
+          "stepInfo": {
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "memoized": false,
+            "options": {
+              "id": "A",
+              "name": "A"
+            },
+            "stepType": "run"
+          }
+        },
+        "memoizationDeferred": {
+          "promise": {}
+        },
+        "transformedResultPromise": {},
+        "data": "A",
+        "timing": {
+          "a": 1792957656421000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpointReply": "fail",
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957656421,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957656421000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656421
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957656421,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957656421000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656544
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957656421,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957656421000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957656784
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957656421,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957656421000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957657245
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957656421,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957656421000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957658066
+      }
+    ]
+  },
+  "cp_stale": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "true",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "StaleDispatchError",
+      "message": "Stale dispatch: checkpoint returned 409 (run run-1)",
+      "stack": "StaleDispatchError: Stale dispatch: checkpoint returned 409 (run run-1)\n    at InngestApi.checkpointStepsAsync (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/api/api.ts:599:13)\n    at async retryWithBackoff (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/promises.ts:247:14)\n    at async InngestExecutionEngine.checkpoint (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:554:7)\n    at async attemptCheckpointAndResume (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:986:24)\n    at async steps-found (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:1584:22)\n    at async InngestExecutionEngine.runCoreLoop (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:469:24)\n    at async InngestCommHandler.handleAction (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1869:28)\n    at async ServerTiming.wrap (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/helpers/ServerTiming.ts:89:15)\n    at async handleAndPrepare (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1288:22)\n    at async innerHandler (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestCommHandler.ts:1374:26)",
+      "__serialized": true
+    },
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpointReply": "stale",
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658070,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658074000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957658074
+      }
+    ]
+  },
+  "cp_no_qi": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "mode": "sync",
+        "op": "StepRun",
+        "name": "A",
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "opts": {},
+        "rawArgs": [
+          "A",
+          null
+        ],
+        "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "promise": {},
+        "fulfilled": true,
+        "hasStepState": true,
+        "handled": true,
+        "middleware": {
+          "stepInfo": {
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "memoized": false,
+            "options": {
+              "id": "A",
+              "name": "A"
+            },
+            "stepType": "run"
+          }
+        },
+        "memoizationDeferred": {
+          "promise": {}
+        },
+        "transformedResultPromise": {},
+        "data": "A",
+        "timing": {
+          "a": 1792957658087000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_off": {
+    "request": {
+      "fnId": "cp-off",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "A",
+        "timing": {
+          "a": 1792957658090000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_requested_step": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "op": "StepRun",
+        "name": "A",
+        "opts": {},
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "data": "A",
+        "timing": {
+          "a": 1792957658092000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_disable_immediate": {
+    "request": {
+      "fnId": "a-b-c",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":true,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "displayName": "A",
+        "op": "StepPlanned",
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "name": "A",
+        "opts": {},
+        "userland": {
+          "id": "A"
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": []
+  },
+  "cp_buffered": {
+    "request": {
+      "fnId": "cp-buffered",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "32096c2e0eff33d844ee6d675407ace18289357d",
+        "mode": "sync",
+        "op": "StepRun",
+        "name": "C",
+        "displayName": "C",
+        "userland": {
+          "id": "C"
+        },
+        "opts": {},
+        "rawArgs": [
+          "C",
+          null
+        ],
+        "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+        "promise": {},
+        "fulfilled": true,
+        "hasStepState": true,
+        "handled": true,
+        "middleware": {
+          "stepInfo": {
+            "hashedId": "32096c2e0eff33d844ee6d675407ace18289357d",
+            "memoized": false,
+            "options": {
+              "id": "C",
+              "name": "C"
+            },
+            "stepType": "run"
+          }
+        },
+        "memoizationDeferred": {
+          "promise": {}
+        },
+        "transformedResultPromise": {},
+        "data": "C",
+        "timing": {
+          "a": 1792957658098000000,
+          "b": 0
+        }
+      },
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": "C"
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658096,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658097000000,
+              "b": 0
+            }
+          },
+          {
+            "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "B",
+            "displayName": "B",
+            "userland": {
+              "id": "B"
+            },
+            "opts": {},
+            "rawArgs": [
+              "B",
+              null
+            ],
+            "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+                "memoized": false,
+                "options": {
+                  "id": "B",
+                  "name": "B"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "B",
+            "timing": {
+              "a": 1792957658097000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957658097
+      }
+    ]
+  },
+  "cp_buffered_throws": {
+    "request": {
+      "fnId": "cp-buffered-throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": {
+      "name": "Error",
+      "message": "after A",
+      "stack": "Error: after A\n    at InngestExecutionEngine.userFnToRun (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:409:13)",
+      "__serialized": true
+    },
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658099,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658100000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957658100
+      }
+    ]
+  },
+  "cp_buffered_throws_fail": {
+    "request": {
+      "fnId": "cp-buffered-throws",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "mode": "sync",
+        "op": "StepRun",
+        "name": "A",
+        "displayName": "A",
+        "userland": {
+          "id": "A"
+        },
+        "opts": {},
+        "rawArgs": [
+          "A",
+          null
+        ],
+        "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+        "promise": {},
+        "fulfilled": true,
+        "hasStepState": true,
+        "handled": true,
+        "middleware": {
+          "stepInfo": {
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "memoized": false,
+            "options": {
+              "id": "A",
+              "name": "A"
+            },
+            "stepType": "run"
+          }
+        },
+        "memoizationDeferred": {
+          "promise": {}
+        },
+        "transformedResultPromise": {},
+        "data": "A",
+        "timing": {
+          "a": 1792957658103000000,
+          "b": 0
+        }
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async",
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpointReply": "fail",
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658101,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658103000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957658103
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658101,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658103000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957658303
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658101,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658103000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957658597
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658101,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658103000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957659005
+      },
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957658101,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957658103000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957659902
+      }
+    ]
+  },
+  "cp_buffered_step_error": {
+    "request": {
+      "fnId": "cp-buffered-step-error",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-no-retry": "false",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "id": "ae4f281df5a5d0ff3cad6371f76d5c29b6d953ec",
+        "op": "StepError",
+        "name": "B",
+        "opts": {},
+        "displayName": "B",
+        "userland": {
+          "id": "B"
+        },
+        "error": {
+          "name": "Error",
+          "message": "B broke",
+          "stack": "Error: B broke\n    at <anonymous> (/Users/jearle/Workspace/dealnews/tmp/inngest-php-sdk/tests/fixtures/execution/generate.mts:417:15)\n    at Object.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/InngestStepTools.ts:483:38)\n    at step.fn (/Users/jearle/Workspace/inngest/github/inngest-js/packages/inngest/src/components/execution/engine.ts:2648:37)",
+          "__serialized": true
+        },
+        "timing": {
+          "a": 1792957659906000000,
+          "b": 0
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957659904,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957659905000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957659906
+      }
+    ]
+  },
+  "cp_buffered_sleep": {
+    "request": {
+      "fnId": "cp-buffered-sleep",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000},\"events\":[{\"name\":\"demo/event.sent\",\"data\":{\"n\":1},\"id\":\"evt-1\",\"ts\":1700000000000}],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "displayName": "S",
+        "op": "Sleep",
+        "id": "02aa629c8b16cd17a44f3a0efec2feed43937642",
+        "name": "1h",
+        "opts": {},
+        "userland": {
+          "id": "S"
+        },
+        "data": null
+      }
+    ],
+    "apiCalls": [
+      "/v1/checkpoint/run-1/async"
+    ],
+    "checkpoints": [
+      {
+        "run_id": "run-1",
+        "fn_id": "fn-uuid",
+        "qi_id": "qi-1",
+        "request_started_at": 1792957659908,
+        "steps": [
+          {
+            "id": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "mode": "sync",
+            "op": "StepRun",
+            "name": "A",
+            "displayName": "A",
+            "userland": {
+              "id": "A"
+            },
+            "opts": {},
+            "rawArgs": [
+              "A",
+              null
+            ],
+            "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+            "promise": {},
+            "fulfilled": true,
+            "hasStepState": true,
+            "handled": true,
+            "middleware": {
+              "stepInfo": {
+                "hashedId": "6dcd4ce23d88e2ee9568ba546c007c63d9131c1b",
+                "memoized": false,
+                "options": {
+                  "id": "A",
+                  "name": "A"
+                },
+                "stepType": "run"
+              }
+            },
+            "memoizationDeferred": {
+              "promise": {}
+            },
+            "transformedResultPromise": {},
+            "data": "A",
+            "timing": {
+              "a": 1792957659909000000,
+              "b": 0
+            }
+          }
+        ],
+        "ts": 1792957659909
+      }
+    ]
+  },
+  "cp_failure_handler": {
+    "request": {
+      "fnId": "with-failure-failure",
+      "stepId": "step",
+      "headers": {},
+      "body": "{\"event\":{\"name\":\"inngest/function.failed\",\"data\":{\"function_id\":\"test-app-with-failure\",\"run_id\":\"run-0\",\"error\":{\"name\":\"Error\",\"message\":\"main broke\",\"stack\":\"Error: main broke\\n    at somewhere\",\"__serialized\":true}}},\"events\":[],\"steps\":{},\"version\":2,\"ctx\":{\"run_id\":\"run-1\",\"attempt\":0,\"disable_immediate_execution\":false,\"use_api\":false,\"stack\":{\"stack\":[],\"current\":0},\"fn_id\":\"fn-uuid\",\"qi_id\":\"qi-1\"}}"
+    },
+    "status": 206,
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "inngest-js:v4.26.0",
+      "x-inngest-framework": "test",
+      "x-inngest-req-version": "2",
+      "x-inngest-sdk": "inngest-js:v4.26.0",
+      "x-inngest-sdk-handled": "true"
+    },
+    "body": [
+      {
+        "op": "RunComplete",
+        "id": "0737c22d3bfae812339732d14d8c7dbd6dc4e09c",
+        "data": "handled: main broke (Error) for test-app-with-failure"
       }
     ],
     "apiCalls": []

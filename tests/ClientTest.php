@@ -87,6 +87,7 @@ class ClientTest extends TestCase {
         $http   = new MockHttp();
         $client = $this->client($http);
         $this->assertSame($http->client, $client->getHttpClient());
+        $this->assertInstanceOf(Retry::class, $client->getRetry());
 
         $version = new FixedVersion('9.9.9');
         $client  = new Client('my-app', env: new Env([]), version: $version);

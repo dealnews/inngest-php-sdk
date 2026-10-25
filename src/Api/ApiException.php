@@ -12,6 +12,8 @@ namespace DealNews\Inngest\Api;
  * - 6002: Inngest returned an error response
  * - 6003: Inngest returned a response we couldn't parse
  * - 6004: sending a signal failed
+ * - 6005: a checkpoint failed
+ * - 6006: a checkpoint was stale (StaleDispatchError, HTTP 409)
  *
  * @package DealNews\Inngest\Api
  */

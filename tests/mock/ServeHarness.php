@@ -14,11 +14,13 @@ use DealNews\Inngest\Http\Request;
 use DealNews\Inngest\Http\Response;
 use DealNews\Inngest\Http\ServeHandler;
 use DealNews\Inngest\Http\Signature;
+use DealNews\Inngest\Support\Retry;
 
 /**
  * A client, serve handler, mocked HTTP, and logger wired together
  *
- * The client never reads real env vars, reports version `1.2.3`, and
+ * The client never reads real env vars, reports version `1.2.3`, never
+ * sleeps between retries, and
  * (by default) has the same two functions the JS fixture generator in
  * tests/fixtures/serve uses.
  *
@@ -97,7 +99,9 @@ class ServeHarness {
             $this->logger,
             $this->http->client,
             new Env([]),
-            new FixedVersion('1.2.3')
+            new FixedVersion('1.2.3'),
+            new Retry(static function (float $milliseconds): void {
+            })
         );
 
         if ($functions instanceof \Closure) {

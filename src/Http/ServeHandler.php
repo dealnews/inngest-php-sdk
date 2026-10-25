@@ -8,6 +8,8 @@ use DealNews\Inngest\Client;
 use DealNews\Inngest\Config\Env;
 use DealNews\Inngest\Config\Mode;
 use DealNews\Inngest\Error\ErrorSerializer;
+use DealNews\Inngest\Execution\CheckpointConfig;
+use DealNews\Inngest\Execution\Checkpointer;
 use DealNews\Inngest\Execution\Engine;
 use DealNews\Inngest\Execution\ExecutionException;
 use DealNews\Inngest\Execution\ExecutionResult;
@@ -15,6 +17,7 @@ use DealNews\Inngest\Execution\OutgoingOp;
 use DealNews\Inngest\Execution\ResultType;
 use DealNews\Inngest\Execution\RunRequest;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Support\Duration;
 use DealNews\Inngest\Support\Url;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Log\LoggerInterface;
@@ -332,6 +335,8 @@ class ServeHandler {
         InngestFunction $function,
         string $fn_id
     ): Response {
+        $started_ms = (int)floor(microtime(true) * 1000);
+
         $run = RunRequest::parse(
             (string)$request->body,
             $request->header(Headers::REQUEST_VERSION)
@@ -345,6 +350,14 @@ class ServeHandler {
             $step_id = null;
         }
 
+        $checkpointer = $this->checkpointer(
+            $request,
+            $function,
+            $run,
+            $step_id,
+            $started_ms
+        );
+
         $engine = new Engine(
             $function,
             $fn_id === $function->failureId(),
@@ -352,10 +365,64 @@ class ServeHandler {
             $step_id,
             $this->logger,
             $this->serializer,
-            $this->client
+            $this->client,
+            $checkpointer
         );
 
         return $this->executionResponse($engine->execute());
+    }
+
+    /**
+     * Builds the checkpointer when this request should checkpoint
+     *
+     * @param Request         $request    Incoming request
+     * @param InngestFunction $function   Function to run
+     * @param RunRequest      $run        Parsed request
+     * @param string|null     $step_id    Requested step
+     * @param int             $started_ms When the request started
+     *
+     * @throws \InvalidArgumentException When a checkpointing duration is
+     *                                   invalid
+     *
+     * @return Checkpointer|null
+     */
+    protected function checkpointer(
+        Request $request,
+        InngestFunction $function,
+        RunRequest $run,
+        ?string $step_id,
+        int $started_ms
+    ): ?Checkpointer {
+        $result = null;
+        $config = CheckpointConfig::resolve(
+            $function->getOptions()->checkpointing,
+            $this->client->getConfig()->checkpointing,
+            $step_id,
+            $run->fn_id,
+            $run->disable_immediate_execution,
+            new Duration($this->logger)
+        );
+
+        if ($config !== null) {
+            $generation_id = $request->header(Headers::GENERATION_ID);
+
+            $result = new Checkpointer(
+                $config,
+                $this->client->getApi(),
+                $this->client->getRetry(),
+                $run->run_id,
+                (string)$run->fn_id,
+                $run->qi_id,
+                $request->header(Headers::REQUEST_ID),
+                $generation_id !== null &&
+                    preg_match('/^-?\\d+$/', $generation_id) === 1 ?
+                    (int)$generation_id :
+                    null,
+                $started_ms
+            );
+        }
+
+        return $result;
     }
 
     /**

@@ -7,6 +7,7 @@ namespace DealNews\Inngest\Tests\Api;
 use DealNews\Inngest\Api\ApiClient;
 use DealNews\Inngest\Api\ApiException;
 use DealNews\Inngest\Api\SendSignalResult;
+use DealNews\Inngest\Api\StaleDispatchError;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
  */
 #[CoversClass(ApiClient::class)]
 #[CoversClass(ApiException::class)]
+#[CoversClass(StaleDispatchError::class)]
 #[UsesClass(ClientConfig::class)]
 #[UsesClass(ClientOptions::class)]
 #[UsesClass(Env::class)]
@@ -378,6 +380,53 @@ class ApiClientTest extends TestCase {
                 'response parsing failed: 200 OK - {"data":{"run_id":""}}',
             ],
         ];
+    }
+
+    /**
+     * Checkpoints POST the payload; 409 is stale, other errors fail
+     *
+     * @return void
+     */
+    public function testCheckpointAsync(): void {
+        $http = new MockHttp([
+            MockHttp::json(200, new \stdClass()),
+            MockHttp::json(409, new \stdClass()),
+            new Response(502, [], 'bad gateway'),
+        ]);
+        $api  = $this->api($http);
+
+        $api->checkpointAsync('run/1', ['a' => 'b/c']);
+        $this->assertSame(
+            'https://api.inngest.com/v1/checkpoint/run%2F1/async',
+            (string)$http->requests[0]->getUri()
+        );
+        $this->assertSame(
+            '{"a":"b/c"}',
+            (string)$http->requests[0]->getBody()
+        );
+
+        try {
+            $api->checkpointAsync('run-1', []);
+            $this->fail('Expected a stale dispatch');
+        } catch (StaleDispatchError $e) {
+            $this->assertSame(6006, $e->getCode());
+            $this->assertSame(409, $e->getHttpStatus());
+            $this->assertSame(
+                'Stale dispatch: checkpoint returned 409 (run run-1)',
+                $e->getMessage()
+            );
+        }
+
+        try {
+            $api->checkpointAsync('run-1', []);
+            $this->fail('Expected a failure');
+        } catch (ApiException $e) {
+            $this->assertSame(6005, $e->getCode());
+            $this->assertSame(
+                'Failed to checkpoint async: 502 Bad Gateway - bad gateway',
+                $e->getMessage()
+            );
+        }
     }
 
     /**

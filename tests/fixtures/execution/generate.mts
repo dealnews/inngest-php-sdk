@@ -1,8 +1,10 @@
 /**
  * Dumps execution responses (POST requests that run functions) from the JS
- * SDK. Every case runs in dev mode without `ctx.fn_id`, so async
- * checkpointing stays off. EngineParityTest replays each case against the
- * PHP SDK. See ../js/README.md for how to run it.
+ * SDK. Cases run in dev mode; most leave out `ctx.fn_id`, so async
+ * checkpointing stays off. The `cp_*` cases set `fn_id` and `qi_id` to turn
+ * it on, choose how the checkpoint endpoint answers, and record the
+ * checkpoint bodies. EngineParityTest replays each case against the PHP
+ * SDK. See ../js/README.md for how to run it.
  */
 import { createHash } from "node:crypto";
 
@@ -33,6 +35,8 @@ const logger = new ConsoleLogger({ level: "silent" });
 const hash = (id: string) => createHash("sha1").update(id).digest("hex");
 
 const apiCalls: string[] = [];
+const checkpoints: unknown[] = [];
+let checkpointReply: "ok" | "fail" | "stale" = "ok";
 const client = new Inngest({
   id: "test-app",
   isDev: true,
@@ -40,6 +44,16 @@ const client = new Inngest({
   fetch: async (url: string, init?: RequestInit) => {
     const path = new URL(String(url)).pathname;
     apiCalls.push(path);
+    if (path.startsWith("/v1/checkpoint/")) {
+      checkpoints.push(JSON.parse(String(init?.body)));
+      if (checkpointReply === "fail") {
+        return new Response("nope", { status: 500 });
+      }
+      if (checkpointReply === "stale") {
+        return new Response("{}", { status: 409 });
+      }
+      return new Response("{}");
+    }
     if (path.startsWith("/e/")) {
       return new Response(JSON.stringify({ ids: ["sent-1"], status: 200 }));
     }
@@ -367,6 +381,50 @@ const fns = [
   client.createFunction({ id: "no-step-branches", ...trigger }, async () => {
     return await Promise.all([(async () => 1)(), (async () => 2)()]);
   }),
+  client.createFunction({ id: "a-b-c", ...trigger }, async ({ step }) => {
+    const a = await step.run("A", () => "A");
+    const b = await step.run("B", () => ({ got: a }));
+    const c = await step.run("C", () => undefined);
+    return { a, b, c };
+  }),
+  client.createFunction(
+    { id: "cp-off", checkpointing: false, ...trigger },
+    async ({ step }) => {
+      await step.run("A", () => "A");
+      await step.run("B", () => "B");
+    },
+  ),
+  client.createFunction(
+    { id: "cp-buffered", checkpointing: { bufferedSteps: 2 }, ...trigger },
+    async ({ step }) => {
+      await step.run("A", () => "A");
+      await step.run("B", () => "B");
+      return await step.run("C", () => "C");
+    },
+  ),
+  client.createFunction(
+    { id: "cp-buffered-throws", checkpointing: { bufferedSteps: 2 }, ...trigger },
+    async ({ step }) => {
+      await step.run("A", () => "A");
+      throw new Error("after A");
+    },
+  ),
+  client.createFunction(
+    { id: "cp-buffered-step-error", checkpointing: { bufferedSteps: 2 }, ...trigger },
+    async ({ step }) => {
+      await step.run("A", () => "A");
+      await step.run("B", () => {
+        throw new Error("B broke");
+      });
+    },
+  ),
+  client.createFunction(
+    { id: "cp-buffered-sleep", checkpointing: { bufferedSteps: 2 }, ...trigger },
+    async ({ step }) => {
+      await step.run("A", () => "A");
+      await step.sleep("S", "1h");
+    },
+  ),
   client.createFunction({ id: "race-error", ...trigger }, async ({ step, group }) => {
     try {
       return await group.parallel(async () =>
@@ -409,6 +467,8 @@ const order = (...ids: string[]) => ({
   stack: { stack: ids.map(hash), current: Math.max(ids.length - 1, 0) },
 });
 const noImmediate = { disable_immediate_execution: true };
+const cp = { fn_id: "fn-uuid", qi_id: "qi-1" };
+const cpHeaders = { "x-request-id": "req-1", "x-inngest-generation-id": "3" };
 const body = (extra: Record<string, unknown> = {}, ctxExtra: Record<string, unknown> = {}) => ({
   event,
   events: [event],
@@ -426,6 +486,7 @@ const stepError = (message: string) => ({
 
 type Case = {
   fnId: string;
+  checkpoint?: "ok" | "fail" | "stale";
   stepId?: string;
   body: unknown;
   headers?: Record<string, string>;
@@ -850,12 +911,71 @@ const cases: Record<string, Case> = {
     fnId: "race-error",
     body: body(states(["A", { error: stepError("A broke") }]), order("A")),
   },
+  cp_no_steps: { fnId: "no-steps", headers: cpHeaders, body: body({}, cp) },
+  cp_no_steps_bare: { fnId: "no-steps", body: body({}, cp) },
+  cp_a_b_c: { fnId: "a-b-c", headers: cpHeaders, body: body({}, cp) },
+  cp_a_b_c_from_b: {
+    fnId: "a-b-c",
+    headers: cpHeaders,
+    body: body(states(["A", { data: "A" }]), { ...cp, ...order("A") }),
+  },
+  cp_throws: { fnId: "throws", body: body({}, cp) },
+  cp_step_throws: { fnId: "step-throws", body: body({}, cp) },
+  cp_step_non_retriable: { fnId: "step-non-retriable", body: body({}, cp) },
+  cp_sleep: { fnId: "sleeps", body: body({}, cp) },
+  cp_parallel: { fnId: "all", body: body({}, cp) },
+  cp_parallel_b_done: {
+    fnId: "all",
+    body: body(states(["B", { data: "B" }]), { ...cp, ...order("B") }),
+  },
+  cp_retry_attempt: {
+    fnId: "a-b-c",
+    body: body({}, { ...cp, attempt: 1, max_attempts: 4 }),
+  },
+  cp_fail: { fnId: "a-b-c", checkpoint: "fail", body: body({}, cp) },
+  cp_stale: { fnId: "a-b-c", checkpoint: "stale", body: body({}, cp) },
+  cp_no_qi: { fnId: "a-b-c", body: body({}, { fn_id: "fn-uuid" }) },
+  cp_off: { fnId: "cp-off", body: body({}, cp) },
+  cp_requested_step: {
+    fnId: "a-b-c",
+    stepId: hash("A"),
+    body: body({}, cp),
+  },
+  cp_disable_immediate: {
+    fnId: "a-b-c",
+    body: body({}, { ...cp, ...noImmediate }),
+  },
+  cp_buffered: { fnId: "cp-buffered", body: body({}, cp) },
+  cp_buffered_throws: { fnId: "cp-buffered-throws", body: body({}, cp) },
+  cp_buffered_throws_fail: {
+    fnId: "cp-buffered-throws",
+    checkpoint: "fail",
+    body: body({}, cp),
+  },
+  cp_buffered_step_error: { fnId: "cp-buffered-step-error", body: body({}, cp) },
+  cp_buffered_sleep: { fnId: "cp-buffered-sleep", body: body({}, cp) },
+  cp_failure_handler: {
+    fnId: "with-failure-failure",
+    body: body(
+      {
+        event: {
+          name: "inngest/function.failed",
+          data: { function_id: "test-app-with-failure", run_id: "run-0", error: stepError("main broke") },
+        },
+        events: [],
+      },
+      cp,
+    ),
+  },
   missing_ctx: { fnId: "no-steps", body: { event, events: [event], steps: {}, version: 2 } },
 };
 
 const out: Record<string, unknown> = {};
 for (const [name, c] of Object.entries(cases)) {
   apiCalls.length = 0;
+  checkpoints.length = 0;
+  checkpointReply = c.checkpoint ?? "ok";
+  if (process.env.TRACE) console.error("case", name);
   const query = new URLSearchParams({ fnId: `test-app-${c.fnId}`, stepId: c.stepId ?? "step" });
   const raw = c.rawBody ?? JSON.stringify(c.body);
   const res: Response = await handler(
@@ -874,6 +994,8 @@ for (const [name, c] of Object.entries(cases)) {
     headers,
     body: text === "" ? "" : JSON.parse(text),
     apiCalls: [...apiCalls],
+    ...(c.checkpoint ? { checkpointReply: c.checkpoint } : {}),
+    ...(checkpoints.length ? { checkpoints: [...checkpoints] } : {}),
   };
 }
 

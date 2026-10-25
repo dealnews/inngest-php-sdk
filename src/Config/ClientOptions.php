@@ -66,6 +66,8 @@ class ClientOptions extends ValueObject {
      *                                          (INNGEST_ENABLE_UNAUTHED_SYNC)
      * @param bool|null   $allow_in_band_sync   Allow in-band syncs
      *                                          (INNGEST_ALLOW_IN_BAND_SYNC)
+     * @param bool|Checkpointing|null $checkpointing Async checkpointing
+     *        for every function (on by default); functions can override
      */
     public function __construct(
         public ?string $event_key = null,
@@ -80,7 +82,8 @@ class ClientOptions extends ValueObject {
         public ?string $serve_origin = null,
         public ?string $serve_path = null,
         public ?bool $enable_unauthed_sync = null,
-        public ?bool $allow_in_band_sync = null
+        public ?bool $allow_in_band_sync = null,
+        public bool|Checkpointing|null $checkpointing = null
     ) {
     }
 }

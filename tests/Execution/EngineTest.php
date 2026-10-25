@@ -936,7 +936,7 @@ class EngineTest extends TestCase {
 
         $engine = new class($fn, false, $run, null, $log) extends Engine {
             /** @var list<int> */
-            public array $times = [1000, 1250];
+            public array $times = [0, 1000, 1250];
 
             protected function nowMs(): int {
                 return (int)array_shift($this->times);

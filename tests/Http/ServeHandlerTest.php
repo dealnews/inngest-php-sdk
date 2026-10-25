@@ -15,6 +15,8 @@ use DealNews\Inngest\Error\RemoteError;
 use DealNews\Inngest\Error\SerializedError;
 use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Event\Event;
+use DealNews\Inngest\Execution\CheckpointConfig;
+use DealNews\Inngest\Execution\Checkpointer;
 use DealNews\Inngest\Execution\Engine;
 use DealNews\Inngest\Execution\ExecutionException;
 use DealNews\Inngest\Execution\ExecutionResult;
@@ -79,6 +81,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(AiTools::class)]
 #[UsesClass(ApiClient::class)]
 #[UsesClass(Context::class)]
+#[UsesClass(CheckpointConfig::class)]
+#[UsesClass(Checkpointer::class)]
 #[UsesClass(Engine::class)]
 #[UsesClass(Event::class)]
 #[UsesClass(ExecutionException::class)]
@@ -1259,6 +1263,56 @@ class ServeHandlerTest extends TestCase {
             'StepPlanned',
             static::body($response)[0]['op']
         );
+    }
+
+    /**
+     * Checkpoints carry the request and generation IDs; a generation ID
+     * that isn't an integer is left out (JS `Number.isInteger`)
+     *
+     * @return void
+     */
+    public function testCheckpointRequestIds(): void {
+        $harness = new ServeHarness(
+            static::dev(),
+            [],
+            static function (Client $client): void {
+                $client->createFunction(
+                    new FunctionOptions(id: 'steps'),
+                    static fn (Context $ctx) => $ctx->step->run(
+                        'A',
+                        static fn () => 'ran A'
+                    )
+                );
+            }
+        );
+        $body  = '{"event":{},"ctx":{"run_id":"r","fn_id":"f","qi_id":"q"}}';
+        $cases = ['7' => 7, '-2' => -2, '1.5' => null, 'abc' => null];
+
+        foreach ($cases as $header => $expected) {
+            $harness->http->requests = [];
+            $harness->http->handler->append(
+                MockHttp::json(200, new \stdClass())
+            );
+
+            $response = $harness->request(
+                'POST',
+                ServeHarness::URL . '?fnId=test-app-steps',
+                [
+                    Headers::REQUEST_ID    => 'req',
+                    Headers::GENERATION_ID => (string)$header,
+                ],
+                $body
+            );
+
+            $sent = json_decode(
+                (string)$harness->http->requests[0]->getBody(),
+                true
+            );
+            $this->assertSame(206, $response->status);
+            $this->assertSame('RunComplete', static::body($response)[0]['op']);
+            $this->assertSame('req', $sent['request_id']);
+            $this->assertSame($expected, $sent['generation_id'] ?? null);
+        }
     }
 
     /**

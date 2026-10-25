@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace DealNews\Inngest\Tests\Execution;
 
 use DealNews\Inngest\Api\ApiClient;
+use DealNews\Inngest\Api\ApiException;
 use DealNews\Inngest\Api\SendSignalResult;
+use DealNews\Inngest\Api\StaleDispatchError;
 use DealNews\Inngest\Client;
+use DealNews\Inngest\Config\Checkpointing;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
@@ -20,6 +23,8 @@ use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Event\Event;
 use DealNews\Inngest\Event\EventMeta;
 use DealNews\Inngest\Event\SendEventResult;
+use DealNews\Inngest\Execution\CheckpointConfig;
+use DealNews\Inngest\Execution\Checkpointer;
 use DealNews\Inngest\Execution\Engine;
 use DealNews\Inngest\Execution\ExecutionException;
 use DealNews\Inngest\Execution\ExecutionResult;
@@ -60,6 +65,7 @@ use DealNews\Inngest\Tests\mock\ServeHarness;
 use DealNews\Inngest\Tests\TestCase;
 use DealNews\Inngest\ValueObject\ValueObject;
 use DealNews\Inngest\Version;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -83,6 +89,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(ServeHandler::class)]
 #[UsesClass(AiTools::class)]
 #[UsesClass(ApiClient::class)]
+#[UsesClass(ApiException::class)]
+#[UsesClass(CheckpointConfig::class)]
+#[UsesClass(Checkpointer::class)]
+#[UsesClass(Checkpointing::class)]
 #[UsesClass(Client::class)]
 #[UsesClass(ClientConfig::class)]
 #[UsesClass(ClientOptions::class)]
@@ -114,6 +124,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SendEventResult::class)]
 #[UsesClass(SendSignalResult::class)]
 #[UsesClass(SerializedError::class)]
+#[UsesClass(StaleDispatchError::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(SignatureResult::class)]
 #[UsesClass(StepConfig::class)]
@@ -145,6 +156,25 @@ class EngineParityTest extends TestCase {
     public const FIXTURE = 'execution/js-responses.json';
 
     /**
+     * JS `FoundStep` fields that leak into checkpoint ops; PHP sends clean
+     * ops, so these are dropped before comparing
+     *
+     * @var list<string>
+     */
+    public const JS_INTERNAL_KEYS = [
+        'mode',
+        'rawArgs',
+        'hashedId',
+        'promise',
+        'fulfilled',
+        'hasStepState',
+        'handled',
+        'middleware',
+        'memoizationDeferred',
+        'transformedResultPromise',
+    ];
+
+    /**
      * Adds the PHP versions of the JS fixture functions
      *
      * @param Client $client Client
@@ -154,16 +184,18 @@ class EngineParityTest extends TestCase {
     public static function addFunctions(Client $client): void {
         $trigger = [new EventTrigger('demo/event.sent')];
         $add     = static function (
-            string $id,
+            string|FunctionOptions $id,
             callable $handler,
             ?\Closure $on_failure = null
         ) use ($client, $trigger): void {
             $client->createFunction(
-                new FunctionOptions(
-                    id: $id,
-                    triggers: $trigger,
-                    on_failure: $on_failure
-                ),
+                $id instanceof FunctionOptions ?
+                    $id :
+                    new FunctionOptions(
+                        id: $id,
+                        triggers: $trigger,
+                        on_failure: $on_failure
+                    ),
                 $handler
             );
         };
@@ -260,6 +292,77 @@ class EngineParityTest extends TestCase {
         );
         static::addToolFunctions($client, $add);
         static::addParallelFunctions($add);
+        static::addCheckpointFunctions($add);
+    }
+
+    /**
+     * Adds the functions used by the checkpointing (`cp_*`) cases
+     *
+     * @param \Closure $add Adds a function by ID and handler
+     *
+     * @return void
+     */
+    protected static function addCheckpointFunctions(\Closure $add): void {
+        $buffered = new Checkpointing(buffered_steps: 2);
+        $options  = static function (
+            string $id,
+            bool|Checkpointing $checkpointing
+        ): FunctionOptions {
+            return new FunctionOptions(
+                id: $id,
+                triggers: [new EventTrigger('demo/event.sent')],
+                checkpointing: $checkpointing
+            );
+        };
+
+        $add('a-b-c', static function (Context $ctx): array {
+            $a = $ctx->step->run('A', static fn () => 'A');
+            $b = $ctx->step->run('B', static fn () => ['got' => $a]);
+            $c = $ctx->step->run('C', static function (): void {
+            });
+
+            return ['a' => $a, 'b' => $b, 'c' => $c];
+        });
+        $add(
+            $options('cp-off', false),
+            static function (Context $ctx): void {
+                $ctx->step->run('A', static fn () => 'A');
+                $ctx->step->run('B', static fn () => 'B');
+            }
+        );
+        $add(
+            $options('cp-buffered', $buffered),
+            static function (Context $ctx): string {
+                $ctx->step->run('A', static fn () => 'A');
+                $ctx->step->run('B', static fn () => 'B');
+
+                return $ctx->step->run('C', static fn () => 'C');
+            }
+        );
+        $add(
+            $options('cp-buffered-throws', $buffered),
+            static function (Context $ctx): void {
+                $ctx->step->run('A', static fn () => 'A');
+
+                throw new \Error('after A');
+            }
+        );
+        $add(
+            $options('cp-buffered-step-error', $buffered),
+            static function (Context $ctx): void {
+                $ctx->step->run('A', static fn () => 'A');
+                $ctx->step->run('B', static function (): void {
+                    throw new \Error('B broke');
+                });
+            }
+        );
+        $add(
+            $options('cp-buffered-sleep', $buffered),
+            static function (Context $ctx): void {
+                $ctx->step->run('A', static fn () => 'A');
+                $ctx->step->sleep('S', '1h');
+            }
+        );
     }
 
     /**
@@ -618,7 +721,7 @@ class EngineParityTest extends TestCase {
                 MockHttp::json(200, ['data' => ['run_id' => 'run-2']]),
             ],
             'signal_missing' => [MockHttp::json(404, new \stdClass())],
-            default          => [],
+            default          => static::checkpointReplies($expected),
         };
 
         $harness = new ServeHarness(
@@ -661,6 +764,42 @@ class EngineParityTest extends TestCase {
             $harness->http->requests
         );
         $this->assertSame($expected->apiCalls, $paths, 'API calls');
+
+        $checkpoints = [];
+        foreach ($harness->http->requests as $sent) {
+            $path = $sent->getUri()->getPath();
+            if (str_starts_with($path, '/v1/checkpoint/')) {
+                $checkpoints[] = static::normalize(
+                    json_decode((string)$sent->getBody(), false),
+                    false
+                );
+            }
+        }
+        $this->assertJsonDataSame(
+            static::encode(static::normalize(
+                $expected->checkpoints ?? [],
+                true
+            )),
+            static::encode($checkpoints),
+            'checkpoints'
+        );
+    }
+
+    /**
+     * Mock replies for the checkpoint endpoint, per the case's setting
+     *
+     * @param \stdClass $expected Fixture case
+     *
+     * @return list<Response>
+     */
+    protected static function checkpointReplies(\stdClass $expected): array {
+        $reply = match ($expected->checkpointReply ?? 'ok') {
+            'fail'  => static fn () => new GuzzleResponse(500, [], 'nope'),
+            'stale' => static fn () => MockHttp::json(409, new \stdClass()),
+            default => static fn () => MockHttp::json(200, new \stdClass()),
+        };
+
+        return array_map(static fn () => $reply(), range(1, 10));
     }
 
     /**
@@ -693,6 +832,12 @@ class EngineParityTest extends TestCase {
             foreach (get_object_vars($value) as $key => $item) {
                 if ($key === 'stack' && is_string($item) && $item !== '') {
                     continue;
+                }
+                if ($js && in_array($key, self::JS_INTERNAL_KEYS, true)) {
+                    continue;
+                }
+                if (in_array($key, ['ts', 'request_started_at'], true)) {
+                    $item = '<time>';
                 }
                 if ($key === 'code' && !$js) {
                     continue;

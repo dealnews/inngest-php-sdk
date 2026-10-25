@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Execution;
 
+use DealNews\Inngest\Api\StaleDispatchError;
 use DealNews\Inngest\Client;
 use DealNews\Inngest\Context;
 use DealNews\Inngest\Error\ErrorSerializer;
@@ -53,6 +54,9 @@ use Psr\Log\LoggerInterface;
  *   because async code might still find it).
  * - Step tools called inside a running step throw a NonRetriableError
  *   (JS only warns, then waits forever).
+ * - With a Checkpointer (async checkpointing), a step that runs is sent to
+ *   Inngest and the function keeps going in the same request; the run
+ *   ends with a `RunComplete` op. Limits are checked between steps.
  * - Parallel branches (`step->parallel()`, `step->race()`) each run in a
  *   child fiber. A branch that returns or throws settles its group, which
  *   resumes the fiber waiting on it (JS `Promise.all` / `Promise.race`).
@@ -209,6 +213,35 @@ class Engine {
     protected array $groups = [];
 
     /**
+     * Steps that ran but haven't been checkpointed yet
+     *
+     * @var list<OutgoingOp>
+     */
+    protected array $checkpoint_buffer = [];
+
+    /**
+     * When execute() started, in milliseconds
+     *
+     * @var int
+     */
+    protected int $started_ms = 0;
+
+    /**
+     * When the last checkpoint was sent (or execute() started), in
+     * milliseconds
+     *
+     * @var int
+     */
+    protected int $flushed_ms = 0;
+
+    /**
+     * Whether the last roll-up ran a step and resumed the function
+     *
+     * @var bool
+     */
+    protected bool $resumed = false;
+
+    /**
      * Whether the handler returned
      *
      * @var bool
@@ -250,6 +283,8 @@ class Engine {
      * @param Client|null          $client         Client, for step tools
      *                                             that send events, signals,
      *                                             or HTTP requests
+     * @param Checkpointer|null    $checkpointer   Turns on async
+     *                                             checkpointing
      */
     public function __construct(
         protected InngestFunction $function,
@@ -258,7 +293,8 @@ class Engine {
         protected ?string $requested_step,
         protected LoggerInterface $logger,
         ?ErrorSerializer $serializer = null,
-        protected ?Client $client = null
+        protected ?Client $client = null,
+        protected ?Checkpointer $checkpointer = null
     ) {
         $this->serializer      = $serializer ?? new ErrorSerializer();
         $this->ids             = new StepIdResolver();
@@ -293,6 +329,9 @@ class Engine {
      * @return ExecutionResult
      */
     public function execute(): ExecutionResult {
+        $this->started_ms = $this->nowMs();
+        $this->flushed_ms = $this->started_ms;
+
         try {
             $result = $this->run();
         } finally {
@@ -613,15 +652,207 @@ class Engine {
         $this->found     = [];
         $this->unhandled = [];
 
-        $result = null;
+        $result        = null;
+        $this->resumed = false;
         if ($steps !== []) {
-            $op     = $this->tryExecuteStep($steps);
-            $result = $op === null ?
-                $this->newStepsResult($steps) :
-                $this->stepRan($op);
+            if ($this->checkpointer !== null) {
+                $result = $this->checkpointSteps($steps);
+            } else {
+                $op     = $this->tryExecuteStep($steps);
+                $result = $op === null ?
+                    $this->newStepsResult($steps) :
+                    $this->stepRan($op);
+            }
         }
 
-        return $result ?? $this->stalled();
+        if ($result === null && !$this->resumed) {
+            $result = $this->stalled();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Handles found steps while checkpointing (JS
+     * `asyncCheckpointingHandlers["steps-found"]`)
+     *
+     * Runs the one new step right away when allowed, checkpoints it, and
+     * resumes the function. Anything else (several new steps, a sleep or
+     * wait, an error, a checkpoint failure, or the runtime limit) flushes
+     * the buffer and hands back to Inngest.
+     *
+     * @param list<FoundStep> $steps Steps found in this tick
+     *
+     * @return ExecutionResult|null Null to keep going
+     */
+    protected function checkpointSteps(array $steps): ?ExecutionResult {
+        $result = null;
+
+        $unfulfilled = array_filter(
+            $steps,
+            static fn (FoundStep $step) => !$step->fulfilled
+        );
+
+        if ($unfulfilled !== []) {
+            $result = $this->intervalDue() ? $this->flushCheckpoints() : null;
+
+            if ($result === null && $this->runtimeExceeded()) {
+                $result = $this->flushCheckpoints() ??
+                    $this->newStepsResult(array_values($this->steps));
+            } elseif ($result === null) {
+                $result = $this->runNewStep($steps);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Runs the one new step when allowed, otherwise hands back to Inngest
+     *
+     * @param list<FoundStep> $steps Steps found in this tick
+     *
+     * @return ExecutionResult|null Null when the function was resumed
+     */
+    protected function runNewStep(array $steps): ?ExecutionResult {
+        $op = $this->tryExecuteStep($steps);
+
+        if ($op === null) {
+            $result = $this->flushCheckpoints() ??
+                $this->newStepsResult($steps);
+        } elseif ($op->thrown !== null) {
+            $result = $this->flushCheckpoints() ?? $this->stepRan($op);
+        } else {
+            $result = $this->checkpointAndResume($op);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Buffers a step that ran, checkpoints when the buffer is full, and
+     * resumes the function (JS `attemptCheckpointAndResume`)
+     *
+     * A request that's a retry (attempt > 0) returns the step instead, so
+     * the next step gets a fresh retry count.
+     *
+     * @param OutgoingOp $op The step's op
+     *
+     * @return ExecutionResult|null Null when the function was resumed
+     */
+    protected function checkpointAndResume(OutgoingOp $op): ?ExecutionResult {
+        $result = null;
+
+        if ($this->request->attempt > 0) {
+            $result = $this->stepRan($op);
+        } else {
+            $this->checkpoint_buffer[] = $op;
+
+            $limit = $this->checkpointer?->config->buffered_steps ?? 1;
+            if (count($this->checkpoint_buffer) >= max(1, $limit)) {
+                $result = $this->flushCheckpoints();
+            }
+
+            if ($result === null) {
+                $this->resumeRanStep($op);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Resumes the function with the result of a step that just ran
+     *
+     * The data goes through JSON first, so the function sees what it would
+     * see if Inngest had sent it back (JS `resumeStepWithResult`).
+     *
+     * @param OutgoingOp $op The step's op
+     *
+     * @return void
+     */
+    protected function resumeRanStep(OutgoingOp $op): void {
+        $step  = $this->steps[$op->id];
+        $fiber = $step->fiber;
+        $data  = json_decode(
+            (string)json_encode(
+                $op->data,
+                JSON_UNESCAPED_SLASHES      |
+                JSON_UNESCAPED_UNICODE      |
+                JSON_PRESERVE_ZERO_FRACTION |
+                JSON_PARTIAL_OUTPUT_ON_ERROR
+            ),
+            true
+        );
+
+        $step->fulfilled      = true;
+        $step->has_step_state = true;
+        $step->handled        = true;
+        $this->resumed        = true;
+
+        if ($fiber !== null) {
+            $this->drive($fiber, static fn () => $fiber->resume($data));
+        }
+    }
+
+    /**
+     * Sends buffered steps to Inngest
+     *
+     * @return ExecutionResult|null Null when sent (or nothing to send); a
+     *                              stale-request rejection, or the buffered
+     *                              steps for Inngest to save when sending
+     *                              failed
+     */
+    protected function flushCheckpoints(): ?ExecutionResult {
+        $ops    = $this->checkpoint_buffer;
+        $result = null;
+
+        $this->checkpoint_buffer = [];
+        $this->flushed_ms        = $this->nowMs();
+
+        if ($ops !== [] && $this->checkpointer !== null) {
+            try {
+                $this->checkpointer->checkpoint($ops);
+            } catch (StaleDispatchError $e) {
+                // Another request owns the run now; stop without retrying.
+                $result = ExecutionResult::rejected(
+                    $this->serializer->serialize($e),
+                    false
+                );
+            } catch (\Throwable $e) {
+                $this->logger->warning(
+                    'Checkpointing failed; returning steps to Inngest instead',
+                    ['exception' => $e, 'run_id' => $this->request->run_id]
+                );
+                $result = ExecutionResult::stepsFound($ops);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Whether the checkpointing runtime limit has passed
+     *
+     * @return bool
+     */
+    protected function runtimeExceeded(): bool {
+        $limit = $this->checkpointer?->config->max_runtime_ms ?? 0;
+
+        return $limit > 0 && $this->nowMs() - $this->started_ms >= $limit;
+    }
+
+    /**
+     * Whether buffered steps are due for an interval checkpoint
+     *
+     * @return bool
+     */
+    protected function intervalDue(): bool {
+        $interval = $this->checkpointer?->config->max_interval_ms ?? 0;
+
+        return $interval > 0                  &&
+            $this->checkpoint_buffer !== []   &&
+            $this->nowMs() - $this->flushed_ms >= $interval;
     }
 
     /**
@@ -812,8 +1043,26 @@ class Engine {
      * @return ExecutionResult
      */
     protected function resolved(): ExecutionResult {
-        return $this->newStepsResult(array_values($this->steps)) ??
-            ExecutionResult::resolved($this->return_value);
+        $result = $this->newStepsResult(array_values($this->steps));
+
+        if ($this->checkpointer !== null) {
+            // Unsent steps go back with the final ops (JS only does this for
+            // RunComplete; it drops them when new steps are reported).
+            $ops = $this->checkpoint_buffer;
+            if ($result !== null) {
+                $ops = array_merge($ops, $result->ops);
+            } else {
+                $ops[] = (new OutgoingOp(
+                    StepIdResolver::hash(self::RUN_COMPLETE_STEP_ID),
+                    OpCode::RunComplete
+                ))->withData($this->return_value);
+            }
+
+            $this->checkpoint_buffer = [];
+            $result                  = ExecutionResult::stepsFound($ops);
+        }
+
+        return $result ?? ExecutionResult::resolved($this->return_value);
     }
 
     /**
@@ -824,7 +1073,8 @@ class Engine {
      * @return ExecutionResult
      */
     protected function rejected(\Throwable $error): ExecutionResult {
-        return ExecutionResult::rejected(
+        // Steps that ran before the error are still worth saving.
+        return $this->flushCheckpoints() ?? ExecutionResult::rejected(
             $this->serializer->serialize($error),
             $this->retriability($error)
         );

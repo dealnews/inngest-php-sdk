@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Functions;
 
+use DealNews\Inngest\Config\Checkpointing;
 use DealNews\Inngest\Functions\Options\BatchEvents;
 use DealNews\Inngest\Functions\Options\Cancellation;
 use DealNews\Inngest\Functions\Options\Concurrency;
@@ -90,6 +91,8 @@ class FunctionOptions {
      *                                                        step (0-20)
      * @param callable|null                     $on_failure   Runs after the
      *                                                        function fails
+     * @param bool|Checkpointing|null           $checkpointing Async
+     *        checkpointing; null uses the client's setting (on by default)
      *
      * @throws \InvalidArgumentException When an option is invalid
      */
@@ -109,7 +112,8 @@ class FunctionOptions {
         public ?Singleton $singleton = null,
         public array $cancel_on = [],
         public ?int $retries = null,
-        ?callable $on_failure = null
+        ?callable $on_failure = null,
+        public bool|Checkpointing|null $checkpointing = null
     ) {
         if ($on_failure !== null) {
             $this->on_failure = \Closure::fromCallable($on_failure);

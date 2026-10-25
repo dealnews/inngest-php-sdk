@@ -42,6 +42,8 @@ class FoundStep {
      * @param int|null             $userland_index Index for repeated IDs
      * @param \Closure|null        $fn             Code to run (step.run)
      * @param bool                 $fulfilled      Has a result or error
+     *                                             (set once a checkpointed
+     *                                             step is resumed)
      * @param bool                 $has_step_state Inngest has state for it
      */
     public function __construct(
@@ -54,8 +56,8 @@ class FoundStep {
         public readonly string $userland_id,
         public readonly ?int $userland_index,
         public readonly ?\Closure $fn,
-        public readonly bool $fulfilled,
-        public readonly bool $has_step_state
+        public bool $fulfilled,
+        public bool $has_step_state
     ) {
     }
 

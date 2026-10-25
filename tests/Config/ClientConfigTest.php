@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Tests\Config;
 
+use DealNews\Inngest\Config\Checkpointing;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
@@ -23,6 +24,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
  * @package DealNews\Inngest\Tests\Config
  */
 #[CoversClass(ClientConfig::class)]
+#[UsesClass(Checkpointing::class)]
 #[UsesClass(ClientOptions::class)]
 #[UsesClass(Env::class)]
 #[UsesClass(Url::class)]
@@ -287,6 +289,26 @@ class ClientConfigTest extends TestCase {
         $this->assertNull($config->serve_path);
         $this->assertTrue($config->enable_unauthed_sync);
         $this->assertTrue($config->allow_in_band_sync);
+        $this->assertTrue($config->checkpointing);
+    }
+
+    /**
+     * Checkpointing comes from the options as given
+     *
+     * @return void
+     */
+    public function testCheckpointing(): void {
+        $options = new Checkpointing(buffered_steps: 2);
+
+        $this->assertFalse(
+            $this->resolve([], new ClientOptions(checkpointing: false))
+                ->checkpointing
+        );
+        $this->assertSame(
+            $options,
+            $this->resolve([], new ClientOptions(checkpointing: $options))
+                ->checkpointing
+        );
     }
 
     /**

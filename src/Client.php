@@ -205,6 +205,15 @@ class Client {
     }
 
     /**
+     * Returns the retry helper used for outbound requests
+     *
+     * @return Retry
+     */
+    public function getRetry(): Retry {
+        return $this->retry;
+    }
+
+    /**
      * Returns the Guzzle client used for outbound HTTP
      *
      * @return ClientInterface
