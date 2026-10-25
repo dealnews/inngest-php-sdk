@@ -6,6 +6,7 @@ namespace DealNews\Inngest\Tests\Api;
 
 use DealNews\Inngest\Api\ApiClient;
 use DealNews\Inngest\Api\ApiException;
+use DealNews\Inngest\Api\SendSignalResult;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
@@ -21,6 +22,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 /**
@@ -34,6 +36,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(ClientOptions::class)]
 #[UsesClass(Env::class)]
 #[UsesClass(Headers::class)]
+#[UsesClass(SendSignalResult::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(Url::class)]
 #[UsesClass(ValueObject::class)]
@@ -252,6 +255,129 @@ class ApiClientTest extends TestCase {
         $this->expectException(ApiException::class);
         $this->expectExceptionCode(6003);
         $this->api($http)->getRunSteps('run');
+    }
+
+    /**
+     * Signals POST `{signal, data}` and return the run ID
+     *
+     * @return void
+     */
+    public function testSendSignal(): void {
+        $http = new MockHttp([
+            MockHttp::json(200, ['data' => ['run_id' => 'run-2']]),
+        ]);
+
+        $result = $this->api($http, new ClientOptions(env: 'main'))
+            ->sendSignal('sig', ['ok' => true], 'branch');
+
+        $request = $http->requests[0];
+        $this->assertSame('run-2', $result->run_id);
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame(
+            'https://api.inngest.com/v1/signals',
+            (string)$request->getUri()
+        );
+        $this->assertSame(
+            '{"signal":"sig","data":{"ok":true}}',
+            (string)$request->getBody()
+        );
+        $this->assertSame(
+            ['branch'],
+            $request->getHeader('x-inngest-env')
+        );
+    }
+
+    /**
+     * Without data, only the signal is sent; the client env is used
+     *
+     * @return void
+     */
+    public function testSendSignalNoData(): void {
+        $http = new MockHttp([
+            MockHttp::json(200, ['data' => ['run_id' => 'run-2']]),
+        ]);
+
+        $this->api($http, new ClientOptions(env: 'main'))->sendSignal('sig');
+
+        $this->assertSame(
+            '{"signal":"sig"}',
+            (string)$http->requests[0]->getBody()
+        );
+        $this->assertSame(
+            'main',
+            $http->requests[0]->getHeaderLine('x-inngest-env')
+        );
+    }
+
+    /**
+     * A 404 means no run was waiting
+     *
+     * @return void
+     */
+    public function testSendSignalNotFound(): void {
+        $http = new MockHttp([new Response(404, [], 'not json')]);
+
+        $this->assertNull($this->api($http)->sendSignal('sig')->run_id);
+    }
+
+    /**
+     * Failures throw with JS's messages
+     *
+     * @param Response $response Response
+     * @param string   $message  Expected message
+     *
+     * @return void
+     */
+    #[DataProvider('signalErrorProvider')]
+    public function testSendSignalErrors(
+        Response $response,
+        string $message
+    ): void {
+        $http = new MockHttp([$response]);
+
+        try {
+            $this->api($http)->sendSignal('sig');
+            $this->fail('Expected an exception');
+        } catch (ApiException $e) {
+            $this->assertSame(6004, $e->getCode());
+            $this->assertSame($message, $e->getMessage());
+            $this->assertSame(
+                $response->getStatusCode(),
+                $e->getHttpStatus()
+            );
+        }
+    }
+
+    /**
+     * Error responses
+     *
+     * @return array<string, array{Response, string}>
+     */
+    public static function signalErrorProvider(): array {
+        return [
+            'error body' => [
+                MockHttp::json(400, ['error' => 'bad signal', 'status' => 400]),
+                'Failed to send signal: bad signal',
+            ],
+            'not json' => [
+                new Response(500, [], 'oops'),
+                'Failed to send signal: 500 Internal Server Error - oops',
+            ],
+            'json without error' => [
+                MockHttp::json(502, ['nope' => 1]),
+                'Failed to send signal: 502 Bad Gateway - {"nope":1}',
+            ],
+            'success without run ID' => [
+                MockHttp::json(200, ['data' => []]),
+                'Failed to send signal: Successfully sent signal, but ' .
+                'response parsing failed: 200 OK - {"data":[]}',
+            ],
+            'success with empty run ID' => [
+                MockHttp::json(200, ['data' => ['run_id' => '']]),
+                'Failed to send signal: Successfully sent signal, but ' .
+                'response parsing failed: 200 OK - {"data":{"run_id":""}}',
+            ],
+        ];
     }
 
     /**

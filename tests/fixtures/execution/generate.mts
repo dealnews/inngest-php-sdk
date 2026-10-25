@@ -25,6 +25,9 @@ const { RetryAfterError } = await import(
   `${root}/src/components/RetryAfterError.ts`
 );
 const { ConsoleLogger } = await import(`${root}/src/middleware/logger.ts`);
+const { referenceFunction } = await import(
+  `${root}/src/components/InngestFunctionReference.ts`
+);
 
 const logger = new ConsoleLogger({ level: "silent" });
 const hash = (id: string) => createHash("sha1").update(id).digest("hex");
@@ -34,9 +37,19 @@ const client = new Inngest({
   id: "test-app",
   isDev: true,
   logger,
-  fetch: async (url: string) => {
+  fetch: async (url: string, init?: RequestInit) => {
     const path = new URL(String(url)).pathname;
     apiCalls.push(path);
+    if (path.startsWith("/e/")) {
+      return new Response(JSON.stringify({ ids: ["sent-1"], status: 200 }));
+    }
+    if (path === "/v1/signals") {
+      const sent = JSON.parse(String(init?.body));
+      if (sent.signal === "missing") {
+        return new Response("{}", { status: 404 });
+      }
+      return new Response(JSON.stringify({ data: { run_id: "run-2" } }));
+    }
     if (path.endsWith("/batch")) {
       return new Response(
         JSON.stringify([
@@ -53,6 +66,18 @@ const client = new Inngest({
 });
 
 const trigger = { triggers: [{ event: "demo/event.sent" }] };
+const until = new Date("2030-01-02T03:04:05.678Z");
+const aiModel = {
+  url: "https://ai.example.com/v1/chat",
+  format: "openai-chat",
+  authKey: "sk-1",
+  headers: { "x-a": "1" },
+};
+
+const invokeTarget = client.createFunction(
+  { id: "invoke-target", ...trigger },
+  () => "target",
+);
 
 const fns = [
   client.createFunction({ id: "no-steps", ...trigger }, ({ event, events }) => ({
@@ -131,6 +156,97 @@ const fns = [
     },
     () => "main",
   ),
+  invokeTarget,
+  client.createFunction({ id: "sleeps", ...trigger }, async ({ step }) => {
+    await step.sleep("S", "1h");
+    await step.sleepUntil("U", until);
+    return "slept";
+  }),
+  client.createFunction({ id: "sleep-variants", ...trigger }, async ({ step }) => {
+    await step.sleep("A", 500);
+    await step.sleep({ id: "B", name: "Nap" }, 90 * 60000);
+    await step.sleepUntil("C", "2030-01-02T03:04:05Z");
+  }),
+  client.createFunction({ id: "waits", ...trigger }, async ({ step }) => {
+    const evt = await step.waitForEvent("W", {
+      event: "demo/other",
+      match: "data.id",
+      timeout: "1d",
+    });
+    return { evt };
+  }),
+  client.createFunction({ id: "waits-if", ...trigger }, async ({ step }) => {
+    return await step.waitForEvent({ id: "W", name: "Wait" }, {
+      event: "demo/other",
+      if: "async.data.n > 1",
+      timeout: until,
+    });
+  }),
+  client.createFunction({ id: "invokes", ...trigger }, async ({ step }) => {
+    return await step.invoke("I", { function: invokeTarget, data: { x: 1 } });
+  }),
+  client.createFunction({ id: "invokes-ref", ...trigger }, async ({ step }) => {
+    return await step.invoke("I", {
+      function: referenceFunction({ functionId: "other" }),
+      v: "2",
+      meta: { sessions: { conv: 1 } },
+      timeout: "1h",
+    });
+  }),
+  client.createFunction({ id: "invokes-ref-app", ...trigger }, async ({ step }) => {
+    return await step.invoke({ id: "I", name: "Call other" }, {
+      function: referenceFunction({ functionId: "other", appId: "other-app" }),
+      data: {},
+      timeout: 60000,
+    });
+  }),
+  client.createFunction({ id: "sends", ...trigger }, async ({ step }) => {
+    return await step.sendEvent("E", { name: "demo/sent", data: { a: 1 } });
+  }),
+  client.createFunction({ id: "sends-named", ...trigger }, async ({ step }) => {
+    return await step.sendEvent({ id: "E", name: "Send it" }, [
+      { name: "demo/sent", data: { a: 1 } },
+      { name: "demo/sent", data: { a: 2 } },
+    ]);
+  }),
+  client.createFunction({ id: "signals", ...trigger }, async ({ step }) => {
+    return await step.sendSignal("SS", { signal: "sig-1", data: { ok: true } });
+  }),
+  client.createFunction({ id: "signals-missing", ...trigger }, async ({ step }) => {
+    return await step.sendSignal("SS", { signal: "missing" });
+  }),
+  client.createFunction({ id: "waits-signal", ...trigger }, async ({ step }) => {
+    return await step.waitForSignal("WS", {
+      signal: "sig-1",
+      timeout: "2h",
+      onConflict: "replace",
+    });
+  }),
+  client.createFunction({ id: "fetches", ...trigger }, async ({ step }) => {
+    const res = await step.fetch("https://Example.com/path?q=1", {
+      method: "POST",
+      headers: { "X-Token": "abc" },
+      body: '{"a":1}',
+    });
+    return {
+      status: res.status,
+      body: await res.text(),
+      header: res.headers.get("x-r"),
+    };
+  }),
+  client.createFunction({ id: "fetches-get", ...trigger }, async ({ step }) => {
+    await step.fetch("https://example.com/");
+    await step.fetch("https://example.com/again");
+  }),
+  client.createFunction({ id: "infers", ...trigger }, async ({ step }) => {
+    return await step.ai.infer("AI", {
+      model: aiModel,
+      body: { model: "m", messages: [] },
+    });
+  }),
+  client.createFunction({ id: "wraps", ...trigger }, async ({ step }) => {
+    return await step.ai.wrap("AW", (p: string) => p.toUpperCase(), "hi");
+  }),
 ];
 
 const commHandler = new InngestCommHandler({
@@ -308,6 +424,116 @@ const cases: Record<string, Case> = {
   version_zero: { fnId: "no-steps", body: body({ version: 0 }) },
   version_missing: { fnId: "no-steps", body: { ...body(), version: undefined } },
   invalid_event: { fnId: "no-steps", body: body({ event: "nope" }) },
+  sleep_first: { fnId: "sleeps", body: body() },
+  sleep_until_next: {
+    fnId: "sleeps",
+    body: body({ steps: { [hash("S")]: { data: null } } }),
+  },
+  sleep_done: {
+    fnId: "sleeps",
+    body: body({ steps: { [hash("S")]: { data: null }, [hash("U")]: { data: null } } }),
+  },
+  sleep_variants_ms: { fnId: "sleep-variants", body: body() },
+  sleep_variants_named: {
+    fnId: "sleep-variants",
+    body: body({ steps: { [hash("A")]: { data: null } } }),
+  },
+  sleep_variants_string_date: {
+    fnId: "sleep-variants",
+    body: body({ steps: { [hash("A")]: { data: null }, [hash("B")]: { data: null } } }),
+  },
+  wait_first: { fnId: "waits", body: body() },
+  wait_received: {
+    fnId: "waits",
+    body: body({
+      steps: { [hash("W")]: { data: { name: "demo/other", data: { id: 7 }, id: "e2", ts: 1 } } },
+    }),
+  },
+  wait_timed_out: {
+    fnId: "waits",
+    body: body({ steps: { [hash("W")]: { data: null } } }),
+  },
+  wait_if: { fnId: "waits-if", body: body() },
+  invoke_first: { fnId: "invokes", body: body() },
+  invoke_done: {
+    fnId: "invokes",
+    body: body({ steps: { [hash("I")]: { data: "target" } } }),
+  },
+  invoke_failed: {
+    fnId: "invokes",
+    body: body({ steps: { [hash("I")]: { error: stepError("invoked broke") } } }),
+  },
+  invoke_ref: { fnId: "invokes-ref", body: body() },
+  invoke_ref_app: { fnId: "invokes-ref-app", body: body() },
+  send_first: { fnId: "sends", body: body() },
+  send_done: {
+    fnId: "sends",
+    body: body({ steps: { [hash("E")]: { data: { ids: ["sent-1"] } } } }),
+  },
+  send_disable_immediate: {
+    fnId: "sends-named",
+    body: body({}, { disable_immediate_execution: true }),
+  },
+  send_requested: {
+    fnId: "sends-named",
+    stepId: hash("E"),
+    body: body({}, { disable_immediate_execution: true }),
+  },
+  send_input_replay: {
+    fnId: "sends",
+    body: body({ steps: { [hash("E")]: { input: ["ignored"] } } }),
+  },
+  signal_first: { fnId: "signals", body: body() },
+  signal_missing: { fnId: "signals-missing", body: body() },
+  signal_disable_immediate: {
+    fnId: "signals",
+    body: body({}, { disable_immediate_execution: true }),
+  },
+  signal_done: {
+    fnId: "signals",
+    body: body({ steps: { [hash("SS")]: { data: { runId: "run-2" } } } }),
+  },
+  wait_signal_first: { fnId: "waits-signal", body: body() },
+  wait_signal_done: {
+    fnId: "waits-signal",
+    body: body({ steps: { [hash("WS")]: { data: { signal: "sig-1", data: { y: 2 } } } } }),
+  },
+  fetch_first: { fnId: "fetches", body: body() },
+  fetch_done: {
+    fnId: "fetches",
+    body: body({
+      steps: {
+        [hash("step.fetch: example.com")]: {
+          data: { status_code: 201, headers: { "x-r": "yes" }, body: "hi" },
+        },
+      },
+    }),
+  },
+  fetch_get_first: { fnId: "fetches-get", body: body() },
+  fetch_get_second: {
+    fnId: "fetches-get",
+    body: body({
+      steps: {
+        [hash("step.fetch: example.com")]: {
+          data: { status_code: 200, headers: {}, body: "" },
+        },
+      },
+    }),
+  },
+  infer_first: { fnId: "infers", body: body() },
+  infer_done: {
+    fnId: "infers",
+    body: body({ steps: { [hash("AI")]: { data: { choices: [{ text: "ok" }] } } } }),
+  },
+  wrap_first: { fnId: "wraps", body: body() },
+  wrap_disable_immediate: {
+    fnId: "wraps",
+    body: body({}, { disable_immediate_execution: true }),
+  },
+  wrap_input_replay: {
+    fnId: "wraps",
+    body: body({ steps: { [hash("AW")]: { input: ["yo"] } } }),
+  },
   missing_ctx: { fnId: "no-steps", body: { event, events: [event], steps: {}, version: 2 } },
 };
 

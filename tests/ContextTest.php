@@ -13,7 +13,9 @@ use DealNews\Inngest\Execution\StepIdResolver;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepTools;
+use DealNews\Inngest\Support\Duration;
 use DealNews\Inngest\Tests\mock\RecordingLogger;
 use DealNews\Inngest\ValueObject\ValueObject;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,6 +27,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
  * @package DealNews\Inngest\Tests
  */
 #[CoversClass(Context::class)]
+#[UsesClass(AiTools::class)]
+#[UsesClass(Duration::class)]
 #[UsesClass(Engine::class)]
 #[UsesClass(ErrorSerializer::class)]
 #[UsesClass(Event::class)]

@@ -126,6 +126,78 @@ class ApiClient {
     }
 
     /**
+     * Sends a signal to the run waiting for it (`POST /v1/signals`)
+     *
+     * Port of JS `InngestApi.sendSignal`. A 404 means no run was waiting
+     * for the signal; that's not an error.
+     *
+     * @param string      $signal Signal name
+     * @param mixed       $data   Data for the waiting run; null sends none
+     * @param string|null $env    Environment override (`X-Inngest-Env`)
+     *
+     * @throws ApiException When the request fails (6001) or Inngest
+     *                      rejects the signal (6004)
+     *
+     * @return SendSignalResult
+     */
+    public function sendSignal(
+        string $signal,
+        mixed $data = null,
+        ?string $env = null
+    ): SendSignalResult {
+        $body = ['signal' => $signal];
+        if ($data !== null) {
+            $body['data'] = $data;
+        }
+
+        $response = $this->request(
+            'POST',
+            '/v1/signals',
+            (string)json_encode(
+                $body,
+                JSON_UNESCAPED_SLASHES |
+                JSON_UNESCAPED_UNICODE |
+                JSON_THROW_ON_ERROR
+            ),
+            $env === null ? [] : [Headers::ENVIRONMENT => $env]
+        );
+
+        $status = $response->getStatusCode();
+        $raw    = (string)$response->getBody();
+        $json   = json_decode($raw, true);
+        $detail = "$status " . $response->getReasonPhrase() . " - $raw";
+
+        if ($status === 404) {
+            $result = new SendSignalResult();
+        } elseif ($status < 200 || $status >= 300) {
+            $message = is_array($json) && is_string($json['error'] ?? null) ?
+                $json['error'] :
+                $detail;
+
+            throw new ApiException(
+                "Failed to send signal: $message",
+                6004,
+                $status
+            );
+        } elseif (
+            !is_array($json)                             ||
+            !is_string($json['data']['run_id'] ?? null)  ||
+            $json['data']['run_id'] === ''
+        ) {
+            throw new ApiException(
+                'Failed to send signal: Successfully sent signal, but ' .
+                "response parsing failed: $detail",
+                6004,
+                $status
+            );
+        } else {
+            $result = new SendSignalResult($json['data']['run_id']);
+        }
+
+        return $result;
+    }
+
+    /**
      * GETs a path and decodes its JSON body
      *
      * @param string $path             API path

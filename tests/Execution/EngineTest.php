@@ -25,8 +25,10 @@ use DealNews\Inngest\Execution\StepOp;
 use DealNews\Inngest\Execution\StepState;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
+use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
+use DealNews\Inngest\Support\Duration;
 use DealNews\Inngest\Tests\mock\RecordingLogger;
 use DealNews\Inngest\Tests\TestCase;
 use DealNews\Inngest\ValueObject\ValueObject;
@@ -43,7 +45,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
  * @package DealNews\Inngest\Tests\Execution
  */
 #[CoversClass(Engine::class)]
+#[UsesClass(AiTools::class)]
 #[UsesClass(Context::class)]
+#[UsesClass(Duration::class)]
 #[UsesClass(ErrorSerializer::class)]
 #[UsesClass(Event::class)]
 #[UsesClass(ExecutionException::class)]
@@ -362,6 +366,183 @@ class EngineTest extends TestCase {
 
         $this->assertSame(10, $result->ops[0]->data);
         $this->assertSame(['input' => [1]], $result->ops[0]->opts);
+    }
+
+    /**
+     * Input from Inngest is merged into a step.ai.infer body (JS
+     * `stepHandler`, `AiGateway` case)
+     *
+     * @param array<mixed> $body     Body the function passed
+     * @param mixed        $input    Input state from Inngest
+     * @param string       $expected Expected body JSON
+     *
+     * @return void
+     */
+    #[DataProvider('aiInputProvider')]
+    public function testAiInferInputReplay(
+        array $body,
+        mixed $input,
+        string $expected
+    ): void {
+        $engine = $this->engine(
+            static fn (Context $ctx) => $ctx->step->ai->infer(
+                'AI',
+                'https://ai.test/',
+                'openai-chat',
+                $body
+            ),
+            ['steps' => [sha1('AI') => ['input' => $input]]],
+            sha1('AI')
+        );
+
+        $result = $engine->execute();
+        $steps  = (new \ReflectionProperty(Engine::class, 'steps'))
+            ->getValue($engine);
+
+        $this->assertSame(ResultType::StepNotFound, $result->type);
+        $this->assertSame(
+            $expected,
+            json_encode($steps[sha1('AI')]->opts['body'])
+        );
+    }
+
+    /**
+     * Bodies and replacement input
+     *
+     * @return array<string, array{array<mixed>, mixed, string}>
+     */
+    public static function aiInputProvider(): array {
+        return [
+            'merged' => [
+                ['model' => 'm', 'messages' => []],
+                [['model' => 'm2', 'temperature' => 1]],
+                '{"model":"m2","messages":[],"temperature":1}',
+            ],
+            'empty body' => [
+                [],
+                [['model' => 'm2']],
+                '{"model":"m2"}',
+            ],
+            'not an object' => [
+                ['model' => 'm'],
+                ['text'],
+                '{"model":"m"}',
+            ],
+            'both empty' => [[], [[]], '{}'],
+            'no items'   => [['a' => 1], [], '{"a":1}'],
+            'not a list' => [['a' => 1], ['x' => ['a' => 2]], '{"a":1}'],
+        ];
+    }
+
+    /**
+     * Branching on a waited-for event (InngestFunction.test.ts
+     * "waitForEvent" scenario)
+     *
+     * @param array<string, mixed> $steps    Step state
+     * @param ResultType           $type     Expected result type
+     * @param string|null          $ran      Step expected to run
+     *
+     * @return void
+     */
+    #[DataProvider('waitThenBranchProvider')]
+    public function testWaitForEventThenBranch(
+        array $steps,
+        ResultType $type,
+        ?string $ran
+    ): void {
+        $engine = $this->engine(
+            static function (Context $ctx): void {
+                $foo = $ctx->step->waitForEvent(
+                    'wait-id',
+                    event: 'foo',
+                    timeout: '2h'
+                );
+
+                if (($foo['data']['foo'] ?? null) === 'foo') {
+                    $ctx->step->run('A', static fn () => 'A');
+                } elseif (($foo['data']['foo'] ?? null) === 'bar') {
+                    $ctx->step->run('B', static fn () => 'B');
+                }
+            },
+            $steps === [] ? [] : ['steps' => $steps]
+        );
+
+        $result = $engine->execute();
+
+        $this->assertSame($type, $result->type);
+        if ($type === ResultType::StepsFound) {
+            $op = $result->ops[0];
+            $this->assertSame(OpCode::WaitForEvent, $op->op);
+            $this->assertSame(sha1('wait-id'), $op->id);
+            $this->assertSame('foo', $op->name);
+            $this->assertSame('wait-id', $op->display_name);
+        } elseif ($type === ResultType::StepRan) {
+            $this->assertSame(sha1((string)$ran), $result->ops[0]->id);
+            $this->assertSame($ran, $result->ops[0]->data);
+        } else {
+            $this->assertNull($result->data);
+        }
+    }
+
+    /**
+     * Requests in the scenario
+     *
+     * @return array<string, array{array<string, mixed>, ResultType, ?string}>
+     */
+    public static function waitThenBranchProvider(): array {
+        $event = static fn (string $foo) => [
+            'data' => ['name' => 'foo', 'data' => ['foo' => $foo]],
+        ];
+
+        return [
+            'first run reports waitForEvent' => [
+                [],
+                ResultType::StepsFound,
+                null,
+            ],
+            'foo runs A' => [
+                [sha1('wait-id') => $event('foo')],
+                ResultType::StepRan,
+                'A',
+            ],
+            'bar runs B' => [
+                [sha1('wait-id') => $event('bar')],
+                ResultType::StepRan,
+                'B',
+            ],
+            'final request resolves' => [
+                [
+                    sha1('wait-id') => $event('bar'),
+                    sha1('B')       => ['data' => 'B'],
+                ],
+                ResultType::FunctionResolved,
+                null,
+            ],
+        ];
+    }
+
+    /**
+     * isExecutingStep() is true only while a step's code runs
+     *
+     * @return void
+     */
+    public function testIsExecutingStep(): void {
+        $seen   = new \ArrayObject();
+        $engine = $this->engine(static function (Context $ctx) use ($seen) {
+            $seen['before'] = $seen['engine']->isExecutingStep();
+
+            return $ctx->step->run(
+                'A',
+                static fn () => $seen['engine']->isExecutingStep()
+            );
+        });
+        $seen['engine'] = $engine;
+
+        $result = $engine->execute();
+
+        $this->assertFalse($seen['before']);
+        $this->assertTrue($result->ops[0]->data);
+        $this->assertFalse($engine->isExecutingStep());
     }
 
     /**

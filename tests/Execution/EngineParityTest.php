@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DealNews\Inngest\Tests\Execution;
 
 use DealNews\Inngest\Api\ApiClient;
+use DealNews\Inngest\Api\SendSignalResult;
 use DealNews\Inngest\Client;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
@@ -17,6 +18,8 @@ use DealNews\Inngest\Error\RetryAfterError;
 use DealNews\Inngest\Error\SerializedError;
 use DealNews\Inngest\Error\StepError;
 use DealNews\Inngest\Event\Event;
+use DealNews\Inngest\Event\EventMeta;
+use DealNews\Inngest\Event\SendEventResult;
 use DealNews\Inngest\Execution\Engine;
 use DealNews\Inngest\Execution\ExecutionException;
 use DealNews\Inngest\Execution\ExecutionResult;
@@ -31,6 +34,7 @@ use DealNews\Inngest\Functions\Config\StepConfig;
 use DealNews\Inngest\Functions\Config\StepRetries;
 use DealNews\Inngest\Functions\Config\StepRuntime;
 use DealNews\Inngest\Functions\FunctionOptions;
+use DealNews\Inngest\Functions\FunctionReference;
 use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Functions\Trigger\EventTrigger;
 use DealNews\Inngest\Http\Headers;
@@ -41,6 +45,9 @@ use DealNews\Inngest\Http\Response;
 use DealNews\Inngest\Http\ServeHandler;
 use DealNews\Inngest\Http\Signature;
 use DealNews\Inngest\Http\SignatureResult;
+use DealNews\Inngest\Step\AiFormat;
+use DealNews\Inngest\Step\AiTools;
+use DealNews\Inngest\Step\SignalConflict;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
 use DealNews\Inngest\Support\Duration;
@@ -72,6 +79,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(Engine::class)]
 #[CoversClass(RunRequest::class)]
 #[CoversClass(ServeHandler::class)]
+#[UsesClass(AiTools::class)]
 #[UsesClass(ApiClient::class)]
 #[UsesClass(Client::class)]
 #[UsesClass(ClientConfig::class)]
@@ -81,12 +89,14 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Env::class)]
 #[UsesClass(ErrorSerializer::class)]
 #[UsesClass(Event::class)]
+#[UsesClass(EventMeta::class)]
 #[UsesClass(EventTrigger::class)]
 #[UsesClass(ExecutionException::class)]
 #[UsesClass(ExecutionResult::class)]
 #[UsesClass(FoundStep::class)]
 #[UsesClass(FunctionConfig::class)]
 #[UsesClass(FunctionOptions::class)]
+#[UsesClass(FunctionReference::class)]
 #[UsesClass(Headers::class)]
 #[UsesClass(InngestFunction::class)]
 #[UsesClass(Introspector::class)]
@@ -98,6 +108,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Response::class)]
 #[UsesClass(Retry::class)]
 #[UsesClass(RetryAfterError::class)]
+#[UsesClass(SendEventResult::class)]
+#[UsesClass(SendSignalResult::class)]
 #[UsesClass(SerializedError::class)]
 #[UsesClass(Signature::class)]
 #[UsesClass(SignatureResult::class)]
@@ -243,6 +255,136 @@ class EngineParityTest extends TestCase {
                        $ctx->event->data['function_id'];
             }
         );
+        static::addToolFunctions($client, $add);
+    }
+
+    /**
+     * Adds the step tool functions (sleep, waits, invoke, sends, fetch, AI)
+     *
+     * @param Client   $client Client
+     * @param \Closure $add    Adds a function by ID and handler
+     *
+     * @return void
+     */
+    protected static function addToolFunctions(
+        Client $client,
+        \Closure $add
+    ): void {
+        $until  = new \DateTimeImmutable('2030-01-02T03:04:05.678Z');
+        $target = $client->createFunction(
+            new FunctionOptions(
+                id: 'invoke-target',
+                triggers: [new EventTrigger('demo/event.sent')]
+            ),
+            static fn () => 'target'
+        );
+
+        $add('sleeps', static function (Context $ctx) use ($until): string {
+            $ctx->step->sleep('S', '1h');
+            $ctx->step->sleepUntil('U', $until);
+
+            return 'slept';
+        });
+        $add('sleep-variants', static function (Context $ctx): void {
+            $ctx->step->sleep('A', 500);
+            $ctx->step->sleep(new StepOptions('B', 'Nap'), 90 * 60000);
+            $ctx->step->sleepUntil('C', '2030-01-02T03:04:05Z');
+        });
+        $add('waits', static fn (Context $ctx) => [
+            'evt' => $ctx->step->waitForEvent(
+                'W',
+                event: 'demo/other',
+                timeout: '1d',
+                match: 'data.id'
+            ),
+        ]);
+        $add('waits-if', static fn (Context $ctx) => $ctx->step->waitForEvent(
+            new StepOptions('W', 'Wait'),
+            event: 'demo/other',
+            timeout: $until,
+            if: 'async.data.n > 1'
+        ));
+        $add('invokes', static fn (Context $ctx) => $ctx->step->invoke(
+            'I',
+            $target,
+            data: ['x' => 1]
+        ));
+        $add('invokes-ref', static fn (Context $ctx) => $ctx->step->invoke(
+            'I',
+            new FunctionReference('other'),
+            v: '2',
+            meta: new EventMeta(['conv' => 1]),
+            timeout: '1h'
+        ));
+        $add(
+            'invokes-ref-app',
+            static fn (Context $ctx) => $ctx->step->invoke(
+                new StepOptions('I', 'Call other'),
+                new FunctionReference('other', 'other-app'),
+                data: [],
+                timeout: 60000
+            )
+        );
+        $add('sends', static fn (Context $ctx) => $ctx->step->sendEvent(
+            'E',
+            new Event('demo/sent', ['a' => 1])
+        ));
+        $add('sends-named', static fn (Context $ctx) => $ctx->step->sendEvent(
+            new StepOptions('E', 'Send it'),
+            [
+                ['name' => 'demo/sent', 'data' => ['a' => 1]],
+                ['name' => 'demo/sent', 'data' => ['a' => 2]],
+            ]
+        ));
+        $add('signals', static fn (Context $ctx) => $ctx->step->sendSignal(
+            'SS',
+            'sig-1',
+            ['ok' => true]
+        ));
+        $add(
+            'signals-missing',
+            static fn (Context $ctx) => $ctx->step->sendSignal('SS', 'missing')
+        );
+        $add(
+            'waits-signal',
+            static fn (Context $ctx) => $ctx->step->waitForSignal(
+                'WS',
+                'sig-1',
+                '2h',
+                SignalConflict::Replace
+            )
+        );
+        $add('fetches', static function (Context $ctx): array {
+            $response = $ctx->step->fetch(
+                'https://Example.com/path?q=1',
+                'POST',
+                ['X-Token' => 'abc'],
+                '{"a":1}'
+            );
+
+            return [
+                'status' => $response->getStatusCode(),
+                'body'   => (string)$response->getBody(),
+                'header' => $response->getHeaderLine('x-r'),
+            ];
+        });
+        $add('fetches-get', static function (Context $ctx): void {
+            $ctx->step->fetch('https://example.com/');
+            $ctx->step->fetch('https://example.com/again');
+        });
+        $add('infers', static fn (Context $ctx) => $ctx->step->ai->infer(
+            'AI',
+            url: 'https://ai.example.com/v1/chat',
+            format: AiFormat::OpenAiChat,
+            body: ['model' => 'm', 'messages' => []],
+            auth_key: 'sk-1',
+            headers: ['x-a' => '1']
+        ));
+        $add('wraps', static fn (Context $ctx) => $ctx->step->ai->wrap(
+            'AW',
+            static fn (string $p) => strtoupper($p),
+            'hi'
+        ));
     }
 
     /**
@@ -276,16 +418,23 @@ class EngineParityTest extends TestCase {
         $expected = $this->fixture()->$name;
         $request  = $expected->request;
 
-        $responses = [];
-        if ($name === 'use_api') {
-            $responses = [
+        $responses = match ($name) {
+            'use_api' => [
                 MockHttp::json(200, [
                     ['name' => 'demo/event.sent', 'data' => ['n' => 1]],
                     ['name' => 'demo/event.sent', 'data' => ['n' => 2]],
                 ]),
                 MockHttp::json(200, [sha1('A') => 'from api']),
-            ];
-        }
+            ],
+            'send_first', 'send_requested', 'send_input_replay' => [
+                MockHttp::json(200, ['ids' => ['sent-1'], 'status' => 200]),
+            ],
+            'signal_first'   => [
+                MockHttp::json(200, ['data' => ['run_id' => 'run-2']]),
+            ],
+            'signal_missing' => [MockHttp::json(404, new \stdClass())],
+            default          => [],
+        };
 
         $harness = new ServeHarness(
             new ClientOptions(is_dev: true),

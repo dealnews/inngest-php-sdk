@@ -11,6 +11,7 @@ namespace DealNews\Inngest\Api;
  * - 6001: transport failure (couldn't connect, timeout, ...)
  * - 6002: Inngest returned an error response
  * - 6003: Inngest returned a response we couldn't parse
+ * - 6004: sending a signal failed
  *
  * @package DealNews\Inngest\Api
  */

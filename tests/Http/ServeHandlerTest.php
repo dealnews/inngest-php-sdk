@@ -49,6 +49,7 @@ use DealNews\Inngest\Http\SignatureResult;
 use DealNews\Inngest\Http\Sync\InBandRegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterRequest;
 use DealNews\Inngest\Http\Sync\RegisterResult;
+use DealNews\Inngest\Step\AiTools;
 use DealNews\Inngest\Step\StepOptions;
 use DealNews\Inngest\Step\StepTools;
 use DealNews\Inngest\Support\Duration;
@@ -75,6 +76,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
  * @package DealNews\Inngest\Tests\Http
  */
 #[CoversClass(ServeHandler::class)]
+#[UsesClass(AiTools::class)]
 #[UsesClass(ApiClient::class)]
 #[UsesClass(Context::class)]
 #[UsesClass(Engine::class)]

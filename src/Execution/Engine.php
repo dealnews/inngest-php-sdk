@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DealNews\Inngest\Execution;
 
+use DealNews\Inngest\Client;
 use DealNews\Inngest\Context;
 use DealNews\Inngest\Error\ErrorSerializer;
 use DealNews\Inngest\Error\NonRetriableError;
@@ -35,7 +36,9 @@ use Psr\Log\LoggerInterface;
  * Usage:
  *
  * ```php
- * $engine = new Engine($function, false, $run_request, null, $logger);
+ * $engine = new Engine(
+ *     $function, false, $run_request, null, $logger, null, $client
+ * );
  * $result = $engine->execute();
  * ```
  *
@@ -216,6 +219,9 @@ class Engine {
      *                                             Inngest wants run
      * @param LoggerInterface      $logger         Logger
      * @param ErrorSerializer|null $serializer     Error serializer
+     * @param Client|null          $client         Client, for step tools
+     *                                             that send events, signals,
+     *                                             or HTTP requests
      */
     public function __construct(
         protected InngestFunction $function,
@@ -223,7 +229,8 @@ class Engine {
         protected RunRequest $request,
         protected ?string $requested_step,
         protected LoggerInterface $logger,
-        ?ErrorSerializer $serializer = null
+        ?ErrorSerializer $serializer = null,
+        protected ?Client $client = null
     ) {
         $this->serializer      = $serializer ?? new ErrorSerializer();
         $this->ids             = new StepIdResolver();
@@ -239,6 +246,15 @@ class Engine {
      */
     public function getContext(): Context {
         return $this->context;
+    }
+
+    /**
+     * Whether a step's code is running right now
+     *
+     * @return bool
+     */
+    public function isExecutingStep(): bool {
+        return $this->executing_step !== null;
     }
 
     /**
@@ -292,14 +308,20 @@ class Engine {
 
         // Inngest can replace a step's input before it runs.
         if (
-            $state !== null                           &&
-            $state->type === StepState::TYPE_INPUT    &&
-            is_array($state->input)                   &&
-            array_is_list($state->input)              &&
-            $op->op === OpCode::StepPlanned
+            $state !== null                        &&
+            $state->type === StepState::TYPE_INPUT &&
+            is_array($state->input)                &&
+            array_is_list($state->input)
         ) {
-            $args          = $state->input;
-            $opts['input'] = $state->input;
+            if ($op->op === OpCode::StepPlanned) {
+                $args          = $state->input;
+                $opts['input'] = $state->input;
+            } elseif ($op->op === OpCode::AiGateway) {
+                $opts['body'] = static::replaceBody(
+                    $opts['body']    ?? null,
+                    $state->input[0] ?? null
+                );
+            }
         }
 
         $step = new FoundStep(
@@ -874,10 +896,32 @@ class Engine {
             run_id: $this->request->run_id,
             attempt: $this->request->attempt,
             max_attempts: $this->request->max_attempts,
-            step: new StepTools($this),
+            step: new StepTools($this, $this->client, $this->logger),
             logger: $this->logger,
             error: $error
         );
+    }
+
+    /**
+     * Merges replacement input into a step.ai.infer request body
+     *
+     * @param mixed $body        Body the function passed
+     * @param mixed $replacement First item of the input from Inngest
+     *
+     * @return array<mixed>|\stdClass The merged body (`{}` when empty)
+     */
+    protected static function replaceBody(
+        mixed $body,
+        mixed $replacement
+    ): array|\stdClass {
+        $result = array_replace(
+            is_array($body) || $body instanceof \stdClass ?
+                (array)$body :
+                [],
+            is_array($replacement) ? $replacement : []
+        );
+
+        return $result === [] ? new \stdClass() : $result;
     }
 
     /**

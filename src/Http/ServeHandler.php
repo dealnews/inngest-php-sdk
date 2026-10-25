@@ -351,7 +351,8 @@ class ServeHandler {
             $run,
             $step_id,
             $this->logger,
-            $this->serializer
+            $this->serializer,
+            $this->client
         );
 
         return $this->executionResponse($engine->execute());

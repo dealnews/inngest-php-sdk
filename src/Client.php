@@ -6,6 +6,7 @@ namespace DealNews\Inngest;
 
 use DealNews\Inngest\Api\ApiClient;
 use DealNews\Inngest\Api\ApiException;
+use DealNews\Inngest\Api\SendSignalResult;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
 use DealNews\Inngest\Config\Env;
@@ -204,6 +205,15 @@ class Client {
     }
 
     /**
+     * Returns the Guzzle client used for outbound HTTP
+     *
+     * @return ClientInterface
+     */
+    public function getHttpClient(): ClientInterface {
+        return $this->http_client;
+    }
+
+    /**
      * Returns the SDK header builder
      *
      * @return Headers
@@ -352,6 +362,29 @@ class Client {
         }
 
         return $result;
+    }
+
+    /**
+     * Sends a signal to the run waiting for it with `waitForSignal`
+     *
+     * Port of JS `inngest.sendSignal()`. Inside a function, prefer
+     * `$ctx->step->sendSignal()` so the signal is sent only once.
+     *
+     * @param string      $signal Signal name
+     * @param mixed       $data   Data for the waiting run
+     * @param string|null $env    Inngest environment to send to; defaults
+     *                            to the client's
+     *
+     * @throws ApiException When the signal can't be sent
+     *
+     * @return SendSignalResult `run_id` is null when no run was waiting
+     */
+    public function sendSignal(
+        string $signal,
+        mixed $data = null,
+        ?string $env = null
+    ): SendSignalResult {
+        return $this->api->sendSignal($signal, $data, $env);
     }
 
     /**

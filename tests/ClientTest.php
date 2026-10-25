@@ -6,6 +6,7 @@ namespace DealNews\Inngest\Tests;
 
 use DealNews\Inngest\Api\ApiClient;
 use DealNews\Inngest\Api\ApiException;
+use DealNews\Inngest\Api\SendSignalResult;
 use DealNews\Inngest\Client;
 use DealNews\Inngest\Config\ClientConfig;
 use DealNews\Inngest\Config\ClientOptions;
@@ -16,6 +17,7 @@ use DealNews\Inngest\Event\SendEventResult;
 use DealNews\Inngest\Functions\FunctionOptions;
 use DealNews\Inngest\Functions\InngestFunction;
 use DealNews\Inngest\Http\Headers;
+use DealNews\Inngest\Http\Signature;
 use DealNews\Inngest\Support\Retry;
 use DealNews\Inngest\Support\Url;
 use DealNews\Inngest\Tests\mock\FixedVersion;
@@ -44,10 +46,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Event::class)]
 #[UsesClass(EventMeta::class)]
 #[UsesClass(SendEventResult::class)]
+#[UsesClass(SendSignalResult::class)]
 #[UsesClass(FunctionOptions::class)]
 #[UsesClass(InngestFunction::class)]
 #[UsesClass(Headers::class)]
 #[UsesClass(Retry::class)]
+#[UsesClass(Signature::class)]
 #[UsesClass(Url::class)]
 #[UsesClass(ValueObject::class)]
 #[UsesClass(Version::class)]
@@ -75,6 +79,14 @@ class ClientTest extends TestCase {
         $this->assertInstanceOf(ApiClient::class, $client->getApi());
         $this->assertInstanceOf(Headers::class, $client->getHeaders());
         $this->assertInstanceOf(Version::class, $client->getVersion());
+        $this->assertInstanceOf(
+            \GuzzleHttp\ClientInterface::class,
+            $client->getHttpClient()
+        );
+
+        $http   = new MockHttp();
+        $client = $this->client($http);
+        $this->assertSame($http->client, $client->getHttpClient());
 
         $version = new FixedVersion('9.9.9');
         $client  = new Client('my-app', env: new Env([]), version: $version);
@@ -684,6 +696,28 @@ class ClientTest extends TestCase {
         $this->expectException(ApiException::class);
         $this->expectExceptionCode(6001);
         $this->client($http)->send(new Event(name: 'test'));
+    }
+
+    /**
+     * sendSignal() goes through the API client
+     *
+     * @return void
+     */
+    public function testSendSignal(): void {
+        $http   = new MockHttp([
+            MockHttp::json(200, ['data' => ['run_id' => 'run-9']]),
+        ]);
+        $result = $this->client($http)->sendSignal('sig', [1], 'env-x');
+
+        $this->assertSame('run-9', $result->run_id);
+        $this->assertSame(
+            '{"signal":"sig","data":[1]}',
+            (string)$http->requests[0]->getBody()
+        );
+        $this->assertSame(
+            'env-x',
+            $http->requests[0]->getHeaderLine('x-inngest-env')
+        );
     }
 
     /**
