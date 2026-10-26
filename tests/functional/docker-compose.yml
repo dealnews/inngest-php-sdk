@@ -1,0 +1,86 @@
+# Functional test stack: real Inngest servers + the PHP test app.
+#
+# Run it with tests/functional/run.sh (see tests/functional/README.md).
+#
+# - dev:        `inngest dev`, unsigned, talks to `app`
+# - selfhosted: `inngest start` with a signing key, talks to `app-cloud`
+#               (signed requests, cloud mode)
+# - app:        tests/functional/app/server.php in dev mode
+# - app-cloud:  the same app in cloud mode
+# - phpunit:    runs `--group functional` against all of the above
+
+name: inngest-php-functional
+
+x-php: &php
+  image: php:8.4-cli-alpine
+  working_dir: /app
+  volumes:
+    - ../..:/app
+    - state:/state
+
+services:
+  dev:
+    image: inngest/inngest:v1.44.0
+    command: >-
+      inngest dev --no-discovery --no-poll --retry-interval 1 --tick 10
+      -u http://app:8000/api/inngest
+    depends_on:
+      - app
+    ports:
+      - "${FUNCTIONAL_DEV_PORT:-8288}:8288"
+
+  selfhosted:
+    image: inngest/inngest:v1.44.0
+    command: >-
+      inngest start --retry-interval 1 --tick 10
+      --signing-key ${FUNCTIONAL_SIGNING_KEY_HEX}
+      --event-key functional-event-key
+    ports:
+      - "${FUNCTIONAL_CLOUD_PORT:-8290}:8288"
+
+  app:
+    <<: *php
+    command: php -S 0.0.0.0:8000 tests/functional/app/server.php
+    environment:
+      PHP_CLI_SERVER_WORKERS: "8"
+      FUNCTIONAL_APP: dev
+      FUNCTIONAL_STATE_DIR: /state
+      INNGEST_DEV: http://dev:8288
+      INNGEST_SERVE_ORIGIN: http://app:8000
+
+  app-cloud:
+    <<: *php
+    command: php -S 0.0.0.0:8000 tests/functional/app/server.php
+    environment:
+      PHP_CLI_SERVER_WORKERS: "8"
+      FUNCTIONAL_APP: cloud
+      FUNCTIONAL_STATE_DIR: /state
+      INNGEST_DEV: "0"
+      INNGEST_BASE_URL: http://selfhosted:8288
+      INNGEST_SIGNING_KEY: signkey-test-${FUNCTIONAL_SIGNING_KEY_HEX}
+      INNGEST_EVENT_KEY: functional-event-key
+      INNGEST_SERVE_ORIGIN: http://app-cloud:8000
+
+  phpunit:
+    <<: *php
+    profiles:
+      - test
+    entrypoint:
+      - php
+      - -d
+      - memory_limit=-1
+      - vendor/bin/phpunit
+      - --group
+      - functional
+      - --no-coverage
+    environment:
+      FUNCTIONAL_STATE_DIR: /state
+      FUNCTIONAL_DEV_URL: http://dev:8288
+      FUNCTIONAL_APP_URL: http://app:8000/api/inngest
+      FUNCTIONAL_CLOUD_URL: http://selfhosted:8288
+      FUNCTIONAL_CLOUD_APP_URL: http://app-cloud:8000/api/inngest
+      FUNCTIONAL_SIGNING_KEY: signkey-test-${FUNCTIONAL_SIGNING_KEY_HEX}
+      FUNCTIONAL_EVENT_KEY: functional-event-key
+
+volumes:
+  state:

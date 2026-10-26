@@ -280,6 +280,28 @@ class EngineCheckpointTest extends TestCase {
     }
 
     /**
+     * The runtime limit doesn't apply before the request's first step has
+     * run, like JS, whose timer can't fire before the first `await`
+     *
+     * @return void
+     */
+    public function testRuntimeNotCheckedBeforeFirstStep(): void {
+        $clock  = $this->clock;
+        $engine = $this->engine(
+            static function (Context $ctx) use ($clock): void {
+                $clock['now'] = 500;
+                $ctx->step->run('A', static fn () => 'A');
+                $ctx->step->run('B', static fn () => 'B');
+            },
+            new CheckpointConfig(max_runtime_ms: 100)
+        );
+        $result = $engine->execute();
+
+        $this->assertSame(['StepPlanned B'], static::summary($result->ops));
+        $this->assertCount(1, $this->checkpointer->sent);
+    }
+
+    /**
      * A runtime limit of 0 means none
      *
      * @return void

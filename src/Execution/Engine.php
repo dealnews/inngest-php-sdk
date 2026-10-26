@@ -273,6 +273,15 @@ class Engine {
     protected int $started_ms = 0;
 
     /**
+     * Whether a step has run in this request
+     *
+     * The runtime limit only applies after that (see runtimeExceeded()).
+     *
+     * @var bool
+     */
+    protected bool $step_ran = false;
+
+    /**
      * When the last checkpoint was sent (or execute() started), in
      * milliseconds
      *
@@ -894,6 +903,9 @@ class Engine {
      */
     protected function runNewStep(array $steps): ?ExecutionResult {
         $op = $this->tryExecuteStep($steps);
+        if ($op !== null) {
+            $this->step_ran = true;
+        }
 
         if ($op === null) {
             $result = $this->flushCheckpoints() ??
@@ -1013,12 +1025,18 @@ class Engine {
     /**
      * Whether the checkpointing runtime limit has passed
      *
+     * Not before the first step of the request has run: JS's timer can
+     * only take effect at an `await`, after the first step found has been
+     * handled, so that step always runs (D52).
+     *
      * @return bool
      */
     protected function runtimeExceeded(): bool {
         $limit = $this->checkpointer?->config->max_runtime_ms ?? 0;
 
-        return $limit > 0 && $this->nowMs() - $this->started_ms >= $limit;
+        return $limit > 0       &&
+            $this->step_ran     &&
+            $this->nowMs() - $this->started_ms >= $limit;
     }
 
     /**
